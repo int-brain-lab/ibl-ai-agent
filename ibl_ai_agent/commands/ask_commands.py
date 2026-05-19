@@ -12,6 +12,10 @@ from ibl_ai_agent.ask.app.preflight import run_preflight
 from ibl_ai_agent.commands.common import fail
 from ibl_ai_agent.commands.kernel import run_or_fail
 from ibl_ai_agent.errors import IblAgentError
+from ibl_ai_agent.local_config import default_project_root
+
+
+DEFAULT_REPORT_DIR = Path("reports/ask_runs")
 
 
 def register(app: typer.Typer) -> None:
@@ -47,7 +51,7 @@ def register(app: typer.Typer) -> None:
             help="Manifest used for optional session hints and data-loading artifacts.",
         ),
         report_dir: Path = typer.Option(
-            Path("reports/ask_runs"),
+            DEFAULT_REPORT_DIR,
             help="Output directory for notebook + answer artifacts.",
         ),
         execute_notebook: bool = typer.Option(
@@ -98,11 +102,12 @@ def register(app: typer.Typer) -> None:
             f"UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent ask {question!r} --plan-file {str(plan_file)!r} "
             f"--runtime-mode {runtime_mode!r} --execution-backend {execution_backend!r}"
         )
+        effective_report_dir = default_project_root() if report_dir == DEFAULT_REPORT_DIR else report_dir
 
         config = AskConfig(
             question=question,
             manifest_path=manifest,
-            report_dir=report_dir,
+            report_dir=effective_report_dir,
             execute_notebook=(execute_notebook and runtime_mode == "full"),
             run_name=run_name,
             max_sessions=max_sessions,

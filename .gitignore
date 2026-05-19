@@ -19,6 +19,7 @@ uv.lock
 .jupyter_runtime/
 .ibl-ai-agent-publish/
 data_locations.local.yaml
+ibl-agent.local.yaml
 questions/projects/**/data_locations.local.yaml
 questions/projects/**/_tmp/
 projects/*

@@ -77,15 +77,22 @@ Skill maintenance:
 
 ## Project directory
 
-All outputs for a session belong in `projects/<project_slug>/`, and nowhere else.
+Before starting a scientific analysis, check for an optional repo-root
+`ibl-agent.local.yaml`. If present and it defines `project_root`, use that
+directory as the project root. Resolve a relative `project_root` against the
+repository root.
 
-- `projects/<project_slug>/question.md` a dynamic document containing the original question, current refined explication, definitions of terms, and definition of exploration and confirmation sets;
-- `projects/<project_slug>/TODO.md` for a sequential list of steps performed and planned. Change [ ] to [X] on completion and list output files generated. You can change future plans in the list but do not change descriptions of steps already performed
-- `projects/<project_slug>/change-log.md` a list of changes to `question.md` and `TODO.md`, with date-times
-- `projects/<project_slug>/artifacts` for things like intermediate npy files for later reuse
-- `projects/<project_slug>/exploratory-analyses` for python files and outputs of exploratory analyses
-- `projects/<project_slug>/confirmatory-analyses` for python files and outputs of confirmatory analyses
-- `projects/<project_slug>/report.html` for final report including motivation, didactic example figures, and figures illustrating summary analysis
+If no local config is present, use the repository-local `projects/` directory.
+All outputs for a session belong under `<project_root>/<project_slug>/`, and
+nowhere else.
+
+- `<project_root>/<project_slug>/question.md` a dynamic document containing the original question, current refined explication, definitions of terms, and definition of exploration and confirmation sets;
+- `<project_root>/<project_slug>/TODO.md` for a sequential list of steps performed and planned. Change [ ] to [X] on completion and list output files generated. You can change future plans in the list but do not change descriptions of steps already performed
+- `<project_root>/<project_slug>/change-log.md` a list of changes to `question.md` and `TODO.md`, with date-times
+- `<project_root>/<project_slug>/artifacts` for things like intermediate npy files for later reuse
+- `<project_root>/<project_slug>/exploratory-analyses` for python files and outputs of exploratory analyses
+- `<project_root>/<project_slug>/confirmatory-analyses` for python files and outputs of confirmatory analyses
+- `<project_root>/<project_slug>/report.html` for final report including motivation, didactic example figures, and figures illustrating summary analysis
 
 ## File naming
 
