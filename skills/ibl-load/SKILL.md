@@ -16,6 +16,7 @@ description: Use this skill when loading IBL data, preferring the smallest suffi
 - `references/bwm_fallback_preflight.md`: required preflight when a BWM field is absent from local/aggregate tables.
 - `references/brain_regions_qc.md`: spike sorting loaders, atlas mapping, region/QC handling, and plotting prep.
 - `references/bwm_ephys_spike_example.md`: concrete local spike-shard example.
+- `references/repeated_site_pids.md`: how to find repeated site PIDs, sometimes useful for exploratory analyses
 - `../../docs/data_locations.md`: machine-local data-root configuration.
 
 Supplemental references:

@@ -3,11 +3,12 @@ name: exploration-confirmation
 description: Use this skill to analyze scientific data: refine, formalize and test hypotheses.
 ---
 
-Most analysis projects will start with a large dataset, and have two phases:
-- exploratory analysis, in which we refine our original questions, define metrics to measure quantities of interest, and formalize a statistical tests for our hypotheses
-- confirmatory analysis, in which we perform the formal statistical tests
+Most analysis projects will start with a large dataset, and have three phases:
+- Initial planning, in which you ensure you have understood the user's question
+- Exploratory analysis, in which we refine the original question, define metrics to measure quantities of interest, and lock statistical tests for later confirmation. Sometimes, the scientific question can evolve substantially in this phase.
+- Confirmatory analysis, in which we perform the locked statistical tests.
 
-To avoid p-hacking, the exploration and confirmation should happen on different subsets of the data.
+To avoid p-hacking, exploration and confirmation should happen on different subsets of the data. Not all users are used to working this way; if necessary, explain why it is required and emphasize the need to carefully lock a test plan with a good chance of finding significance, because you only have one shot. 
 
 # Replicates
 
@@ -17,14 +18,11 @@ The definition of a replicate will depend on the question being asked. Example: 
 
 # Data split
 
-Before beginning an analysis, split the dataset randomly into an *exploration set* and a *confirmation set*. The exploration set will typically consist of ~10% of the replicates; enough to run exploratory analyses on more than one unit, but leaving the confirmation set large enough for good statistical power.
+Before beginning an analysis, split the dataset into an *exploration set* and a *confirmation set*. The exploration set should contain enough replicates to  refine scientific hypotheses and metrics, estimate session-to-session variability, and define a statistical test that will plausibly show significance on the confirmation set. The confirmation set should be large enough for good statistical power, and give brainwide coverage if scientifically required.
 
-If there are not enough replicates to have separate exploration and confirmation sets, this does not necessarily invalidate the analysis, but should be noted in the final report.
+Finding a good replicate definition and data split is essential, and sometimes itself requires research. Stop and discuss with the user before starting exploratory analysis.
 
-Finding a good replicate definition and data split is essential.  Sometimes finding a good split itself requires research, so stop and discuss with the user before starting exploratory analysis.
-
-For questions where the exploration set is used to define metrics such as time bins that will be used for brainwide analysis, consider using a subset of the repeated site recordings from different labs as exploration set, to help estimate session-to-session variability.
-
+For questions requiring a brainwide comparison, the confirmation set should contain all brain locations. Consider using a subset of the repeated site recordings as the exploration set, as described in  `skills/ibl-load/references/repeated_site_pids.md`. 
 **IMPORTANT** Do **NOT** start analysis until the user has approved a split strategy.
 
 # Exploratory analysis
@@ -47,7 +45,7 @@ In rare cases, it is possible to define the confirmatory analysis without any ex
 
 ### Metric Definition Figures
 
-When defining or revising a metric that compresses a structured signal, distribution, or time series into one or more scalar values, make a didactic metric-definition figure during exploration.
+When defining or revising a metric that compresses a structured signal, distribution, or time series into one or more scalar values, make a didactic metric-definition figure during exploration. For ideas: `skills\exploration-confirmation\references\exploratory-analysis-ideas.md`.
 
 The figure should show:
 - one representative source signal or distribution;
@@ -67,6 +65,9 @@ For example, compare a grid of scientifically plausible parameter values, includ
 **IMPORTANT** A situation where the hypothesis is true, but the precise tests locked for confirmation come out insignificant, is a failure.  Before locking a confirmatory analysis, adversarially consider scenarios where this could happen. Disucss any such concerns with the user and together plan locked that are likely to be robust to differences between confirmation and exploration sets.
 
 Consider using omnibus tests of general hypothesis rather than tests of highly specific effects to increase the chance of confirmatory significance.
+
+For ideas: `skills\exploration-confirmation\references\confirmatory-analysis-ideas.md`.
+
 
 # Confirmatory analysis
 
