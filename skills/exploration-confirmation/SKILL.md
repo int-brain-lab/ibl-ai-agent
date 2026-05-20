@@ -45,7 +45,7 @@ In rare cases, it is possible to define the confirmatory analysis without any ex
 
 ### Metric Definition Figures
 
-When defining or revising a metric that compresses a structured signal, distribution, or time series into one or more scalar values, make a didactic metric-definition figure during exploration.
+When defining or revising a metric that compresses a structured signal, distribution, or time series into one or more scalar values, make a didactic metric-definition figure during exploration. For ideas: `skills\exploration-confirmation\references\exploratory-analysis-ideas.md`.
 
 The figure should show:
 - one representative source signal or distribution;
@@ -65,6 +65,9 @@ For example, compare a grid of scientifically plausible parameter values, includ
 **IMPORTANT** A situation where the hypothesis is true, but the precise tests locked for confirmation come out insignificant, is a failure.  Before locking a confirmatory analysis, adversarially consider scenarios where this could happen. Disucss any such concerns with the user and together plan locked that are likely to be robust to differences between confirmation and exploration sets.
 
 Consider using omnibus tests of general hypothesis rather than tests of highly specific effects to increase the chance of confirmatory significance.
+
+For ideas: `skills\exploration-confirmation\references\confirmatory-analysis-ideas.md`.
+
 
 # Confirmatory analysis
 

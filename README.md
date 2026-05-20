@@ -60,8 +60,6 @@ The expected user path is to work from your own fork:
 4. **Type `install`** to have the agent help you complete installation by downloading data files and installing other required tools.
 5. **Ask a scientific question about IBL data.**
 
-
-
 ## Publishing Reports
 
 After Codex writes a final HTML report, it can help you publish the report to a
@@ -76,26 +74,23 @@ The default public report repository is `ibl-ai-agent-reports`, at URL `https://
 
 Some example reports can be found at https://kdharris101.github.io/ibl-ai-agent-reports/.
 
-## Lessons Learned So Far
+## Impressions So Far
 
-
-
-## Related Work
-
-- [A brain-wide map of neural activity during complex behaviour](https://www.nature.com/articles/s41586-025-09235-0)
-- Haussler group work on agentic or AI-assisted scientific analysis. Full
-  citation to be added.
+- The agent appears to function well, writing code that can analyze the BWM data much faster than possible before 
+- This speed improvement, together with the large amount of data available, enables analyses using strict separation of data into exploration/confirmation sets. This approach should greatly help reduce false conclusions, but is still not universal in systems neuroscience.
+- The agent often generates good ideas, but is not yet ready to run fully autonomously
+- We have not yet found any egregious errors or deception
+- The mistakes it makes have been similar to those a human scientist would (for example metrics that might be biased by firing rate or nonsense correlations).  Adding
 
 ## Future Work
 
-Work in progress. Current candidate directions:
+This is work in progress! Current candidate directions:
 
 - A compressed LFP dataset.
 - A compact `bwm_neurobehavior` query layer for broad questions about where
   task, movement, pose, and behavioral-state information is represented in the
   brain.
-- Laptop-sized brain-behavior correlation and ephys-feature datasets.
-- More reviewed public reports and chat logs.
+- Capability to export entire chat logs.
 - Stronger examples of negative controls and false-positive failure modes.
 
 ## Contribute
@@ -111,11 +106,6 @@ Feedback, issues, pull requests, and collaborators are welcome.
 
 ## FAQs
 
-**Do I need Codex?**
-
-Codex is the best-tested interface. Other coding agents may work, but expect
-rough edges.
-
 **Is this safe to run unattended?**
 
 No. The workflow is designed for interactive review of plans, code, plots,
@@ -128,9 +118,7 @@ Scientific outputs should go under `projects/<project_slug>/`. See
 
 **Does it download data?**
 
-It can. For public BWM analyses, agents may offer to download derived datasets
-if no local data location is configured. See
-[docs/data_locations.md](docs/data_locations.md).
+Yes. It will download the main compressed BWM data, and may offer to download more via the API. 
 
 **How much disk space do the public BWM derived datasets need?**
 
@@ -141,19 +129,15 @@ will also need working space for generated artifacts.
 
 **Can it use private IBL data?**
 
-The repository includes IBL access tooling, but public BWM local datasets are
-the default path for public examples. See [docs/data_locations.md](docs/data_locations.md)
-for access checks.
+The repository tells the agent how to access all IBL data via the API, but public BWM local datasets are the default
 
 **How do I know whether a result is trustworthy?**
 
-Inspect the question definition, data split, metric diagnostics, code,
-exploratory plots, confirmatory statistics, caveats, and report. Treat generated
-results as scientific claims requiring review, not as final authority.
+Don't take the agent's work for it! Inspect the question definition, data split, metric diagnostics, code, exploratory plots, confirmatory statistics, caveats, and report. Treat generated results as scientific claims requiring review, not as final authority.
 
 ## Credits
 
 IBL AI Agent builds on data, tools, and scientific work from the International
 Brain Laboratory community.
 
-Funding acknowledgements to be added before public release.
+We thank our funders the Wellcome Trust (338992/Z/25/Z) and Simons Foundation (SFI-AN-NC-IBL-00010540-05) for their generous support.
