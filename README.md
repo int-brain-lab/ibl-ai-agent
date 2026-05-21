@@ -88,7 +88,7 @@ This is work in progress! Current candidate directions:
 
 - A compressed LFP dataset.
 - Capability to export entire chat logs.
-- More "neuroscience folklore": suggested analyses to try; examples of ways things can go wrong; negative controls and false-positive failure modes.
+- More "neuroscience folklore": suggested plots to make and analyses to try; mistakes to avoid; negative controls and failure modes.
 
 ## Contribute
 
@@ -130,10 +130,11 @@ The repository tells the agent how to access any open IBL data via the API, but 
 Don't take the Agent's work for it! Inspect the question definition, data split, metric diagnostics, code, exploratory plots, confirmatory statistics, caveats, and report. Treat generated results as scientific claims requiring review, not as final authority.
 
 ## Related work
-
+[Spikelab](https://www.biorxiv.org/content/10.64898/2026.04.25.720833v1.full) is an agentic system that can run on IBL data.
+[Zhang and Branson](https://arxiv.org/abs/2605.12808) provide a set of benchmarks for AI neurophysiology, including some on IBL data.
 
 ## Credits
 
-IBL AI Agent was developed by Cyrille Rossant, Gaelle Chapuis, Georg Raiser, Olivier Winter and Kenneth Harris, building on data, tools, and scientific work from the International Brain Laboratory community.
+IBL AI Agent was developed by Cyrille Rossant, Gaelle Chapuis, Liam Paninski, Georg Raiser, Olivier Winter and Kenneth Harris, building on data, tools, and scientific work from the International Brain Laboratory community.
 
 We thank our funders the Wellcome Trust (338992/Z/25/Z) and Simons Foundation (SFI-AN-NC-IBL-00010540-05) for their generous support.
