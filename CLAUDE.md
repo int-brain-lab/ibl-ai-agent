@@ -1,1 +1,1 @@
-For coding agent instructions, read `AGENTS.md`
+For coding agent instructions, please read `AGENTS.md`.
