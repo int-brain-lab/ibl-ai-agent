@@ -78,6 +78,19 @@ Prefer:
 - `spikeglx.Reader` slicing
 - `brainbox.io.spikeglx.extract_waveforms` when the task is waveform-centric rather than file-centric
 
+## Channel coordinate convention (`axial_um`)
+
+`axial_um` is the distance in µm from the **tip** of the probe shank — the SpikeGLX convention.
+
+| `axial_um` value | meaning |
+|-----------------|---------|
+| small (≈ 0) | closest to tip → **deepest** in the brain (lower region) |
+| large (≈ 3840 for NP1) | far from tip → **most superficial** (upper region) |
+
+Consequence for depth-ordered operations: sorting ascending by `axial_um` and stepping with `shift(-1)` moves from **deeper → shallower** (lower → upper). Label axes accordingly:
+- rows / `from` (smaller `axial_um`) → **lower region**
+- columns / `to` (larger `axial_um`) → **upper region**
+
 ## Decision rule
 - If the user starts from raw files, use `ibl-neuropixel`.
 - If the user starts from loaded spikes/clusters/trials, skip this skill and use `ibl-load` plus `ibl-analyze`.
