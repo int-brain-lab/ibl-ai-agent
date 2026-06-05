@@ -48,7 +48,7 @@ not overwrite it; report missing or invalid schemas instead.
 Prefer the newest version whose schema directly covers the scientific quantity. Do not hard-code an older version when a newer local version exposes the same fields plus relevant extensions.
 
 Use dataset surfaces by semantic domain:
-- `bwm_ephys`: units, insertions, sessions, regions, good-unit spike shards, task event-response features, passive ephys features. From version 1.2.0 onwards, units waveforms, units waveforms features and units autocorrelograms.
+- `bwm_ephys`: units, insertions, sessions, regions, good-unit spike shards, task event-response features, passive ephys features. From version 1.2.0 onward, root-level full-cluster waveforms, waveform features, and autocorrelograms are also available.
 - `bwm_behavior`: trial behavior, wheel movement features, movement/quiescence state epochs, pose features, behavioral event-aligned features. Current schemas may expose pose tables with legacy `dlc_*` names.
 If one answer needs both ephys and behavior surfaces, join only through stable keys such as `eid`, `trial_id`, `pid`, and `cluster_id`, and state the join grain in Methods.
 

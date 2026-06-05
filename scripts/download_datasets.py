@@ -54,6 +54,28 @@ class ArchiveSpec:
         return BWM_DATASET_ROOTS[self.dataset] / self.version
 
 
+@dataclass(frozen=True)
+class ArchiveDownload:
+    archive: ArchiveSpec
+    target_dir: Path
+
+
+@dataclass(frozen=True)
+class ExactVersionPin:
+    dataset: str
+    root: Path
+    configured_version: str
+    current_version: str
+
+
+@dataclass(frozen=True)
+class ArchivePlan:
+    downloads: list[ArchiveDownload]
+    present: list[ArchiveDownload]
+    exact_version_pins: list[ExactVersionPin]
+    invalid_manual_roots: list[tuple[str, Path]]
+
+
 ARCHIVES: list[ArchiveSpec] = [
     ArchiveSpec(
         dataset="bwm_ephys",
@@ -149,6 +171,37 @@ def extract_archive(archive_path: Path, target_directory: Path) -> None:
     shutil.unpack_archive(str(archive_path), str(target_directory))
 
 
+def install_archive(archive_path: Path, archive: ArchiveSpec, target_directory: Path, scratch_directory: Path) -> None:
+    """Extract ``archive_path`` and move the expected version directory into place."""
+    extract_root = scratch_directory / f"extract-{archive.dataset}-{archive.version}"
+    if extract_root.exists():
+        shutil.rmtree(extract_root)
+    extract_root.mkdir(parents=True)
+    print(f"  extracting into {extract_root}")
+    shutil.unpack_archive(str(archive_path), str(extract_root))
+
+    candidates = [
+        extract_root / archive.dataset / archive.version,
+        extract_root / archive.version,
+    ]
+    source = next((candidate for candidate in candidates if has_schema(candidate)), None)
+    if source is None:
+        raise RuntimeError(
+            f"{archive.dataset} {archive.version} archive did not contain an expected schema under "
+            f"{archive.dataset}/{archive.version}/ or {archive.version}/"
+        )
+
+    if target_directory.exists() and not has_schema(target_directory):
+        raise RuntimeError(f"Refusing to replace non-dataset path: {target_directory}")
+    if has_schema(target_directory):
+        print(f"  already installed at {target_directory}")
+        return
+
+    target_directory.parent.mkdir(parents=True, exist_ok=True)
+    print(f"  installing into {target_directory}")
+    shutil.move(str(source), str(target_directory))
+
+
 def compute_sha1(path: Path, chunk_size: int = 1024 * 1024) -> str:
     """Return the SHA1 hex digest of ``path``, reading in chunks."""
     hasher = hashlib.sha1()
@@ -238,6 +291,56 @@ def config_resolves_bwm_roots(config: dict[str, Any]) -> bool:
     return all(root_has_dataset(roots.get(name)) for name in BWM_DATASET_ROOTS)
 
 
+def plan_current_archives(config: dict[str, Any]) -> ArchivePlan:
+    """Plan downloads needed for the current public archive versions.
+
+    A configured root that directly contains ``schema.yaml`` is treated as an
+    exact-version pin and is never overwritten. A configured root without
+    ``schema.yaml`` is treated as a version-parent directory.
+    """
+    roots = configured_dataset_roots(config)
+    downloads: list[ArchiveDownload] = []
+    present: list[ArchiveDownload] = []
+    exact_version_pins: list[ExactVersionPin] = []
+    invalid_manual_roots: list[tuple[str, Path]] = []
+
+    for archive in ARCHIVES:
+        configured_root = roots.get(archive.dataset)
+        root = configured_root or BWM_DATASET_ROOTS[archive.dataset]
+
+        if has_schema(root):
+            if root.name == archive.version:
+                present.append(ArchiveDownload(archive=archive, target_dir=root))
+            else:
+                exact_version_pins.append(
+                    ExactVersionPin(
+                        dataset=archive.dataset,
+                        root=root,
+                        configured_version=root.name,
+                        current_version=archive.version,
+                    )
+                )
+            continue
+
+        if configured_root is not None and not root.exists():
+            invalid_manual_roots.append((archive.dataset, root))
+            continue
+
+        target_dir = root / archive.version
+        item = ArchiveDownload(archive=archive, target_dir=target_dir)
+        if has_schema(target_dir):
+            present.append(item)
+        else:
+            downloads.append(item)
+
+    return ArchivePlan(
+        downloads=downloads,
+        present=present,
+        exact_version_pins=exact_version_pins,
+        invalid_manual_roots=invalid_manual_roots,
+    )
+
+
 def write_default_config(config: dict[str, Any]) -> None:
     """Write ``data_locations.local.yaml`` pointing at the freshly-extracted BWM roots.
 
@@ -283,30 +386,44 @@ def main() -> int:
              config is left untouched so the user can fix or remove it.
     """
     config = read_config()
-    if config_resolves_bwm_roots(config):
-        print(f"BWM datasets are already configured in {CONFIG_PATH.relative_to(REPO_ROOT)}.")
-        return 0
+    plan = plan_current_archives(config)
 
-    if CONFIG_PATH.exists() and config_has_manual_bwm_roots(config):
-        print(f"{CONFIG_PATH.relative_to(REPO_ROOT)} already contains BWM dataset roots.")
-        print("At least one configured root does not contain a dataset schema.")
+    if plan.exact_version_pins:
+        print(f"{CONFIG_PATH.relative_to(REPO_ROOT)} pins one or more exact dataset versions.")
+        for pin in plan.exact_version_pins:
+            print(
+                f"  {pin.dataset}: {pin.root} is version {pin.configured_version}; "
+                f"current archive is {pin.current_version}"
+            )
+        print("Leaving the manual config unchanged; point root at a version-parent directory to bootstrap current archives.")
+        return 2
+
+    if plan.invalid_manual_roots:
+        print(f"{CONFIG_PATH.relative_to(REPO_ROOT)} contains BWM dataset roots that do not exist.")
+        for dataset, root in plan.invalid_manual_roots:
+            print(f"  {dataset}: {root}")
         print("Leaving the manual config unchanged; edit it or remove it before bootstrapping.")
         return 2
 
-    DATASETS_DIR.mkdir(parents=True, exist_ok=True)
+    if not plan.downloads:
+        print("Current BWM dataset archives are already installed:")
+        for item in plan.present:
+            print(f"  {item.archive.dataset} {item.archive.version}: {item.target_dir}")
+        if not CONFIG_PATH.exists() or not config_has_manual_bwm_roots(config):
+            write_default_config(config)
+        return 0
+
     with tempfile.TemporaryDirectory() as scratch_directory:
         scratch_path = Path(scratch_directory)
-        for archive in ARCHIVES:
-            if has_schema(archive.target_dir):
-                print(f"\n[{archive.dataset} {archive.version}] already present")
-                continue
+        for item in plan.downloads:
+            archive = item.archive
             print(f"\n[{archive.url}]")
             archive_path = scratch_path / Path(archive.url).name
             download_file(archive.url, archive_path)
             verify_archive(archive, archive_path)
-            extract_archive(archive_path, DATASETS_DIR)
+            install_archive(archive_path, archive, item.target_dir, scratch_path)
 
-    missing = [archive.target_dir for archive in ARCHIVES if not has_schema(archive.target_dir)]
+    missing = [item.target_dir for item in (*plan.present, *plan.downloads) if not has_schema(item.target_dir)]
     if missing:
         print("Downloaded archives did not produce the expected schemas:")
         for path in missing:

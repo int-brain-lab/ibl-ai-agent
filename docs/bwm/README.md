@@ -58,13 +58,15 @@ Local ephys-centered BWM dataset with spikes, units, insertions, channels,
 trials, events, and passive-response context.
 
 - Config key: `datasets.bwm_ephys.root`
-- Version: `1.1.0`
-- Approx. size on disk: `5.3G`
+- Version: `1.2.0`
+- Public archive size: `6.03G`
+- Previous `1.1.0` local-table/spike footprint: `5.3G`
 - Approx. file count: `4,215`
 - Mice: `139`
 - Sessions: `459`
 - Insertions: `699`
 - Units: `75,395`
+- Full cluster rows in root `clusters.pqt`: `621,733`
 - Channels: `267,264`
 - Trials: `295,920`
 - Events: `2,066,041`
@@ -82,6 +84,15 @@ trials, events, and passive-response context.
   - `features/event_response_features.parquet`
   - `features/passive_response_features.parquet`
   - `spikes/<pid>/...` blosc shard directories
+  - `clusters.pqt` full cluster table
+  - `clusters.waveforms_peak.npy` peak-channel unit waveforms
+  - `clusters.acgs_log.npy` log-binned autocorrelograms
+  - `acgs_log.times.npy` shared ACG lag-time axis
+
+Compatibility note: the `metadata/units.parquet`, `features/*`, and `spikes/*`
+surfaces keep the good-unit local analysis contract from `1.1.0`. The new
+root-level `clusters.pqt` and companion arrays expose the full cluster table and
+cell-level waveform/ACG surfaces for analyses that need them.
 
 Best detailed references:
 - [Dataset spec](./ephys.md)
