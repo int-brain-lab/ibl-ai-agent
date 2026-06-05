@@ -69,7 +69,7 @@ Filtered unit counts from upstream tests:
 
 ## Anti-Patterns
 - Do not use `pid2eid` or session loops for broad release summaries.
-- Do not assume `clusters.pqt` contains `lab` or waveform metrics.
+- Do not assume upstream/default aggregate `clusters.pqt` contains `lab` or waveform metrics; inspect the configured local dataset version and schema first.
 - Do not call `one.load_dataset(...)` concurrently against a shared cache unless safety is known.
 - Do not continue after a large post-merge missing-value count until collection/revision mismatch is ruled out.
 - Do not wrap simple BWM answers in CLI-heavy scripts.

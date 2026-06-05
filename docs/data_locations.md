@@ -70,6 +70,12 @@ one_cache:
 - a directory containing version folders such as `1.1.0/schema.yaml`; or
 - one exact dataset directory containing `schema.yaml`.
 
+For automatic dataset updates, prefer a version-parent root such as
+`reports/datasets/bwm_ephys` with `preferred_version: latest`. If `root` points
+directly at an exact version such as `reports/datasets/bwm_ephys/1.1.0`, the
+downloader treats that as a manual pin and will not install a newer version into
+that path.
+
 Use a project-level override only when a project has a special data location:
 
 ```text
