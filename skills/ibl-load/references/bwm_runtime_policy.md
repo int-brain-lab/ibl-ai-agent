@@ -8,7 +8,7 @@ Use this as the shared policy reference for:
 - `scientific-analysis`
 
 ## Core policy
-1. For Brain Wide Map questions, start by resolving user-local BWM dataset roots from `data_locations.local.yaml`, project-level `data_locations.local.yaml`, or `IBL_AGENT_DATA_LOCATIONS`, then check schemas before choosing a loading path.
+1. For Brain Wide Map questions, start by resolving user-local BWM dataset roots from `data_locations.local.yaml`, project-level `data_locations.local.yaml`, `IBL_AGENT_DATA_LOCATIONS`, or the repo default `reports/datasets/<dataset_name>` location, then check schemas before choosing a loading path.
 2. Treat `brainwidemap` as the canonical upstream fallback layer, not as the mandatory opening move.
 3. When a configured frozen derived BWM dataset is present and sufficient for the question, prefer it before remote aggregate downloads or repeated release-table joins.
    - Preferred local derived ephys surface for new work: newest semantically sufficient configured `bwm_ephys` dataset.
@@ -17,6 +17,20 @@ Use this as the shared policy reference for:
 4. Start with local derived BWM datasets when their schemas cover the question, then release/freeze helpers and aggregate tables if local derived features are insufficient.
 5. Use session-level loaders only when the requested metric cannot be obtained from `bwm_ephys`, canonical helpers, or aggregate fields.
 6. If `brainwidemap` is required for a missing field and unavailable, fail fast with a clear error; do not generate fallback logic.
+7. If `bwm_ephys` or `bwm_behavior` is semantically sufficient but unavailable, **stop before using ONE, OpenAlyx, `SessionLoader`, or `SpikeSortingLoader`**. Ask the user whether to download or configure the local dataset.
+
+Use plain language like:
+
+```text
+I should use the local compressed <dataset_name> dataset for this task because <why it is sufficient>.
+I do not find it at the expected location: reports/datasets/<dataset_name>.
+
+I can download/configure it before analysis. The public archive is about <size> and will be stored by default under reports/datasets/<dataset_name>, with data_locations.local.yaml pointing to it.
+
+Alternatives: point me to an existing local copy, use a different configured project data root, or explicitly allow a slower ONE/session-loader path if the local dataset lacks a required field.
+```
+
+Do not run the downloader or remote fallback until the user has made that choice.
 
 ## Local dataset discovery
 Before planning a BWM analysis, load the user's data-location config. See `docs/data_locations.md`.
@@ -25,6 +39,7 @@ Resolution order:
 1. explicit `IBL_AGENT_DATA_LOCATIONS`;
 2. nearest `data_locations.local.yaml` found from the current working directory upward;
 3. nearest `data_locations.yaml` found from the current working directory upward.
+4. repo default `reports/datasets/<dataset_name>` when no config entry is present and a valid versioned dataset with `schema.yaml` exists.
 
 Configured roots:
 - `datasets.bwm_ephys.root`

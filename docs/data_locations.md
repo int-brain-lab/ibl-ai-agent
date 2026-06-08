@@ -17,9 +17,11 @@ The script downloads the public `bwm_ephys` and `bwm_behavior` archives into
 sizes are listed in `docs/bwm/README.md`.
 
 If the datasets are already present under `reports/datasets/`, the script skips
-the download and refreshes the local config. If `data_locations.local.yaml`
-already contains manually configured BWM roots, the script leaves that file
-unchanged and reports any missing schemas instead of overwriting your paths.
+the download and refreshes the local config. Runtime loading also auto-detects
+valid BWM datasets in the default `reports/datasets/<dataset_name>/` location
+when no explicit config entry is present. If `data_locations.local.yaml` already
+contains manually configured BWM roots, the script leaves that file unchanged
+and reports any missing schemas instead of overwriting your paths.
 
 These are analysis-ready derived datasets, not raw Neuropixels data and not a
 full ONE cache. They are intended to make common BWM analyses faster, local, and
@@ -92,9 +94,10 @@ bwm_behavior_dir = resolve_dataset_dir("bwm_behavior")
 ```
 
 If no local data location is configured, BWM agents may offer to run the public
-dataset downloader before analysis. If a user has manually configured dataset
-roots, agents and scripts should not overwrite them; they should report missing
-or invalid schemas clearly.
+dataset downloader before analysis. They should not silently fall back to ONE or
+session-level loaders when a sufficient BWM dataset is missing. If a user has
+manually configured dataset roots, agents and scripts should not overwrite them;
+they should report missing or invalid schemas clearly.
 
 ## Provenance And Access
 
