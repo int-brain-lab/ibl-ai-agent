@@ -26,3 +26,5 @@ questions/projects/**/data_locations.local.yaml
 questions/projects/**/_tmp/
 projects/*
 data/*
+pytest.ini
+
