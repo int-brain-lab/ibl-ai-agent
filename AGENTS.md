@@ -46,6 +46,7 @@ Always tell the user when you read a skill or reference file into context, and w
 
 Plain IBL scientific question:
 - `skills/exploration-confirmation/SKILL.md`
+- `skills/scientific-coding-style/SKILL.md`
 - `skills/ibl-analyze/SKILL.md`
 - `skills/ibl-report/SKILL.md` when reporting results
 
