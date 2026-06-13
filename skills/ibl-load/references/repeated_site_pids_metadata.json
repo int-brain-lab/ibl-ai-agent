@@ -1,0 +1,23 @@
+{
+  "created_at_utc": "2026-06-13T10:55:22.997587+00:00",
+  "source_artifact": "projects/nonsense correlations/artifacts/004_repeated_site_pids.csv",
+  "source_metadata_artifact": "projects/nonsense correlations/artifacts/004_repeated_site_pids_metadata.json",
+  "source_endpoint": "https://openalyx.internationalbrainlab.org",
+  "alyx_resource": "insertions",
+  "query": "datasets__tags__name,RepeatedSite",
+  "tag": "RepeatedSite",
+  "source_created_at_utc": "2026-06-12T16:41:47.270589+00:00",
+  "n_insertions": 110,
+  "n_unique_pids": 110,
+  "n_unique_eids": 110,
+  "n_overlaps_bwm_ephys": 67,
+  "n_local_spike_shards": 67,
+  "bwm_ephys_dataset_version": "1.1.0",
+  "bwm_ephys_source_freeze": "2023_12_bwm_release",
+  "bwm_ephys_good_unit_rule": "label >= 1.0",
+  "notes": [
+    "Repeated-site membership comes from the Alyx insertion tag query captured in the source artifact.",
+    "BWM overlap and spike-shard columns were computed against the configured local bwm_ephys dataset when this reference was generated.",
+    "The local bwm_ephys insertion metadata used for enrichment did not include insertion QC outcome fields beyond unit/trial/channel counts."
+  ]
+}
