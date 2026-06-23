@@ -49,7 +49,9 @@ When cluster acronyms are absent:
 4. log any deterministic reduction if channel location IDs are unexpectedly 2D.
 
 ## Depth and Hierarchy
-- `clusters.depths` is microns from probe tip; depth increases away from the tip.
+- `clusters.depths` is microns from probe tip — do **not** use as cross-insertion cortical depth.
+- For **continuous cortical depth** from CCF coords (`units.parquet` `x`, `y`, `z` in metres):
+  `from iblatlas.streamlines.utils import xyz_to_depth` → `xyz_to_depth(xyz, per=False)` (µm from surface) or `per=True` (0–100 %). Returns `nan` outside Isocortex. Lookup files downloaded from S3 on first call. See `../../ibl-anatomy/references/atlas_navigation.md#iblatlas.streamlines`.
 - For parent/child rollups, use `BrainRegions.ancestors(...)` and `descendants(...)`.
 - For slice plotting, prepare left/right data with `iblatlas.plots.prepare_lr_data` and use matching `*-lr` mapping.
 
