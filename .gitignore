@@ -1,3 +1,6 @@
+agentops.log
+.env.local
+.env
 __pycache__/
 *.pyc
 .venv/
@@ -27,4 +30,6 @@ questions/projects/**/_tmp/
 projects/*
 data/*
 pytest.ini
+.deepeval/
+tests/evals/models.json
 
