@@ -1,0 +1,21 @@
+[
+  {
+    "id": "bwm-neuron-count-by-region",
+    "question": "How many good neurons and neurons overall are available in the Cerebellum, Pallidum, and in Somatosensory Areas",
+    "task": "codegen",
+    "packets": ["scientific", "data_loading", "bwm", "anatomy", "region_qc"],
+    "requires_data": "bwm_ephys",
+    "checks": [
+      { "metric": "HierarchyMetric", "stage": "code" },
+      {
+        "metric": "NeuronCountMetric",
+        "stage": "output",
+        "expected": {
+          "CB":  [7273, 53660],
+          "SS":  [2049, 18900],
+          "PAL": [1247,  8448]
+        }
+      }
+    ]
+  }
+]

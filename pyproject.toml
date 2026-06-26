@@ -24,6 +24,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+evals = [
+  "deepeval>=4.0.7",
+  "anthropic>=0.111.0",
+  "agentops>=0.4.21",
+  "litai>=0.0.10",
+]
 ibl = [
   "ONE-api>=3.0",
   "ibllib>=3.3",

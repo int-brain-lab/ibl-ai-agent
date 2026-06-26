@@ -1,0 +1,9 @@
+[
+  { "provider": "anthropic", "model": "claude-haiku-4-5-20251001" },
+  { "provider": "anthropic", "model": "claude-sonnet-4-6" },
+  { "provider": "litai", "model": "lightning-ai/gpt-oss-20b" },
+  { "provider": "litai", "model": "lightning-ai/gemma-4-31B-it" },
+  { "provider": "litai", "model": "google/gemini-3.1-flash-lite-preview" },
+  { "provider": "litai", "model": "lightning-ai/nvidia-nemotron-3-ultra-550b-a55b" },
+  { "provider": "litai", "model": "lightning-ai/deepseek-v4-pro" }
+]
