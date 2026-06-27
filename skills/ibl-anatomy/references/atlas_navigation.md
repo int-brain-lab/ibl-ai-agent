@@ -99,6 +99,36 @@ acronyms   = br.id2acronym(region_ids)
 
 Use `mode='clip'` to suppress out-of-volume errors; default `mode='raise'`.
 
+### label volume — index vs Allen ID (critical distinction)
+
+**`ba.label` stores region indices, not Allen IDs.**
+
+```python
+region_idx = ba.label[iAP, iML, iDV]     # int, 0 … n_regions-1
+allen_id   = ba.regions.id[region_idx]    # e.g. 315 for Isocortex
+acronym    = ba.regions.acronym[region_idx]
+rgb        = ba.regions.rgb[region_idx]   # (R, G, B) uint8
+```
+
+`ba.regions.rgb` is indexed by region index — use `ba.regions.rgb[ba.label[...]]` directly.
+**Never use `ba.regions.rgb[allen_id]`** — Allen IDs are arbitrary integers and are NOT
+valid indices into the regions arrays.
+
+To map a full label slice to Allen colours in one step:
+
+```python
+rgb_lut = np.array(ba.regions.rgb, dtype=np.uint8)   # (n_regions, 3)
+lbl_slice = ba.label[iAP, :, :]                       # (ML, DV)
+rgb_img   = rgb_lut[lbl_slice]                        # (ML, DV, 3)
+```
+
+To build a mask for a specific region by acronym:
+
+```python
+_, idx = ba.regions.acronym2index('Isocortex')        # idx is position in regions arrays
+mask = ba.label == idx[0][0]                           # bool volume
+```
+
 ### Atlas slices
 
 ```python

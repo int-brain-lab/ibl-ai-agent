@@ -49,7 +49,7 @@ def get_actor(model_cfg: dict | None = None) -> tuple[DeepEvalBaseLLM, None]:
         from deepeval.models.llms.anthropic_model import AnthropicModel
         return AnthropicModel(
             model=model_name or _DEFAULTS["anthropic"],
-            generation_kwargs={"max_tokens": 8192},
+            generation_kwargs={"max_tokens": 8192, "timeout": 120},
         ), None
 
     if provider == "litai":
@@ -58,7 +58,7 @@ def get_actor(model_cfg: dict | None = None) -> tuple[DeepEvalBaseLLM, None]:
             model=model_name or _DEFAULTS["litai"],
             api_key=os.getenv("LITAI_API_KEY"),
             base_url="https://lightning.ai/api/v1/",
-            generation_kwargs={"max_tokens": 8192},
+            generation_kwargs={"max_tokens": 8192, "timeout": 120},
         ), None
 
     # Default: deepeval's built-in model (reads OPENAI_API_KEY)

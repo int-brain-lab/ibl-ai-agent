@@ -1,6 +1,6 @@
 ---
 name: ibl-anatomy
-description: Use this skill to navigate the IBL anatomical atlas — region lookup by name/id/coordinate, hierarchy traversal, mapping between Allen/Beryl/Cosmos/Swanson, and brain-map visualisation.
+description: Use this skill to navigate the IBL anatomical atlas — region lookup by name/id/coordinate, cortical depth and layer assignment, hierarchy traversal, mapping between Allen/Beryl/Cosmos/Swanson, and brain-map visualisation. Required whenever a question involves anatomical location, cortical depth, superficial vs deep layers, or brain region identity of recorded units.
 ---
 
 # IBL Anatomy
