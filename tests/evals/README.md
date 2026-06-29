@@ -5,7 +5,7 @@ DeepEval test suite for the IBL AI agent. Tests measure the quality of model out
 
 ## Setup
 
-**1. API keys** in `.env.local` at the repo root (never committed):
+**1. API keys** in `tests/evals/.env.local` (never committed):
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 LITAI_API_KEY=sk-lit-...
@@ -20,17 +20,63 @@ LITAI_API_KEY=sk-lit-...
 ```
 Falls back to `models.default.json` (single Haiku) if `models.json` is absent.
 
+## Dataset setup
+
+`test_codegen.py` requires the `bwm_ephys` dataset (~5 GB). Tests that need it are
+auto-skipped when the dataset is absent.
+
+Download it with the bundled script (public S3 bucket, no credentials required):
+
+```bash
+python scripts/download_datasets.py
+```
+
+The dataset lands at `reports/datasets/bwm_ephys/` by default. To point at an
+existing copy elsewhere, create `data_locations.local.yaml` at the repo root:
+
+```yaml
+datasets:
+  bwm_ephys:
+    root: /path/to/your/bwm_ephys
+```
+
 ## Running the tests
+
+Tests are parametrized over the model grid and spend most of their time waiting
+for LLM responses, so running them in parallel with `-n auto` is recommended:
 
 ```bash
 # Skill selection — no local data required
-uv run pytest tests/evals/tier_1_test_skill_selection.py -v
+pytest tests/evals/tier_1_test_skill_selection.py -v -n auto
 
 # Code generation — requires bwm_ephys dataset (auto-skipped if absent)
-uv run pytest tests/evals/test_codegen.py -v
+pytest tests/evals/test_codegen.py -v -n auto
 
 # All auto-discovered tests
-uv run pytest tests/evals/ -v
+pytest tests/evals/ -v -n auto
+```
+
+`-n auto` spawns one worker per CPU core. Pass `-n 4` (or any integer) to cap
+concurrency — useful when you want to respect API rate limits.
+
+### Logging tiers
+
+On failure, pytest shows two output sections:
+
+| Section | What you see | When |
+|---|---|---|
+| **Captured stdout** | execution result (neuron counts, etc.) | always |
+| **Captured log** | full generated code | `--log-level=DEBUG` |
+
+```bash
+# Default — see execution output on failure
+pytest tests/evals/test_codegen.py -v -n auto
+
+# Verbose — also see the full generated code and reasoning
+pytest tests/evals/test_codegen.py -v -n auto --log-level=DEBUG
+
+# Inline (single-threaded) — stream everything to the terminal live
+pytest tests/evals/test_codegen.py -v -s -n0 --log-cli-level=DEBUG
 ```
 
 Each test is parametrized over every model in `models.json`, producing one result
@@ -42,20 +88,20 @@ Use `-k` to filter by any part of the test ID:
 
 ```bash
 # One model
-uv run pytest tests/evals/test_codegen.py -v -k "haiku"
+pytest tests/evals/test_codegen.py -v -k "haiku"
 
 # One question
-uv run pytest tests/evals/test_codegen.py -v -k "bwm-neuron-count"
+pytest tests/evals/test_codegen.py -v -k "bwm-neuron-count"
 
 # Both
-uv run pytest tests/evals/test_codegen.py -v -k "haiku and bwm-neuron-count"
+pytest tests/evals/test_codegen.py -v -k "haiku and bwm-neuron-count"
 ```
 
 Test IDs follow the pattern `test_codegen[<provider>/<model>-<question-id>]`,
 so any substring of the provider, model name, or question id works as a filter.
 
 To push results to Confident AI, set `DEEPEVAL_API_KEY` and use
-`uv run deepeval test run` instead of `uv run pytest`.
+`deepeval test run` instead of `pytest`.
 
 ## Adding questions
 

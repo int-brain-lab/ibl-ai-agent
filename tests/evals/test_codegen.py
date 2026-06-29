@@ -1,19 +1,37 @@
-# uv run pytest tests/evals/test_codegen.py
+# pytest tests/evals/test_codegen.py
 from __future__ import annotations
 
 import contextlib
 import io
 import json  # used by _load_questions
+import logging
 import re
 import traceback
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 import matplotlib
 matplotlib.use("Agg")
 import pytest
 
-from deepeval import assert_test
+from deepeval import assert_test as _deepeval_assert_test
 from deepeval.test_case import LLMTestCase
+
+
+def assert_test(test_case, metrics) -> None:
+    """Wrap deepeval assert_test, demoting its console table to DEBUG level."""
+    buf = io.StringIO()
+    exc = None
+    try:
+        with contextlib.redirect_stdout(buf):
+            _deepeval_assert_test(test_case=test_case, metrics=metrics)
+    except AssertionError as e:
+        exc = e
+    if report := buf.getvalue():
+        log.debug("deepeval report:\n%s", report)
+    if exc is not None:
+        raise exc
 
 from tests.evals.actor import get_actor
 from tests.evals.metrics import build_metrics
@@ -99,7 +117,6 @@ def _exec_code(code: str, tmp_path: Path) -> str:
     with contextlib.redirect_stdout(buf):
         exec(code, {"FIGURE_PATH": str(tmp_path.joinpath("figure.png"))})  # noqa: S102
     output = buf.getvalue().strip()
-    print(output)  # re-emit so pytest captures it and shows it on failure / with -s
     if not output:
         raise RuntimeError(
             "Code ran without error but printed nothing. Print your results to stdout."
@@ -136,14 +153,7 @@ def _generate_and_fix(model, base_prompt: str, tmp_path: Path) -> tuple[str, str
             return code, answer
         except Exception as exc:
             tb = traceback.format_exc()
-            print(
-                f"\n{'='*60}\n"
-                f"ATTEMPT {attempt}/{MAX_ATTEMPTS} FAILED\n"
-                f"CODE:\n{code}\n"
-                f"{'='*60}\n"
-                f"TRACEBACK:\n{tb}"
-                f"{'='*60}"
-            )
+            log.debug("code that failed (attempt %d):\n%s", attempt, code)
             if attempt < MAX_ATTEMPTS:
                 prompt = base_prompt + _FIX_SUFFIX.format(attempt=attempt, tb=tb)
 
@@ -177,12 +187,15 @@ def test_codegen(golden: dict, model_cfg: dict, tmp_path: Path) -> None:
         answer = None
 
     if code_checks:
+        log.debug("generated code:\n%s", code)
         assert_test(
             LLMTestCase(input=golden["question"], actual_output=code, retrieval_context=retrieval_context),
             build_metrics(code_checks),
         )
 
     if output_checks:
+        # execution output already printed by _exec_code; log full code at debug level
+        log.debug("generated code:\n%s", code)
         assert_test(
             LLMTestCase(input=golden["question"], actual_output=answer, retrieval_context=retrieval_context),
             build_metrics(output_checks),

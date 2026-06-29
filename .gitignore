@@ -1,5 +1,5 @@
 agentops.log
-.env.local
+tests/evals/.env.local
 .env
 __pycache__/
 *.pyc

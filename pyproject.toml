@@ -29,6 +29,8 @@ evals = [
   "anthropic>=0.111.0",
   "agentops>=0.4.21",
   "litai>=0.0.10",
+  "python-dotenv>=1.0",
+  "pytest-xdist>=3.5",
 ]
 ibl = [
   "ONE-api>=3.0",
@@ -63,6 +65,7 @@ include = ["ibl_ai_agent*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+log_level = "INFO"
 
 [tool.ruff]
 line-length = 100
@@ -71,6 +74,9 @@ target-version = "py310"
 [tool.uv]
 constraint-dependencies = [
   "PyQt5-Qt5==5.15.2; sys_platform == 'win32'",
+]
+required-environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
 [tool.uv.sources]
