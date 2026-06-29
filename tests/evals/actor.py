@@ -54,11 +54,14 @@ def get_actor(model_cfg: dict | None = None) -> tuple[DeepEvalBaseLLM, None]:
 
     if provider == "litai":
         from deepeval.models import GPTModel
+        model_id = model_name or _DEFAULTS["litai"]
+        # Newer OpenAI models reject max_tokens; non-OpenAI models may not support max_completion_tokens
+        token_kwarg = "max_completion_tokens" if model_id.startswith("openai/") else "max_tokens"
         return GPTModel(
-            model=model_name or _DEFAULTS["litai"],
+            model=model_id,
             api_key=os.getenv("LITAI_API_KEY"),
             base_url="https://lightning.ai/api/v1/",
-            generation_kwargs={"max_tokens": 8192, "timeout": 120},
+            generation_kwargs={token_kwarg: 8192, "timeout": 120},
         ), None
 
     # Default: deepeval's built-in model (reads OPENAI_API_KEY)
