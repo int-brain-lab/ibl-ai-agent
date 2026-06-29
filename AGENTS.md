@@ -76,6 +76,9 @@ Raw Neuropixels or SpikeGLX preprocessing:
 Skill maintenance:
 - `skills/skill-maintenance/SKILL.md`
 
+IBL agent feedback (`/ibl-feedback`, or an explicit request to submit IBL-agent feedback):
+- `skills/ibl-feedback/SKILL.md`
+
 ## Project directory
 
 Before starting a scientific analysis, check for an optional repo-root

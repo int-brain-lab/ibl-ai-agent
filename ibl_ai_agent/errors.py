@@ -11,3 +11,7 @@ class ExecutionContractError(IblAgentError):
 
 class NotebookExecutionError(IblAgentError):
     """Raised when notebook generation or execution fails."""
+
+
+class FeedbackError(IblAgentError):
+    """Raised when feedback collection, packaging, or sending fails."""

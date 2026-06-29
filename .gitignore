@@ -20,6 +20,10 @@ uv.toml
 .mplconfig/
 .jupyter_runtime/
 .ibl-ai-agent-publish/
+feedback/
+server/db.sqlite3
+server/.env
+server/staticfiles/
 data_locations.local.yaml
 ibl-agent.local.yaml
 questions/projects/**/data_locations.local.yaml

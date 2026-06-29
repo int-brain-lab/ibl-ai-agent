@@ -75,3 +75,17 @@ def test_ibl_neuropixel_skill_exists_and_is_wired_into_skill_system() -> None:
     assert "neuropixel_routing.md" in text
     assert "neuropixel_function_signatures.md" in text
     assert "int-brain-lab/ibl-neuropixel" in text
+
+
+def test_ibl_feedback_skill_uses_namespaced_trigger() -> None:
+    """Guard against colliding with host-native feedback commands."""
+    text = Path("skills/ibl-feedback/SKILL.md").read_text(encoding="utf-8")
+
+    assert "/ibl-feedback" in text
+    assert "Do not trigger on `/feedback` or bare `feedback`" in text
+    for stale_trigger in (
+        "types `/feedback` or `feedback`",
+        "types `/ibl-feedback`, `feedback`",
+        "typed text after `/feedback`",
+    ):
+        assert stale_trigger not in text

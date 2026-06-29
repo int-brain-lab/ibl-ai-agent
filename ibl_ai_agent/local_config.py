@@ -13,6 +13,8 @@ LOCAL_CONFIG_FILENAME = "ibl-agent.local.yaml"
 class LocalConfig:
     path: Path
     project_root: Path | None = None
+    feedback_url: str | None = None
+    feedback_token: str | None = None
 
 
 def load_local_config(root: Path | None = None) -> LocalConfig | None:
@@ -27,7 +29,12 @@ def load_local_config(root: Path | None = None) -> LocalConfig | None:
         raise ValueError(f"{LOCAL_CONFIG_FILENAME} must contain a YAML mapping")
 
     project_root = _optional_path(raw.get("project_root"), config_dir=path.parent)
-    return LocalConfig(path=path, project_root=project_root)
+    return LocalConfig(
+        path=path,
+        project_root=project_root,
+        feedback_url=_optional_str(raw.get("feedback_url"), name="feedback_url"),
+        feedback_token=_optional_str(raw.get("feedback_token"), name="feedback_token"),
+    )
 
 
 def default_project_root(root: Path | None = None) -> Path:
@@ -35,6 +42,15 @@ def default_project_root(root: Path | None = None) -> Path:
     if config and config.project_root:
         return config.project_root
     return (root or Path.cwd()).resolve() / "projects"
+
+
+def _optional_str(value: Any, *, name: str) -> str | None:
+    """Return a stripped non-empty string, or None when the key is absent."""
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string when provided")
+    return value.strip()
 
 
 def _optional_path(value: Any, *, config_dir: Path) -> Path | None:

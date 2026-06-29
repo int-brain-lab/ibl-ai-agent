@@ -1,0 +1,20 @@
+# systemd unit for the IBL feedback server.
+# Install to /etc/systemd/system/ibl-feedback.service, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now ibl-feedback
+[Unit]
+Description=IBL feedback server (gunicorn)
+After=network.target
+
+[Service]
+User=iblfeedback
+Group=iblfeedback
+WorkingDirectory=/opt/ibl-feedback-server/server
+EnvironmentFile=/etc/ibl-feedback.env
+ExecStart=/opt/ibl-feedback-server/.venv/bin/gunicorn feedback_server.wsgi:application \
+    --bind 127.0.0.1:8000 --workers 3 --timeout 60
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

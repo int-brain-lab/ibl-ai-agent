@@ -1,0 +1,3 @@
+# Runtime dependencies for the IBL feedback server.
+Django>=5.0,<6.0
+gunicorn>=22.0
