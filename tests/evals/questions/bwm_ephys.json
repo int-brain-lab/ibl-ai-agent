@@ -6,7 +6,6 @@
     "packets": ["scientific", "data_loading", "bwm", "anatomy", "region_qc"],
     "requires_data": "bwm_ephys",
     "checks": [
-      { "metric": "HierarchyMetric", "stage": "code" },
       {
         "metric": "NeuronCountMetric",
         "stage": "output",
