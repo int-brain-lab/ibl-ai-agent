@@ -1,15 +1,35 @@
-# uv run pytest tests/evals/tier_1_test_skill_selection.py
+# pytest tests/evals/tier_1_test_skill_selection.py
 from __future__ import annotations
 
+import contextlib
+import io
 import json
+import logging
 from pathlib import Path
 
 import pytest
-from deepeval import assert_test
+from deepeval import assert_test as _deepeval_assert_test
 from deepeval.test_case import LLMTestCase, ToolCall
 
 from tests.evals.actor import get_actor
 from tests.evals.metrics import build_metrics
+
+log = logging.getLogger(__name__)
+
+
+def assert_test(test_case, metrics) -> None:
+    """Wrap deepeval assert_test, demoting its console table to DEBUG level."""
+    buf = io.StringIO()
+    exc = None
+    try:
+        with contextlib.redirect_stdout(buf):
+            _deepeval_assert_test(test_case=test_case, metrics=metrics)
+    except AssertionError as e:
+        exc = e
+    if report := buf.getvalue():
+        log.debug("deepeval report:\n%s", report)
+    if exc is not None:
+        raise exc
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 _QUESTIONS_DIR = Path(__file__).parent.joinpath("questions")
@@ -57,7 +77,9 @@ GOLDENS = _load_questions()
 
 @pytest.mark.parametrize("golden", GOLDENS, ids=[g["id"] for g in GOLDENS])
 def test_skill_selection(golden: dict, model_cfg: dict) -> None:
+    evaluator, _ = get_actor(model_cfg)
     selected = _select_skills(golden["question"], model_cfg)
+    print(f"\nModel selected skills: {selected}")
 
     # Attach expected_skills to each ToolCorrectnessMetric check before building
     checks_with_tools = []
@@ -77,4 +99,4 @@ def test_skill_selection(golden: dict, model_cfg: dict) -> None:
         tools_called=[ToolCall(name=s) for s in selected],
         expected_tools=expected_tools,
     )
-    assert_test(test_case=test_case, metrics=build_metrics(golden["checks"]))
+    assert_test(test_case=test_case, metrics=build_metrics(golden["checks"], evaluator=evaluator))
