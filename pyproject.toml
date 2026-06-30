@@ -21,6 +21,7 @@ dependencies = [
   "zarr>=2.18",
   "brainwidemap",
   "boto3>=1.34",
+  "lfpack>=0.1.0",
 ]
 
 [project.optional-dependencies]

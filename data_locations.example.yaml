@@ -14,5 +14,10 @@ datasets:
     root:
     preferred_version: latest
 
+  bwm_lfp:
+    # Directory containing lf_compressed_all_bwm.h5 (~14 GB).
+    # Download with: uv run python scripts/download_datasets.py --lfp
+    root:
+
 one_cache:
   root:

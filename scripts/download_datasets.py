@@ -1,11 +1,13 @@
-"""Download public BWM archives, extract them, and configure local paths.
+"""Download public BWM archives/files and configure local paths.
 
 Usage:
     UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py
+    UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import shutil
 import sys
@@ -39,6 +41,8 @@ BWM_DATASET_ROOTS = {
     "bwm_ephys": DATASETS_DIR / "bwm_ephys",
     "bwm_behavior": DATASETS_DIR / "bwm_behavior",
 }
+
+LFP_DIR = DATASETS_DIR / "bwm_lfp"
 
 
 @dataclass(frozen=True)
@@ -96,6 +100,30 @@ ARCHIVES: list[ArchiveSpec] = [
         sha1="aa19a2ab3159c54b3f6b5889adf7a703681b152a",
     ),
 ]
+
+
+@dataclass(frozen=True)
+class LFPFileSpec:
+    """Spec for a single-file LFP dataset (HDF5, no extraction needed)."""
+    filename: str
+    url: str
+    sha1: str
+
+    @property
+    def target_path(self) -> Path:
+        return LFP_DIR / self.filename
+
+
+# Only the standard-compression tier is exposed for download.
+# The aggressive tier is archived on S3 for future use.
+LFP_STANDARD = LFPFileSpec(
+    filename="lf_compressed_all_bwm.h5",
+    url=(
+        "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
+        "ibl-agent-data/lf_compressed_all_bwm.h5"
+    ),
+    sha1="2aa88d3ba52cabc89ccd345b846eecaa02cfebc6",
+)
 
 
 def _is_s3_url(url: str) -> bool:
@@ -372,6 +400,45 @@ def write_default_config(config: dict[str, Any]) -> None:
     print(f"  wrote {CONFIG_PATH.relative_to(REPO_ROOT)}")
 
 
+def download_lfp_file(spec: LFPFileSpec) -> int:
+    """Download a single LFP HDF5 file, verify it, and update data_locations.local.yaml.
+
+    Returns 0 on success, 1 on failure.
+    """
+    target = spec.target_path
+    if target.exists():
+        actual = compute_sha1(target)
+        if actual == spec.sha1:
+            print(f"  {spec.filename} already present and verified.")
+        else:
+            print(f"  {spec.filename} present but sha1 mismatch — re-downloading.")
+            target.unlink()
+        if target.exists():
+            _write_lfp_config()
+            return 0
+
+    print(f"\n[{spec.url}]")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    download_file(spec.url, target)
+    verify_archive(spec, target)  # reuses sha1 check; LFPFileSpec has .sha1 attr
+    _write_lfp_config()
+    return 0
+
+
+def _write_lfp_config() -> None:
+    """Add bwm_lfp.root to data_locations.local.yaml without touching other keys."""
+    config = read_config()
+    payload = dict(config)
+    datasets = dict(payload.get("datasets") or {})
+    raw = dict(datasets.get("bwm_lfp") or {})
+    raw["root"] = LFP_DIR.relative_to(REPO_ROOT).as_posix()
+    datasets["bwm_lfp"] = raw
+    payload["datasets"] = datasets
+    payload.setdefault("one_cache", {"root": None})
+    CONFIG_PATH.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    print(f"  wrote bwm_lfp.root → {CONFIG_PATH.relative_to(REPO_ROOT)}")
+
+
 def main() -> int:
     """Download missing public BWM archives and configure local BWM roots.
 
@@ -385,6 +452,18 @@ def main() -> int:
              but at least one of them does not resolve to a dataset; the
              config is left untouched so the user can fix or remove it.
     """
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--lfp",
+        action="store_true",
+        default=False,
+        help="Also download the BWM LFP dataset (standard compression tier, ~14 GB).",
+    )
+    args = parser.parse_args()
+
+    if args.lfp:
+        return download_lfp_file(LFP_STANDARD)
+
     config = read_config()
     plan = plan_current_archives(config)
 
