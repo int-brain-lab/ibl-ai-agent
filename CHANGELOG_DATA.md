@@ -11,6 +11,18 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_behavior 1.2.0] - 2026-07-05
+
+### Added
+- Wheel data now available for ~73 previously-missing sessions (of 458).
+
+### Changed
+- Wheel `timestamps`/`position`/`velocity` are now on a uniform 100 Hz grid with
+  filtered velocity, replacing the earlier irregular sampling. Re-validate
+  wheel-based analyses.
+
+---
+
 ## [bwm_ephys 1.2.0] - 2026-06-08
 
 ### Added

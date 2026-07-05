@@ -67,12 +67,13 @@ def _resolve_release_archive_identity(dataset_root: Path) -> tuple[str, str]:
 
 
 def _release_archive_excludes(dataset_name: str, dataset_version: str) -> set[str]:
-    if dataset_name == "bwm_behavior" and dataset_version == "1.1.0":
+    if dataset_name == "bwm_behavior":
         try:
-            from ibl_ai_agent.datasets.bwm_behavior_upgrade import FEATURE_CACHE_DIRNAME
+            from ibl_ai_agent.datasets.bwm_behavior_upgrade import FEATURE_CACHE_DIRNAME, TARGET_DATASET_VERSION
         except Exception:
             return set()
-        return {FEATURE_CACHE_DIRNAME}
+        if dataset_version == TARGET_DATASET_VERSION:
+            return {FEATURE_CACHE_DIRNAME}
     return set()
 
 
@@ -365,7 +366,7 @@ def register(app: typer.Typer) -> None:
     @app.command("inspect-bwm-behavior")
     def inspect_bwm_behavior_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.1.0"),
+            Path("reports/datasets/bwm_behavior/1.2.0"),
             help="Path to an existing built bwm_behavior dataset directory to inspect.",
         ),
         cache_root: Path = typer.Option(
@@ -640,7 +641,7 @@ def register(app: typer.Typer) -> None:
     @app.command("refresh-bwm-behavior")
     def refresh_bwm_behavior_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.1.0"),
+            Path("reports/datasets/bwm_behavior/1.2.0"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         cache_root: Path = typer.Option(
@@ -749,8 +750,8 @@ def register(app: typer.Typer) -> None:
     @app.command("build-bwm-behavior")
     def build_bwm_behavior_command(
         target_version: str = typer.Option(
-            "1.1.0",
-            help="Target dataset version to build. Supported values: 1.0.0, 1.1.0.",
+            "1.2.0",
+            help="Target dataset version to build. Supported values: 1.0.0, 1.2.0.",
         ),
         output_root: Path = typer.Option(
             Path("reports/datasets"),
@@ -806,7 +807,7 @@ def register(app: typer.Typer) -> None:
                         verbose=True,
                     )
                 )
-            elif target_version == "1.1.0":
+            elif target_version == "1.2.0":
                 source_dataset_root = output_root / "bwm_behavior" / "1.0.0"
                 if not source_dataset_root.exists():
                     build_bwm_behavior_dataset(
@@ -959,7 +960,7 @@ def register(app: typer.Typer) -> None:
             help="Number of parallel worker threads for shard rewrite and shard-based feature refresh.",
         ),
     ) -> None:
-        """Upgrade bwm_behavior/1.0.0 into bwm_behavior/1.1.0 with compressed session shards."""
+        """Upgrade bwm_behavior/1.0.0 into bwm_behavior/1.2.0 with compressed session shards."""
         try:
             from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
 

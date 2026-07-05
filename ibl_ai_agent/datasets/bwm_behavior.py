@@ -34,6 +34,11 @@ BEHAVIOR_EVENT_FEATURE_COLUMNS = (("wheel", "wheel"), ("leftCamera", "dlc"), ("r
 BEHAVIOR_EVENT_WINDOW_SPEC = "pre=0.200|post=0.300|event-aligned"
 WHEEL_STATE_DETECTOR_NAME = "ibllib.io.extractors.training_wheel.extract_wheel_moves"
 QUIESCENCE_MIN_DURATION_S = 0.2
+# Uniform sampling rate for the interpolated wheel signal produced by
+# brainbox.io.one.SessionLoader.load_wheel. Matches the `wheel_downsample_rate_hz`
+# field of the 100 Hz compression strategies in bwm_behavior_compression.STRATEGIES
+# so build-time interpolation and stored sampling rate agree.
+WHEEL_FS_HZ = 100.0
 BEHAVIOR_SESSION_SHARD_FORMAT_V1 = "ibl_ai_agent_behavior_session_shard_v1"
 BEHAVIOR_SESSION_SHARD_FORMAT_V2 = "ibl_ai_agent_behavior_session_shard_v2"
 LEGACY_BEHAVIOR_SESSION_SHARD_FORMAT_V2 = "ibl" + "_agent_behavior_session_shard_v2"
@@ -1223,24 +1228,53 @@ def _write_metadata_tables(*, metadata_dir: Path, features_dir: Path, sessions_d
 
 
 def _prepare_wheel_payload(*, row: Any, cache_root: Path) -> dict[str, Any]:
-    session_alf = session_assets.resolve_session_alf_dir(cache_root, lab=str(row.lab), subject=str(row.subject), date=str(row.date), session_number=int(row.session_number))
-    if session_alf is None or not session_assets.wheel_assets_present(session_alf):
-        return {"status": "missing", "eid": str(row.eid)}
-    position_path = session_assets.first_existing(session_alf, session_assets.WHEEL_POSITION_CANDIDATES)
-    timestamps_path = session_assets.first_existing(session_alf, session_assets.WHEEL_TIMESTAMPS_CANDIDATES)
-    timestamps = np.load(timestamps_path)
-    position = np.load(position_path)
+    """Load wheel data on a uniform grid via ``SessionLoader.load_wheel``.
+
+    ``brainbox.io.one.SessionLoader.load_wheel`` resolves the dataset revision
+    (raw wheel frequently lives under a revision folder such as
+    ``alf/#2024-05-06#/``), interpolates position onto a uniform ``WHEEL_FS_HZ``
+    grid, and computes a Butterworth-filtered velocity. This supersedes the
+    previous flat-file ``.npy`` scan, which missed revisioned sessions and
+    skipped velocity on non-monotonic timestamps.
+
+    The ONE instance is obtained via ``bwm_shared.make_remote_one`` which is a
+    singleton (repeated calls return the same object), so it is shared across
+    worker threads without extra caching. ``bwm_behavior`` is a maintainer
+    build/release tool; using ONE to resolve revisions is intentional here.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok", "eid", "timestamps", "position", "velocity", "fs"}``
+        on success, otherwise ``{"status": "missing", "eid", ...}``. Never raises.
+    """
+    eid = str(row.eid)
+    try:
+        from brainbox.io.one import SessionLoader
+
+        loader = SessionLoader(one=bwm_shared.make_remote_one(cache_root), eid=eid)
+        loader.load_wheel(fs=WHEEL_FS_HZ)
+        wheel = loader.wheel
+    except Exception as exc:  # keep total: a load failure is a genuine "missing"
+        return {"status": "missing", "eid": eid, "error": str(exc)}
+
+    if wheel is None or not {"times", "position"}.issubset(getattr(wheel, "columns", [])):
+        return {"status": "missing", "eid": eid, "error": "empty wheel"}
+    timestamps = np.asarray(wheel["times"], dtype=np.float64)
+    position = np.asarray(wheel["position"], dtype=np.float64)
+    if timestamps.size < 2 or position.shape != timestamps.shape:
+        return {"status": "missing", "eid": eid, "error": "insufficient wheel samples"}
     payload = {
         "status": "ok",
-        "eid": str(row.eid),
-        "timestamps": np.asarray(timestamps),
-        "position": np.asarray(position),
+        "eid": eid,
+        "timestamps": timestamps,
+        "position": position,
+        "fs": float(WHEEL_FS_HZ),
     }
-    if position.ndim == 1 and timestamps.shape == position.shape and position.size > 1:
-        timestamps_f64 = np.asarray(timestamps, dtype=np.float64)
-        position_f64 = np.asarray(position, dtype=np.float64)
-        if np.all(np.diff(timestamps_f64) > 0):
-            payload["velocity"] = np.gradient(position_f64, timestamps_f64).astype(np.float32)
+    if "velocity" in wheel.columns:
+        velocity = np.asarray(wheel["velocity"], dtype=np.float32)
+        if velocity.shape == timestamps.shape and np.isfinite(velocity).any():
+            payload["velocity"] = velocity
     return payload
 
 
@@ -1387,6 +1421,7 @@ def _write_behavior_session_shards(path: Path, *, roster: pd.DataFrame, cache_ro
                 metadata["wheel"] = {
                     "present": True,
                     "has_velocity": "velocity" in wheel,
+                    "fs": float(wheel.get("fs", WHEEL_FS_HZ)),
                 }
                 wheel_sessions_written += 1
             else:

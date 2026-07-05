@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from ibl_ai_agent.datasets import bwm_behavior, bwm_simple
-from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
+from ibl_ai_agent.datasets.bwm_behavior_upgrade import TARGET_DATASET_VERSION, upgrade_bwm_behavior_dataset_compression
 from ibl_ai_agent.datasets.bwm_behavior_compression import (
     ProfileConfig,
     FeatureValidationConfig,
@@ -88,6 +88,41 @@ def _write_dlc_files(alf_root: Path) -> None:
     pd.DataFrame({"pupilDiameter": [1.0, 1.1, 1.2], "likelihood": [0.9, 0.8, 0.95]}).to_parquet(
         alf_root / "leftCamera.features.pqt", engine="pyarrow", compression="zstd", index=False
     )
+
+
+@pytest.fixture(autouse=True)
+def _offline_wheel_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Load synthetic wheel from local files so build tests run without ONE.
+
+    Production ``_prepare_wheel_payload`` resolves dataset revisions via ONE;
+    the synthetic fixtures write plain local ``.npy`` files, so this patches the
+    loader with an offline equivalent that applies the same 100 Hz interpolation
+    and Butterworth-filtered velocity as ``SessionLoader.load_wheel``.
+    """
+    from ibl_ai_agent.datasets import bwm_session_assets as sa
+
+    def _loader(*, row: object, cache_root: Path) -> dict:
+        from brainbox.io.one import interpolate_position, velocity_filtered
+
+        alf = sa.resolve_session_alf_dir(cache_root, lab=str(row.lab), subject=str(row.subject), date=str(row.date), session_number=int(row.session_number))
+        timestamps_path = sa.first_existing(alf, sa.WHEEL_TIMESTAMPS_CANDIDATES) if alf is not None else None
+        position_path = sa.first_existing(alf, sa.WHEEL_POSITION_CANDIDATES) if alf is not None else None
+        if timestamps_path is None or position_path is None:
+            return {"status": "missing", "eid": str(row.eid)}
+        raw_t = np.asarray(np.load(timestamps_path), dtype=np.float64)
+        raw_p = np.asarray(np.load(position_path), dtype=np.float64)
+        position, times = interpolate_position(raw_t, raw_p, freq=bwm_behavior.WHEEL_FS_HZ)
+        velocity, _acceleration = velocity_filtered(np.asarray(position, dtype=np.float64), fs=bwm_behavior.WHEEL_FS_HZ, corner_frequency=20, order=8)
+        return {
+            "status": "ok",
+            "eid": str(row.eid),
+            "timestamps": np.asarray(times, dtype=np.float64),
+            "position": np.asarray(position, dtype=np.float64),
+            "velocity": np.asarray(velocity, dtype=np.float32),
+            "fs": float(bwm_behavior.WHEEL_FS_HZ),
+        }
+
+    monkeypatch.setattr(bwm_behavior, "_prepare_wheel_payload", _loader)
 
 
 def test_refresh_bwm_behavior_features_reuses_existing_session_shards(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -339,11 +374,11 @@ def test_upgrade_bwm_behavior_dataset_writes_release_tar(tmp_path: Path, monkeyp
     assert upgraded.archive_checksum_path is not None
     assert upgraded.archive_path.exists()
     assert upgraded.archive_checksum_path.exists()
-    assert upgraded.archive_path.parent == release_root / "bwm_behavior" / "1.1.0"
+    assert upgraded.archive_path.parent == release_root / "bwm_behavior" / TARGET_DATASET_VERSION
 
     with tarfile.open(upgraded.archive_path, mode="r") as tar:
         members = tar.getnames()
-    assert "bwm_behavior/1.1.0/metadata/sessions.parquet" in members
+    assert f"bwm_behavior/{TARGET_DATASET_VERSION}/metadata/sessions.parquet" in members
     assert all(".feature-refresh-cache" not in name for name in members)
 
 
@@ -1072,7 +1107,7 @@ def test_upgrade_bwm_behavior_dataset_compression_writes_v11(tmp_path: Path, mon
         verbose=False,
     )
 
-    assert upgraded.dataset_dir.name == "1.1.0"
+    assert upgraded.dataset_dir.name == TARGET_DATASET_VERSION
     shard = bwm_behavior.load_behavior_session_shard(upgraded.dataset_dir / "sessions" / "eid-1.zip")
     assert shard["meta"]["format"] == "ibl_ai_agent_behavior_session_shard_v2"
     assert shard["meta"]["compression"]["profile"] == "aggressive-dlc-delta-wheel-native-left60-right60-body30"
@@ -1204,7 +1239,7 @@ def test_inspect_bwm_behavior_dataset_detects_upgrade_layout(tmp_path: Path, mon
     report = bwm_behavior.inspect_bwm_behavior_dataset(dataset_dir=upgraded.dataset_dir)
 
     assert report["dataset_kind"] == "upgrade_v1_1"
-    assert report["expected_dataset_version"] == "1.1.0"
+    assert report["expected_dataset_version"] == TARGET_DATASET_VERSION
     assert report["expected_schema_version"] == 3
     assert report["schema_dataset_version_matches"] is True
     assert report["schema_version_matches"] is True
@@ -1275,8 +1310,8 @@ def test_refresh_bwm_behavior_features_from_shards_preserves_upgrade_sidecars(tm
     manifest = yaml.safe_load(upgraded.manifest_path.read_text(encoding="utf-8"))
     build_report = yaml.safe_load(upgraded.build_report_path.read_text(encoding="utf-8"))
 
-    assert schema["dataset_version"] == "1.1.0"
+    assert schema["dataset_version"] == TARGET_DATASET_VERSION
     assert schema["schema_version"] == 3
     assert schema["compression_profile"] == "aggressive-dlc-delta-wheel-native-left60-right60-body30"
-    assert manifest["dataset_version"] == "1.1.0"
-    assert build_report["dataset_version"] == "1.1.0"
+    assert manifest["dataset_version"] == TARGET_DATASET_VERSION
+    assert build_report["dataset_version"] == TARGET_DATASET_VERSION

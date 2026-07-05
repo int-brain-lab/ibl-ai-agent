@@ -19,7 +19,7 @@ from ibl_ai_agent.datasets import bwm_behavior, bwm_behavior_compression, bwm_sh
 
 DATASET_NAME = "bwm_behavior"
 SOURCE_DATASET_VERSION = "1.0.0"
-TARGET_DATASET_VERSION = "1.1.0"
+TARGET_DATASET_VERSION = "1.2.0"
 COMPRESSION_PROFILE = "aggressive-dlc-delta-wheel-native-left60-right60-body30"
 TARGET_SIGNAL_CONTAINER_FORMAT = "zip_semantic_shards_v2"
 DEFAULT_UPGRADE_JOBS = max(1, (os.cpu_count() or 2) // 2)
