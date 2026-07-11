@@ -22,6 +22,11 @@ from ibl_ai_agent.datasets import bwm_shared
 
 DATASET_NAME = "bwm_behavior"
 DATASET_VERSION = "1.0.0"
+# The raw build is a scratch/staging artifact, never published directly -- only
+# the compressed output of bwm_behavior_upgrade (stamped with its own
+# TARGET_DATASET_VERSION) is released. Its on-disk directory name is
+# deliberately not a version string so it can't be mistaken for one.
+RAW_BUILD_DIRNAME = "raw"
 SCHEMA_VERSION = 2
 PARQUET_ENGINE = "pyarrow"
 PARQUET_COMPRESSION = "zstd"
@@ -205,7 +210,7 @@ def _detect_dataset_layout(*, dataset_dir: Path, outputs: BuildOutputs, schema: 
 
 
 def build_bwm_behavior_dataset(config: BuildConfig) -> BuildOutputs:
-    target_dir = config.output_root / DATASET_NAME / DATASET_VERSION
+    target_dir = config.output_root / DATASET_NAME / RAW_BUILD_DIRNAME
     if target_dir.exists():
         raise BuildError(
             f"Output directory already exists: {target_dir}. "
@@ -2076,13 +2081,13 @@ def _write_failure_prefetch_report(parent: Path, prefetch_report: dict[str, Any]
 def _resolve_behavior_build_dir(parent: Path, *, config: BuildConfig) -> tuple[Path, bool]:
     if config.resume:
         candidates = sorted(
-            [path for path in parent.glob(f".{DATASET_NAME}-{DATASET_VERSION}-*") if path.is_dir()],
+            [path for path in parent.glob(f".{DATASET_NAME}-{RAW_BUILD_DIRNAME}-*") if path.is_dir()],
             key=lambda path: path.stat().st_mtime,
             reverse=True,
         )
         for candidate in candidates:
             return candidate, True
-    return Path(mkdtemp(prefix=f".{DATASET_NAME}-{DATASET_VERSION}-", dir=parent)), False
+    return Path(mkdtemp(prefix=f".{DATASET_NAME}-{RAW_BUILD_DIRNAME}-", dir=parent)), False
 
 
 def _write_build_state(tmp_dir: Path, state: dict[str, Any]) -> None:

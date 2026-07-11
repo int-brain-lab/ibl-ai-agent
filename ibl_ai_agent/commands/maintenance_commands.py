@@ -703,7 +703,7 @@ def register(app: typer.Typer) -> None:
     @app.command("refresh-bwm-behavior-features", hidden=True)
     def refresh_bwm_behavior_features_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.0.0"),
+            Path("reports/datasets/bwm_behavior/raw"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         cache_root: Path = typer.Option(
@@ -790,7 +790,7 @@ def register(app: typer.Typer) -> None:
     ) -> None:
         """Build the requested bwm_behavior dataset version, creating prerequisites when needed."""
         try:
-            from ibl_ai_agent.datasets.bwm_behavior import BuildConfig, build_bwm_behavior_dataset
+            from ibl_ai_agent.datasets.bwm_behavior import RAW_BUILD_DIRNAME, BuildConfig, build_bwm_behavior_dataset
             from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
 
             if target_version == "1.0.0":
@@ -808,7 +808,7 @@ def register(app: typer.Typer) -> None:
                     )
                 )
             elif target_version == "2.0.0":
-                source_dataset_root = output_root / "bwm_behavior" / "1.0.0"
+                source_dataset_root = output_root / "bwm_behavior" / RAW_BUILD_DIRNAME
                 if not source_dataset_root.exists():
                     build_bwm_behavior_dataset(
                         BuildConfig(
@@ -943,7 +943,7 @@ def register(app: typer.Typer) -> None:
     @app.command("upgrade-bwm-behavior-compression", hidden=True)
     def upgrade_bwm_behavior_compression_command(
         source_dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.0.0"),
+            Path("reports/datasets/bwm_behavior/raw"),
             help="Path to an existing built bwm_behavior dataset directory to upgrade.",
         ),
         output_root: Path = typer.Option(
@@ -960,7 +960,7 @@ def register(app: typer.Typer) -> None:
             help="Number of parallel worker threads for shard rewrite and shard-based feature refresh.",
         ),
     ) -> None:
-        """Upgrade bwm_behavior/1.0.0 into bwm_behavior/2.0.0 with compressed session shards."""
+        """Upgrade bwm_behavior/raw into bwm_behavior/2.0.0 with compressed session shards."""
         try:
             from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
 
@@ -1000,7 +1000,7 @@ def register(app: typer.Typer) -> None:
     @app.command("profile-bwm-behavior-compression")
     def profile_bwm_behavior_compression_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.0.0"),
+            Path("reports/datasets/bwm_behavior/raw"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         output_root: Path = typer.Option(
@@ -1054,7 +1054,7 @@ def register(app: typer.Typer) -> None:
     @app.command("validate-bwm-behavior-compression")
     def validate_bwm_behavior_compression_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.0.0"),
+            Path("reports/datasets/bwm_behavior/raw"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         output_root: Path = typer.Option(
@@ -1100,7 +1100,7 @@ def register(app: typer.Typer) -> None:
     @app.command("validate-bwm-behavior-compression-features")
     def validate_bwm_behavior_compression_features_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.0.0"),
+            Path("reports/datasets/bwm_behavior/raw"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         output_root: Path = typer.Option(

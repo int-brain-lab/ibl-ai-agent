@@ -18,7 +18,6 @@ from ibl_ai_agent.datasets import bwm_behavior, bwm_behavior_compression, bwm_sh
 
 
 DATASET_NAME = "bwm_behavior"
-SOURCE_DATASET_VERSION = "1.0.0"
 TARGET_DATASET_VERSION = "2.0.0"
 COMPRESSION_PROFILE = "aggressive-pose-delta-wheel-native-left60-right60-body30"
 TARGET_SIGNAL_CONTAINER_FORMAT = "zip_semantic_shards_v2"
@@ -452,7 +451,7 @@ def _resolve_source_dataset_dir(dataset_dir: Path) -> Path:
     source_value = (provenance or {}).get("source_dataset")
     if source_value:
         return Path(str(source_value))
-    return dataset_dir.parent / SOURCE_DATASET_VERSION
+    return dataset_dir.parent / bwm_behavior.RAW_BUILD_DIRNAME
 
 
 def _refresh_sidecars(*, dataset_dir: Path, outputs: bwm_behavior.BuildOutputs, source_dataset_dir: Path, elapsed_s: float) -> None:
@@ -520,7 +519,7 @@ def _build_report(*, dataset_dir: Path, outputs: bwm_behavior.BuildOutputs, beha
     return {
         "dataset_name": DATASET_NAME,
         "dataset_version": TARGET_DATASET_VERSION,
-        "source_dataset": str(dataset_dir.parent / SOURCE_DATASET_VERSION),
+        "source_dataset": str(dataset_dir.parent / bwm_behavior.RAW_BUILD_DIRNAME),
         "compression_profile": COMPRESSION_PROFILE,
         "build_timestamp": bwm_shared.now_iso(),
         "elapsed_seconds": float(elapsed_s),

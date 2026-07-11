@@ -15,7 +15,7 @@ import yaml
 from ibl_ai_agent.datasets import bwm_behavior, bwm_shared
 
 
-DEFAULT_DATASET_DIR = Path("reports/datasets/bwm_behavior/1.0.0")
+DEFAULT_DATASET_DIR = Path("reports/datasets/bwm_behavior") / bwm_behavior.RAW_BUILD_DIRNAME
 DEFAULT_STRATEGIES = (
     "lossless-baseline",
     "conservative",
