@@ -21,7 +21,7 @@ from ibl_ai_agent.datasets import bwm_shared
 
 
 DATASET_NAME = "bwm_behavior"
-DATASET_VERSION = "2.0.0"
+DATASET_VERSION = "1.0.0"
 SCHEMA_VERSION = 2
 PARQUET_ENGINE = "pyarrow"
 PARQUET_COMPRESSION = "zstd"
