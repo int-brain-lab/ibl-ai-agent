@@ -11,6 +11,7 @@ from time import perf_counter
 from typing import Any
 import zipfile
 
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -122,15 +123,17 @@ def upgrade_bwm_behavior_dataset_compression(
         _refresh_behavior_metadata_from_shards(dataset_dir=work_dir, outputs=outputs, jobs=jobs, verbose=verbose)
         _refresh_sidecars(dataset_dir=work_dir, outputs=outputs, source_dataset_dir=source_dataset_dir, elapsed_s=perf_counter() - started_at)
         if work_dir != target_dir:
-            # Source and target may now share a directory name (e.g. the raw
-            # DATASET_VERSION build and the compressed TARGET_DATASET_VERSION
-            # release are both stamped "2.0.0" for the combined #18/#19
-            # release). Everything needed from an existing target_dir has
-            # already been hardlink-copied into work_dir above, so it is safe
-            # to clear a stale/duplicate target_dir before the final rename.
+            # A stale/partial target_dir from a previous run has already had
+            # anything useful hardlink-copied into work_dir above, so it is
+            # safe to clear before the final move.
             if target_dir.exists():
                 shutil.rmtree(target_dir)
-            work_dir.rename(target_dir)
+            # work_dir (a temp dir under target_dir.parent) and target_dir can
+            # end up on different underlying volumes on some platforms (e.g.
+            # Lightning AI studio filesystems), which makes a plain rename()
+            # raise EXDEV even though both paths look like the same mount.
+            # shutil.move() falls back to copy+delete in that case.
+            shutil.move(str(work_dir), str(target_dir))
         _write_upgrade_state(target_dir, {"status": "complete", "updated_at": bwm_shared.now_iso(), "jobs": int(max(1, jobs))})
     except Exception as exc:
         _write_upgrade_state(work_dir, {"status": "failed", "updated_at": bwm_shared.now_iso(), "error": str(exc)})
@@ -188,17 +191,44 @@ def _rewrite_session_shards(*, dataset_dir: Path, jobs: int, verbose: bool) -> N
             )
 
 
+POSE_ENSEMBLE_COLUMN_SUFFIXES = ("_ens_median", "_ens_var", "_posterior_var")
+
+
+def _drop_pose_ensemble_columns(*, metadata: dict[str, Any], arrays: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Drop Lightning Pose ensemble-uncertainty columns, keeping x/y/likelihood only.
+
+    Matches the column set DLC produced for the released archive; the raw
+    build keeps the full ensemble columns in case they're wanted later.
+    """
+    metadata = dict(metadata)
+    cameras = {name: dict(cam_meta) for name, cam_meta in metadata.get("cameras", {}).items()}
+    arrays = dict(arrays)
+    for camera, cam_meta in cameras.items():
+        columns = cam_meta.get("columns") or []
+        keep_idx = [idx for idx, col in enumerate(columns) if not col.endswith(POSE_ENSEMBLE_COLUMN_SUFFIXES)]
+        if len(keep_idx) == len(columns):
+            continue
+        features_key = f"{camera}.features"
+        if features_key in arrays:
+            arrays[features_key] = np.asarray(arrays[features_key])[:, keep_idx]
+        cam_meta["columns"] = [columns[idx] for idx in keep_idx]
+        cam_meta["n_features"] = len(keep_idx)
+    metadata["cameras"] = cameras
+    return metadata, arrays
+
+
 def _rewrite_one_session_shard(*, shard_path: Path) -> None:
     if _shard_already_upgraded(shard_path):
         return
     shard = bwm_shared.read_array_shard(shard_path)
     metadata = dict(shard["meta"])
     metadata["dataset_version"] = TARGET_DATASET_VERSION
+    metadata, arrays = _drop_pose_ensemble_columns(metadata=metadata, arrays=shard["arrays"])
     temp_path = shard_path.with_suffix(".tmp")
     bwm_behavior_compression.write_behavior_session_shard(
         temp_path,
         metadata=metadata,
-        arrays=shard["arrays"],
+        arrays=arrays,
         strategy_name=COMPRESSION_PROFILE,
     )
     temp_path.replace(shard_path)
