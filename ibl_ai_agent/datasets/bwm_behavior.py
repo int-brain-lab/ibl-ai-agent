@@ -1339,7 +1339,14 @@ def _prepare_pose_payload(*, row: Any, cache_root: Path) -> dict[str, Any]:
         if not views:
             continue
         try:
-            loader.load_pose(views=views, tracker=tracker)
+            # likelihood_thr=0 disables SessionLoader's likelihood-based NaN
+            # thresholding (nan_fill = likelihood < threshold, so 0 excludes
+            # nothing -- despite what the SessionLoader docstring claims,
+            # threshold=1 NaNs everything, confirmed empirically). Keeping raw
+            # values regardless of confidence matches the old DLC-glob path,
+            # which never thresholded either; the likelihood column itself is
+            # still stored so consumers can threshold downstream if they want.
+            loader.load_pose(views=views, tracker=tracker, likelihood_thr=0)
         except Exception:
             continue
         pose_by_camera.update(loader.pose)
