@@ -366,7 +366,7 @@ def register(app: typer.Typer) -> None:
     @app.command("inspect-bwm-behavior")
     def inspect_bwm_behavior_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.2.0"),
+            Path("reports/datasets/bwm_behavior/2.0.0"),
             help="Path to an existing built bwm_behavior dataset directory to inspect.",
         ),
         cache_root: Path = typer.Option(
@@ -641,7 +641,7 @@ def register(app: typer.Typer) -> None:
     @app.command("refresh-bwm-behavior")
     def refresh_bwm_behavior_command(
         dataset_root: Path = typer.Option(
-            Path("reports/datasets/bwm_behavior/1.2.0"),
+            Path("reports/datasets/bwm_behavior/2.0.0"),
             help="Path to an existing built bwm_behavior dataset directory.",
         ),
         cache_root: Path = typer.Option(
@@ -684,10 +684,10 @@ def register(app: typer.Typer) -> None:
 
         typer.echo(f"Dataset directory: {outputs.dataset_dir}")
         typer.echo(f"Wheel availability table: {outputs.wheel_availability_path}")
-        typer.echo(f"DLC availability table: {outputs.dlc_availability_path}")
+        typer.echo(f"Pose availability table: {outputs.pose_availability_path}")
         typer.echo(f"Trial behavior features: {outputs.trial_behavior_features_path}")
         typer.echo(f"Wheel trial features: {outputs.wheel_trial_features_path}")
-        typer.echo(f"DLC trial features: {outputs.dlc_trial_features_path}")
+        typer.echo(f"Pose trial features: {outputs.pose_trial_features_path}")
         typer.echo(f"Event-aligned behavior features: {outputs.event_aligned_behavior_features_path}")
         typer.echo(f"Behavior session features: {outputs.behavior_session_features_path}")
         typer.echo(f"Movement state epochs: {outputs.movement_state_epochs_path}")
@@ -713,7 +713,7 @@ def register(app: typer.Typer) -> None:
         jobs: int = typer.Option(
             max(1, (os.cpu_count() or 2) // 2),
             min=1,
-            help="Number of parallel workers for wheel/DLC/event feature refresh.",
+            help="Number of parallel workers for wheel/pose/event feature refresh.",
         ),
     ) -> None:
         """Refresh BWM behavior-derived feature tables in place without rebuilding session shards."""
@@ -731,10 +731,10 @@ def register(app: typer.Typer) -> None:
 
         typer.echo(f"Dataset directory: {outputs.dataset_dir}")
         typer.echo(f"Wheel availability table: {outputs.wheel_availability_path}")
-        typer.echo(f"DLC availability table: {outputs.dlc_availability_path}")
+        typer.echo(f"Pose availability table: {outputs.pose_availability_path}")
         typer.echo(f"Trial behavior features: {outputs.trial_behavior_features_path}")
         typer.echo(f"Wheel trial features: {outputs.wheel_trial_features_path}")
-        typer.echo(f"DLC trial features: {outputs.dlc_trial_features_path}")
+        typer.echo(f"Pose trial features: {outputs.pose_trial_features_path}")
         typer.echo(f"Event-aligned behavior features: {outputs.event_aligned_behavior_features_path}")
         typer.echo(f"Behavior session features: {outputs.behavior_session_features_path}")
         typer.echo(f"Movement state epochs: {outputs.movement_state_epochs_path}")
@@ -750,8 +750,8 @@ def register(app: typer.Typer) -> None:
     @app.command("build-bwm-behavior")
     def build_bwm_behavior_command(
         target_version: str = typer.Option(
-            "1.2.0",
-            help="Target dataset version to build. Supported values: 1.0.0, 1.2.0.",
+            "2.0.0",
+            help="Target dataset version to build. Supported values: 1.0.0, 2.0.0.",
         ),
         output_root: Path = typer.Option(
             Path("reports/datasets"),
@@ -771,7 +771,7 @@ def register(app: typer.Typer) -> None:
         ),
         require_signals: bool = typer.Option(
             False,
-            help="Require full wheel+DLC coverage before finalizing. When false, finalize a partial dataset and record gaps in the reports.",
+            help="Require full wheel+pose coverage before finalizing. When false, finalize a partial dataset and record gaps in the reports.",
         ),
         resume: bool = typer.Option(
             True,
@@ -807,7 +807,7 @@ def register(app: typer.Typer) -> None:
                         verbose=True,
                     )
                 )
-            elif target_version == "1.2.0":
+            elif target_version == "2.0.0":
                 source_dataset_root = output_root / "bwm_behavior" / "1.0.0"
                 if not source_dataset_root.exists():
                     build_bwm_behavior_dataset(
@@ -842,10 +842,10 @@ def register(app: typer.Typer) -> None:
         typer.echo(f"Trials table: {outputs.trials_path}")
         typer.echo(f"Events table: {outputs.events_path}")
         typer.echo(f"Wheel availability table: {outputs.wheel_availability_path}")
-        typer.echo(f"DLC availability table: {outputs.dlc_availability_path}")
+        typer.echo(f"Pose availability table: {outputs.pose_availability_path}")
         typer.echo(f"Trial behavior features: {outputs.trial_behavior_features_path}")
         typer.echo(f"Wheel trial features: {outputs.wheel_trial_features_path}")
-        typer.echo(f"DLC trial features: {outputs.dlc_trial_features_path}")
+        typer.echo(f"Pose trial features: {outputs.pose_trial_features_path}")
         typer.echo(f"Event-aligned behavior features: {outputs.event_aligned_behavior_features_path}")
         typer.echo(f"Behavior session features: {outputs.behavior_session_features_path}")
         typer.echo(f"Movement state epochs: {outputs.movement_state_epochs_path}")
@@ -880,7 +880,7 @@ def register(app: typer.Typer) -> None:
         ),
         require_signals: bool = typer.Option(
             False,
-            help="Require full wheel+DLC coverage before finalizing. When false, finalize a partial dataset and record gaps in the reports.",
+            help="Require full wheel+pose coverage before finalizing. When false, finalize a partial dataset and record gaps in the reports.",
         ),
         resume: bool = typer.Option(
             True,
@@ -922,17 +922,17 @@ def register(app: typer.Typer) -> None:
         typer.echo(f"Trials table: {outputs.trials_path}")
         typer.echo(f"Events table: {outputs.events_path}")
         typer.echo(f"Wheel availability table: {outputs.wheel_availability_path}")
-        typer.echo(f"DLC availability table: {outputs.dlc_availability_path}")
+        typer.echo(f"Pose availability table: {outputs.pose_availability_path}")
         typer.echo(f"Trial behavior features: {outputs.trial_behavior_features_path}")
         typer.echo(f"Wheel trial features: {outputs.wheel_trial_features_path}")
-        typer.echo(f"DLC trial features: {outputs.dlc_trial_features_path}")
+        typer.echo(f"Pose trial features: {outputs.pose_trial_features_path}")
         typer.echo(f"Event-aligned behavior features: {outputs.event_aligned_behavior_features_path}")
         typer.echo(f"Behavior session features: {outputs.behavior_session_features_path}")
         typer.echo(f"Movement state epochs: {outputs.movement_state_epochs_path}")
         typer.echo(f"Quiescence state epochs: {outputs.quiescence_state_epochs_path}")
         typer.echo(f"Behavior state session features: {outputs.behavior_state_session_features_path}")
         typer.echo(f"Behavior shard directory: {outputs.wheel_store_path}")
-        typer.echo(f"Behavior shard directory: {outputs.dlc_store_path}")
+        typer.echo(f"Behavior shard directory: {outputs.pose_store_path}")
         typer.echo(f"Manifest: {outputs.manifest_path}")
         typer.echo(f"Schema: {outputs.schema_path}")
         typer.echo(f"Provenance: {outputs.provenance_path}")
@@ -960,7 +960,7 @@ def register(app: typer.Typer) -> None:
             help="Number of parallel worker threads for shard rewrite and shard-based feature refresh.",
         ),
     ) -> None:
-        """Upgrade bwm_behavior/1.0.0 into bwm_behavior/1.2.0 with compressed session shards."""
+        """Upgrade bwm_behavior/1.0.0 into bwm_behavior/2.0.0 with compressed session shards."""
         try:
             from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
 
@@ -980,9 +980,9 @@ def register(app: typer.Typer) -> None:
         typer.echo(f"Trials table: {outputs.trials_path}")
         typer.echo(f"Events table: {outputs.events_path}")
         typer.echo(f"Wheel availability table: {outputs.wheel_availability_path}")
-        typer.echo(f"DLC availability table: {outputs.dlc_availability_path}")
+        typer.echo(f"Pose availability table: {outputs.pose_availability_path}")
         typer.echo(f"Wheel trial features: {outputs.wheel_trial_features_path}")
-        typer.echo(f"DLC trial features: {outputs.dlc_trial_features_path}")
+        typer.echo(f"Pose trial features: {outputs.pose_trial_features_path}")
         typer.echo(f"Event-aligned behavior features: {outputs.event_aligned_behavior_features_path}")
         typer.echo(f"Behavior session features: {outputs.behavior_session_features_path}")
         typer.echo(f"Movement state epochs: {outputs.movement_state_epochs_path}")
@@ -1017,7 +1017,7 @@ def register(app: typer.Typer) -> None:
             help="Shard selection mode: largest, smallest, or spread.",
         ),
         strategies: str = typer.Option(
-            "lossless-baseline,conservative,balanced,aggressive,balanced-dlc-delta,aggressive-dlc-delta,aggressive-dlc-delta-wheel-native-left60-right60-body30,aggressive-dlc-delta-wheel100-dlc50,aggressive-dlc-delta-30hz",
+            "lossless-baseline,conservative,balanced,aggressive,balanced-pose-delta,aggressive-pose-delta,aggressive-pose-delta-wheel-native-left60-right60-body30,aggressive-pose-delta-wheel100-pose50,aggressive-pose-delta-30hz",
             help="Comma-separated strategy names to profile.",
         ),
         target_min_factor: float = typer.Option(
@@ -1071,7 +1071,7 @@ def register(app: typer.Typer) -> None:
             help="Shard selection mode: largest, smallest, or spread.",
         ),
         strategy: str = typer.Option(
-            "aggressive-dlc-delta-30hz",
+            "aggressive-pose-delta-30hz",
             help="Compression strategy name to validate.",
         ),
     ) -> None:
@@ -1117,7 +1117,7 @@ def register(app: typer.Typer) -> None:
             help="Shard selection mode: largest, smallest, or spread.",
         ),
         strategy: str = typer.Option(
-            "aggressive-dlc-delta-30hz",
+            "aggressive-pose-delta-30hz",
             help="Compression strategy name to validate.",
         ),
     ) -> None:

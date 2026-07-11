@@ -81,7 +81,7 @@ def _write_wheel_files(alf_root: Path) -> None:
     np.save(alf_root / "wheel.position.npy", np.asarray([0.0, 1.0, 1.5], dtype=np.float32))
 
 
-def _write_dlc_files(alf_root: Path) -> None:
+def _write_pose_files(alf_root: Path) -> None:
     np.save(alf_root / "leftCamera.times.npy", np.asarray([0.0, 0.5, 1.0], dtype=np.float64))
     np.save(alf_root / "leftCamera.dlc.npy", np.asarray([[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]], dtype=np.float32))
     pd.DataFrame({"pupilDiameter": [1.0, 1.1, 1.2], "likelihood": [0.9, 0.8, 0.95]}).to_parquet(
@@ -193,7 +193,7 @@ def test_build_bwm_ephys_dataset_small_synthetic(tmp_path: Path, monkeypatch: py
     _write_spike_files(revision_dir)
     _write_waveform_files(revision_dir)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_ephys.build_bwm_ephys_dataset(
         bwm_ephys.BuildConfig(
@@ -211,7 +211,7 @@ def test_build_bwm_ephys_dataset_small_synthetic(tmp_path: Path, monkeypatch: py
     assert outputs.spikes_store_path.exists()
     assert (outputs.spikes_store_path / "pid-1" / "meta.json").exists()
     assert not outputs.wheel_store_path.exists()
-    assert not outputs.dlc_store_path.exists()
+    assert not outputs.pose_store_path.exists()
 
     shard = bwm_ephys.load_spike_shard(outputs.spikes_store_path / "pid-1")
     assert shard["spike_times_delta_ticks"].dtype == np.uint16

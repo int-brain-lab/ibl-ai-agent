@@ -12,13 +12,15 @@ The build is allowed to complete as a **partial dataset** when some sessions
 lack wheel or pose assets; those sessions are recorded in the availability
 tables and the build report instead of aborting the whole release.
 
-Pose naming note: current upstream IBL BWM releases include Lightning Pose
-estimates where available. The current local `bwm_behavior` schema keeps legacy
-`dlc_*` table, column, and compression-profile names, such as
-`metadata/dlc_availability.parquet`, `features/dlc_trial_features.parquet`, and
-`dlc_present`, for compatibility with existing built datasets and ALF naming.
-Use "pose" or "LP pose" in prose unless referring to an exact legacy path,
-column, API, or compression-profile name.
+Pose naming note: per camera, the build prefers Lightning Pose over DeepLabCut
+whenever both trackers' datasets are present for a session (measured coverage:
+LP available for 437/437 leftCamera, 433/433 rightCamera, 253/260 bodyCamera
+sessions with any tracker; only 8 camera-instances are DLC-only). The local
+`bwm_behavior` schema uses tracker-agnostic `pose_*` table, column, and
+compression-profile names, such as `metadata/pose_availability.parquet`,
+`features/pose_trial_features.parquet`, and `pose_present`. The `tracker`
+column on `metadata/pose_availability.parquet` records which tracker
+(`lightningPose` or `dlc`) was actually used for each `(eid, camera)` row.
 
 Current implemented version:
 - dataset name: `bwm_behavior`
@@ -27,7 +29,7 @@ Current implemented version:
 - inspect command: `uv run ibl-ai-agent inspect-bwm-behavior`
 - build command: `uv run ibl-ai-agent build-bwm-behavior`
 - refresh/ensure command: `uv run ibl-ai-agent refresh-bwm-behavior`
-- current compression profile: `aggressive-dlc-delta-wheel-native-left60-right60-body30`
+- current compression profile: `aggressive-pose-delta-wheel-native-left60-right60-body30`
 
 ## Current implemented layout
 
@@ -38,11 +40,11 @@ Current implemented version:
     trials.parquet
     events.parquet
     wheel_availability.parquet
-    dlc_availability.parquet
+    pose_availability.parquet
   features/
     trial_behavior_features.parquet
     wheel_trial_features.parquet
-    dlc_trial_features.parquet
+    pose_trial_features.parquet
     event_aligned_behavior_features.parquet
     behavior_session_features.parquet
     movement_state_epochs.parquet
@@ -76,7 +78,7 @@ Current columns include:
 - `n_trials`
 - `n_included_trials`
 - `wheel_present`
-- `dlc_present`
+- `pose_present`
 - `present_cameras`
 
 ### `metadata/trials.parquet`
@@ -112,16 +114,17 @@ Current columns:
 - `t_start`
 - `t_end`
 
-### `metadata/dlc_availability.parquet`
+### `metadata/pose_availability.parquet`
 One row per `(eid, camera)` describing camera pose availability.
 
 Current columns:
 - `eid`
 - `camera`
-- `dlc_present`
+- `pose_present`
 - `n_frames`
 - `t_start`
 - `t_end`
+- `tracker` (`lightningPose` or `dlc`; the tracker actually used for that camera/session)
 
 ## Feature tables
 
@@ -156,7 +159,7 @@ Current columns:
 Current window semantics:
 - `window_spec = stimOn:response`
 
-### `features/dlc_trial_features.parquet`
+### `features/pose_trial_features.parquet`
 One row per `(eid, trial_id, camera)` for compact pose summaries.
 
 Current columns:
@@ -164,7 +167,7 @@ Current columns:
 - `trial_id`
 - `camera`
 - `window_spec`
-- `dlc_present`
+- `pose_present`
 - `feature_mean`
 - `feature_peak`
 
@@ -211,7 +214,7 @@ Current columns:
 - `median_reaction_time`
 - `median_movement_time`
 - `wheel_present`
-- `dlc_present`
+- `pose_present`
 
 ### `features/movement_state_epochs.parquet`
 One row per detected wheel movement epoch.
@@ -291,16 +294,16 @@ Current release profile:
 - `bodyCamera` retained at `30 Hz`
 - aggressive delta/quantized value encoding for wheel and pose arrays
 
-Motion-energy note:
-- the current `1.1.0` behavior build stores pose feature matrices where source
-  files were present, but does not expose whisker motion energy or body motion
-  energy as named primary signals
-- the builder can ingest timestamp-aligned camera `.ROIMotionEnergy.npy` files
-  when they are present in the local source cache, but the current local shard
-  metadata inspected on 2026-05-19 did not contain motion-energy columns
-- a future behavior release should store named motion-energy signals explicitly
-  instead of only folding all camera numeric arrays into generic pose magnitude
-  summaries
+Motion-energy and pupil note:
+- whisker/body motion energy (`whiskerMotionEnergy`, `bodyMotionEnergy`) and left-camera
+  pupil diameter are downstream estimations from pose tracking, so they are sourced via
+  `brainbox.io.one.SessionLoader.load_motion_energy`/`load_pupil` alongside the pose
+  keypoints (rather than a raw `.features.pqt`/`.ROIMotionEnergy.npy` glob) and folded
+  into each camera's `features` matrix when their timestamps line up with the pose
+  timestamps
+- when a source's timestamps do not line up with the camera's pose timestamps, that
+  source is recorded in the shard's per-camera `skipped_sources` list instead of being
+  silently dropped
 
 ## Storage choices
 

@@ -11,15 +11,30 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [bwm_behavior 1.2.0] - 2026-07-05
+## [bwm_behavior 2.0.0] - 2026-07-11
 
 ### Added
 - Wheel data now available for ~73 previously-missing sessions (of 458).
+- `tracker` column on `metadata/pose_availability.parquet` recording which tracker
+  (`lightningPose` or `dlc`) was used for each `(eid, camera)` row.
 
 ### Changed
 - Wheel `timestamps`/`position`/`velocity` are now on a uniform 100 Hz grid with
   filtered velocity, replacing the earlier irregular sampling. Re-validate
   wheel-based analyses.
+- Pose tracker source now prefers Lightning Pose over DeepLabCut per camera
+  (measured coverage: LP available for 437/437 leftCamera, 433/433 rightCamera,
+  253/260 bodyCamera sessions with any tracker; only 8 camera-instances total are
+  DLC-only).
+- Whisker/body motion energy and left-camera pupil diameter are now sourced via
+  `brainbox.io.one.SessionLoader.load_motion_energy`/`load_pupil` instead of a raw
+  `.features.pqt`/`.ROIMotionEnergy.npy` glob, since both are downstream
+  estimations from pose tracking.
+- All `dlc_*` tables, columns, and compression-strategy names are renamed to
+  tracker-agnostic `pose_*` (e.g. `metadata/dlc_availability.parquet` ->
+  `metadata/pose_availability.parquet`, `balanced-dlc-delta` ->
+  `balanced-pose-delta`). This is a breaking rename; there is no backward-compat
+  shim. Re-validate any analysis referencing the old `dlc_*` names.
 
 ---
 

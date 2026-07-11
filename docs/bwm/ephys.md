@@ -774,11 +774,7 @@ Recommended representation:
 - summary features in Parquet
 
 Recommended location:
-- `dlc/by_session.zarr/`
-
-Naming note: `dlc/` is a legacy path name in this future-looking sketch. Use
-pose/LP terminology in prose unless referring to exact historical paths or
-schema names.
+- `pose/by_session.zarr/`
 
 Potential contents:
 - timestamps
@@ -951,7 +947,7 @@ Strongly recommended:
 - `features/trial_features.parquet`
 
 Optional in later iterations:
-- `dlc/by_session.zarr`
+- `pose/by_session.zarr`
 - `features/psth_features.parquet`
 - aggregate summary tables
 

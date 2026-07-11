@@ -1,11 +1,12 @@
-"""Validate an extracted bwm_behavior release archive (issue #18 wheel fix).
+"""Validate an extracted bwm_behavior release archive (issue #18 wheel fix, issue #19 pose rename).
 
-Checks version strings, table presence/manifest completeness, and that the
-wheel fix landed: recovered wheel-session count plus sampled shards carrying a
-uniform-100 Hz ``wheel.velocity``.
+Checks version strings, table presence/manifest completeness, that the wheel
+fix landed (recovered wheel-session count plus sampled shards carrying a
+uniform-100 Hz ``wheel.velocity``), and that the pose tracker column is
+populated.
 
 Usage:
-    uv run python scripts/validate_bwm_behavior_release.py reports/datasets/bwm_behavior/1.2.0
+    uv run python scripts/validate_bwm_behavior_release.py reports/datasets/bwm_behavior/2.0.0
 """
 
 from __future__ import annotations
@@ -18,13 +19,13 @@ import numpy as np
 import pandas as pd
 import yaml
 
-VERSION = "1.2.0"
+VERSION = "2.0.0"
 WHEEL_FS_HZ = 100.0
 TABLES = (
     "metadata/sessions", "metadata/trials", "metadata/events",
-    "metadata/wheel_availability", "metadata/dlc_availability",
+    "metadata/wheel_availability", "metadata/pose_availability",
     "features/trial_behavior_features", "features/wheel_trial_features",
-    "features/dlc_trial_features", "features/event_aligned_behavior_features",
+    "features/pose_trial_features", "features/event_aligned_behavior_features",
     "features/behavior_session_features", "features/movement_state_epochs",
     "features/quiescence_state_epochs", "features/behavior_state_session_features",
 )
@@ -56,6 +57,11 @@ def validate(root: Path, *, min_wheel_sessions: int = 450, sample: int = 25) -> 
     availability = pd.read_parquet(root / "metadata" / "wheel_availability.parquet")
     present = int(availability["wheel_present"].fillna(False).astype(bool).sum())
     req(present >= min_wheel_sessions, f"only {present} wheel sessions (expected >= {min_wheel_sessions})")
+
+    pose_availability = pd.read_parquet(root / "metadata" / "pose_availability.parquet")
+    req("tracker" in pose_availability.columns, "pose_availability.parquet is missing the tracker column")
+    present_trackers = set(pose_availability.loc[pose_availability["pose_present"], "tracker"].dropna().unique())
+    req(present_trackers <= {"lightningPose", "dlc"}, f"unexpected tracker values: {present_trackers}")
 
     from ibl_ai_agent.datasets import bwm_behavior
 

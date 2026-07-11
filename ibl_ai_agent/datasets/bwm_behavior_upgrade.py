@@ -19,8 +19,8 @@ from ibl_ai_agent.datasets import bwm_behavior, bwm_behavior_compression, bwm_sh
 
 DATASET_NAME = "bwm_behavior"
 SOURCE_DATASET_VERSION = "1.0.0"
-TARGET_DATASET_VERSION = "1.2.0"
-COMPRESSION_PROFILE = "aggressive-dlc-delta-wheel-native-left60-right60-body30"
+TARGET_DATASET_VERSION = "2.0.0"
+COMPRESSION_PROFILE = "aggressive-pose-delta-wheel-native-left60-right60-body30"
 TARGET_SIGNAL_CONTAINER_FORMAT = "zip_semantic_shards_v2"
 DEFAULT_UPGRADE_JOBS = max(1, (os.cpu_count() or 2) // 2)
 PROGRESS_UPDATE_EVERY = 10
@@ -34,10 +34,10 @@ class UpgradeOutputs:
     trials_path: Path
     events_path: Path
     wheel_availability_path: Path
-    dlc_availability_path: Path
+    pose_availability_path: Path
     trial_behavior_features_path: Path
     wheel_trial_features_path: Path
-    dlc_trial_features_path: Path
+    pose_trial_features_path: Path
     event_aligned_behavior_features_path: Path
     behavior_session_features_path: Path
     movement_state_epochs_path: Path
@@ -88,10 +88,10 @@ def upgrade_bwm_behavior_dataset_compression(
             trials_path=outputs.trials_path,
             events_path=outputs.events_path,
             wheel_availability_path=outputs.wheel_availability_path,
-            dlc_availability_path=outputs.dlc_availability_path,
+            pose_availability_path=outputs.pose_availability_path,
             trial_behavior_features_path=outputs.trial_behavior_features_path,
             wheel_trial_features_path=outputs.wheel_trial_features_path,
-            dlc_trial_features_path=outputs.dlc_trial_features_path,
+            pose_trial_features_path=outputs.pose_trial_features_path,
             event_aligned_behavior_features_path=outputs.event_aligned_behavior_features_path,
             behavior_session_features_path=outputs.behavior_session_features_path,
             movement_state_epochs_path=outputs.movement_state_epochs_path,
@@ -123,6 +123,14 @@ def upgrade_bwm_behavior_dataset_compression(
         _refresh_behavior_metadata_from_shards(dataset_dir=work_dir, outputs=outputs, jobs=jobs, verbose=verbose)
         _refresh_sidecars(dataset_dir=work_dir, outputs=outputs, source_dataset_dir=source_dataset_dir, elapsed_s=perf_counter() - started_at)
         if work_dir != target_dir:
+            # Source and target may now share a directory name (e.g. the raw
+            # DATASET_VERSION build and the compressed TARGET_DATASET_VERSION
+            # release are both stamped "2.0.0" for the combined #18/#19
+            # release). Everything needed from an existing target_dir has
+            # already been hardlink-copied into work_dir above, so it is safe
+            # to clear a stale/duplicate target_dir before the final rename.
+            if target_dir.exists():
+                shutil.rmtree(target_dir)
             work_dir.rename(target_dir)
         _write_upgrade_state(target_dir, {"status": "complete", "updated_at": bwm_shared.now_iso(), "jobs": int(max(1, jobs))})
     except Exception as exc:
@@ -136,10 +144,10 @@ def upgrade_bwm_behavior_dataset_compression(
         trials_path=outputs.trials_path,
         events_path=outputs.events_path,
         wheel_availability_path=outputs.wheel_availability_path,
-        dlc_availability_path=outputs.dlc_availability_path,
+        pose_availability_path=outputs.pose_availability_path,
         trial_behavior_features_path=outputs.trial_behavior_features_path,
         wheel_trial_features_path=outputs.wheel_trial_features_path,
-        dlc_trial_features_path=outputs.dlc_trial_features_path,
+        pose_trial_features_path=outputs.pose_trial_features_path,
         event_aligned_behavior_features_path=outputs.event_aligned_behavior_features_path,
         behavior_session_features_path=outputs.behavior_session_features_path,
         movement_state_epochs_path=outputs.movement_state_epochs_path,
@@ -248,38 +256,38 @@ def _refresh_behavior_metadata_from_shards(*, dataset_dir: Path, outputs: bwm_be
         bwm_behavior_compression._extend_feature_row_buckets(rows, cache_rows)
     (
         wheel_availability_df,
-        dlc_availability_df,
+        pose_availability_df,
         wheel_trial_features_df,
-        dlc_trial_features_df,
+        pose_trial_features_df,
         event_aligned_behavior_features_df,
         movement_state_epochs_df,
         quiescence_state_epochs_df,
         behavior_state_session_features_df,
     ) = bwm_behavior_compression._coerce_feature_tables(bwm_behavior_compression._feature_tables_from_rows(rows))
 
-    sessions_df = sessions_df.drop(columns=[col for col in ("wheel_present", "dlc_present", "present_cameras") if col in sessions_df.columns])
+    sessions_df = sessions_df.drop(columns=[col for col in ("wheel_present", "pose_present", "present_cameras") if col in sessions_df.columns])
     sessions_df = sessions_df.merge(wheel_availability_df[["eid", "wheel_present"]].drop_duplicates("eid"), on="eid", how="left")
-    dlc_session_presence = dlc_availability_df.groupby("eid")["dlc_present"].max().rename("dlc_present") if not dlc_availability_df.empty else pd.Series(dtype=bool)
-    if not dlc_session_presence.empty:
-        sessions_df = sessions_df.merge(dlc_session_presence, on="eid", how="left")
+    pose_session_presence = pose_availability_df.groupby("eid")["pose_present"].max().rename("pose_present") if not pose_availability_df.empty else pd.Series(dtype=bool)
+    if not pose_session_presence.empty:
+        sessions_df = sessions_df.merge(pose_session_presence, on="eid", how="left")
     camera_lists = (
-        dlc_availability_df.loc[dlc_availability_df["dlc_present"]]
+        pose_availability_df.loc[pose_availability_df["pose_present"]]
         .groupby("eid")["camera"]
         .apply(lambda s: sorted({str(v) for v in s if str(v)}))
         .rename("present_cameras")
-        if not dlc_availability_df.empty
+        if not pose_availability_df.empty
         else pd.Series(dtype=object)
     )
     if not camera_lists.empty:
         sessions_df = sessions_df.merge(camera_lists, on="eid", how="left")
     sessions_df["wheel_present"] = sessions_df.get("wheel_present", False).fillna(False).astype(bool)
-    sessions_df["dlc_present"] = sessions_df.get("dlc_present", False).fillna(False).astype(bool)
+    sessions_df["pose_present"] = sessions_df.get("pose_present", False).fillna(False).astype(bool)
     sessions_df["present_cameras"] = sessions_df.get("present_cameras", [[] for _ in range(len(sessions_df))]).apply(lambda x: x if isinstance(x, list) else [])
     behavior_session_features_df = bwm_behavior._build_behavior_session_features(
         sessions_df=sessions_df,
         trial_behavior_features_df=trial_behavior_features_df,
         wheel_availability_df=wheel_availability_df,
-        dlc_availability_df=dlc_availability_df,
+        pose_availability_df=pose_availability_df,
     )
 
     _write_refreshed_metadata_tables(
@@ -287,10 +295,10 @@ def _refresh_behavior_metadata_from_shards(*, dataset_dir: Path, outputs: bwm_be
         outputs=outputs,
         sessions_df=sessions_df,
         wheel_availability_df=wheel_availability_df,
-        dlc_availability_df=dlc_availability_df,
+        pose_availability_df=pose_availability_df,
         trial_behavior_features_df=trial_behavior_features_df,
         wheel_trial_features_df=wheel_trial_features_df,
-        dlc_trial_features_df=dlc_trial_features_df,
+        pose_trial_features_df=pose_trial_features_df,
         event_aligned_behavior_features_df=event_aligned_behavior_features_df,
         behavior_session_features_df=behavior_session_features_df,
         movement_state_epochs_df=movement_state_epochs_df,
@@ -314,9 +322,9 @@ def refresh_upgraded_bwm_behavior_dataset_from_shards(
     trial_behavior_features_df = bwm_behavior._compute_trial_behavior_features(trials_df)
     (
         wheel_availability_df,
-        dlc_availability_df,
+        pose_availability_df,
         wheel_trial_features_df,
-        dlc_trial_features_df,
+        pose_trial_features_df,
         event_aligned_behavior_features_df,
         movement_state_epochs_df,
         quiescence_state_epochs_df,
@@ -327,29 +335,29 @@ def refresh_upgraded_bwm_behavior_dataset_from_shards(
         verbose=verbose,
         jobs=jobs,
     )
-    sessions_df = sessions_df.drop(columns=[col for col in ("wheel_present", "dlc_present", "present_cameras") if col in sessions_df.columns], errors="ignore")
+    sessions_df = sessions_df.drop(columns=[col for col in ("wheel_present", "pose_present", "present_cameras") if col in sessions_df.columns], errors="ignore")
     sessions_df = sessions_df.merge(wheel_availability_df[["eid", "wheel_present"]].drop_duplicates("eid"), on="eid", how="left")
-    dlc_session_presence = dlc_availability_df.groupby("eid")["dlc_present"].max().rename("dlc_present") if not dlc_availability_df.empty else pd.Series(dtype=bool)
-    if not dlc_session_presence.empty:
-        sessions_df = sessions_df.merge(dlc_session_presence, on="eid", how="left")
+    pose_session_presence = pose_availability_df.groupby("eid")["pose_present"].max().rename("pose_present") if not pose_availability_df.empty else pd.Series(dtype=bool)
+    if not pose_session_presence.empty:
+        sessions_df = sessions_df.merge(pose_session_presence, on="eid", how="left")
     camera_lists = (
-        dlc_availability_df.loc[dlc_availability_df["dlc_present"]]
+        pose_availability_df.loc[pose_availability_df["pose_present"]]
         .groupby("eid")["camera"]
         .apply(lambda s: sorted({str(v) for v in s if str(v)}))
         .rename("present_cameras")
-        if not dlc_availability_df.empty
+        if not pose_availability_df.empty
         else pd.Series(dtype=object)
     )
     if not camera_lists.empty:
         sessions_df = sessions_df.merge(camera_lists, on="eid", how="left")
     sessions_df["wheel_present"] = sessions_df.get("wheel_present", False).fillna(False).astype(bool)
-    sessions_df["dlc_present"] = sessions_df.get("dlc_present", False).fillna(False).astype(bool)
+    sessions_df["pose_present"] = sessions_df.get("pose_present", False).fillna(False).astype(bool)
     sessions_df["present_cameras"] = sessions_df.get("present_cameras", [[] for _ in range(len(sessions_df))]).apply(lambda x: x if isinstance(x, list) else [])
     behavior_session_features_df = bwm_behavior._build_behavior_session_features(
         sessions_df=sessions_df,
         trial_behavior_features_df=trial_behavior_features_df,
         wheel_availability_df=wheel_availability_df,
-        dlc_availability_df=dlc_availability_df,
+        pose_availability_df=pose_availability_df,
     )
     if write_tables is None:
         write_tables = set(bwm_behavior.EXPECTED_TABLE_OUTPUT_ATTRS.keys()) - {"trials", "events"}
@@ -358,10 +366,10 @@ def refresh_upgraded_bwm_behavior_dataset_from_shards(
         outputs=outputs,
         sessions_df=sessions_df,
         wheel_availability_df=wheel_availability_df,
-        dlc_availability_df=dlc_availability_df,
+        pose_availability_df=pose_availability_df,
         trial_behavior_features_df=trial_behavior_features_df,
         wheel_trial_features_df=wheel_trial_features_df,
-        dlc_trial_features_df=dlc_trial_features_df,
+        pose_trial_features_df=pose_trial_features_df,
         event_aligned_behavior_features_df=event_aligned_behavior_features_df,
         behavior_session_features_df=behavior_session_features_df,
         movement_state_epochs_df=movement_state_epochs_df,
@@ -387,10 +395,10 @@ def _write_refreshed_metadata_tables(
     outputs: bwm_behavior.BuildOutputs,
     sessions_df: pd.DataFrame,
     wheel_availability_df: pd.DataFrame,
-    dlc_availability_df: pd.DataFrame,
+    pose_availability_df: pd.DataFrame,
     trial_behavior_features_df: pd.DataFrame,
     wheel_trial_features_df: pd.DataFrame,
-    dlc_trial_features_df: pd.DataFrame,
+    pose_trial_features_df: pd.DataFrame,
     event_aligned_behavior_features_df: pd.DataFrame,
     behavior_session_features_df: pd.DataFrame,
     movement_state_epochs_df: pd.DataFrame,
@@ -402,10 +410,10 @@ def _write_refreshed_metadata_tables(
     table_frames = {
         "sessions": sessions_df,
         "wheel_availability": wheel_availability_df,
-        "dlc_availability": dlc_availability_df,
+        "pose_availability": pose_availability_df,
         "trial_behavior_features": trial_behavior_features_df,
         "wheel_trial_features": wheel_trial_features_df,
-        "dlc_trial_features": dlc_trial_features_df,
+        "pose_trial_features": pose_trial_features_df,
         "event_aligned_behavior_features": event_aligned_behavior_features_df,
         "behavior_session_features": behavior_session_features_df,
         "movement_state_epochs": movement_state_epochs_df,
@@ -424,7 +432,7 @@ def _write_refreshed_metadata_tables(
                 "compression_profile": COMPRESSION_PROFILE,
                 "trial_behavior_feature_rows": int(len(trial_behavior_features_df)),
                 "wheel_trial_feature_rows": int(len(wheel_trial_features_df)),
-                "dlc_trial_feature_rows": int(len(dlc_trial_features_df)),
+                "pose_trial_feature_rows": int(len(pose_trial_features_df)),
                 "event_aligned_behavior_feature_rows": int(len(event_aligned_behavior_features_df)),
                 "behavior_session_feature_rows": int(len(behavior_session_features_df)),
                 "movement_state_epoch_rows": int(len(movement_state_epochs_df)),
@@ -472,10 +480,10 @@ def _build_schema(outputs: bwm_behavior.BuildOutputs) -> dict[str, Any]:
             "trials": {"path": str(outputs.trials_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id"]},
             "events": {"path": str(outputs.events_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "event_id"]},
             "wheel_availability": {"path": str(outputs.wheel_availability_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid"]},
-            "dlc_availability": {"path": str(outputs.dlc_availability_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "camera"]},
+            "pose_availability": {"path": str(outputs.pose_availability_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "camera"]},
             "trial_behavior_features": {"path": str(outputs.trial_behavior_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id"]},
             "wheel_trial_features": {"path": str(outputs.wheel_trial_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id", "window_spec"]},
-            "dlc_trial_features": {"path": str(outputs.dlc_trial_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id", "camera", "window_spec"]},
+            "pose_trial_features": {"path": str(outputs.pose_trial_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id", "camera", "window_spec"]},
             "event_aligned_behavior_features": {"path": str(outputs.event_aligned_behavior_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "trial_id", "signal_name", "event_name", "window_spec"]},
             "behavior_session_features": {"path": str(outputs.behavior_session_features_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid"]},
             "movement_state_epochs": {"path": str(outputs.movement_state_epochs_path.relative_to(outputs.dataset_dir)), "primary_key": ["eid", "movement_id"]},
@@ -520,9 +528,9 @@ def _build_report(*, dataset_dir: Path, outputs: bwm_behavior.BuildOutputs, beha
         "row_counts": {
             "sessions": int(len(pd.read_parquet(outputs.sessions_path))),
             "wheel_availability": int(len(pd.read_parquet(outputs.wheel_availability_path))),
-            "dlc_availability": int(len(pd.read_parquet(outputs.dlc_availability_path))),
+            "pose_availability": int(len(pd.read_parquet(outputs.pose_availability_path))),
             "wheel_trial_features": int(len(pd.read_parquet(outputs.wheel_trial_features_path))),
-            "dlc_trial_features": int(len(pd.read_parquet(outputs.dlc_trial_features_path))),
+            "pose_trial_features": int(len(pd.read_parquet(outputs.pose_trial_features_path))),
             "event_aligned_behavior_features": int(len(pd.read_parquet(outputs.event_aligned_behavior_features_path))),
             "behavior_session_features": int(len(pd.read_parquet(outputs.behavior_session_features_path))),
             "movement_state_epochs": int(len(pd.read_parquet(outputs.movement_state_epochs_path))),
@@ -541,7 +549,7 @@ def _build_summary(*, outputs: bwm_behavior.BuildOutputs, behavior_stats: dict[s
             f"- Compression profile: `{COMPRESSION_PROFILE}`",
             f"- Session shards written: {behavior_stats['sessions_written']:,}",
             f"- Wheel sessions written: {behavior_stats['wheel_sessions_written']:,}",
-            f"- DLC sessions written: {behavior_stats['dlc_sessions_written']:,}",
+            f"- Pose sessions written: {behavior_stats['pose_sessions_written']:,}",
             f"- Movement state epoch rows: {len(pd.read_parquet(outputs.movement_state_epochs_path)):,}",
             f"- Quiescence state epoch rows: {len(pd.read_parquet(outputs.quiescence_state_epochs_path)):,}",
             f"- Schema: `{outputs.schema_path}`",
