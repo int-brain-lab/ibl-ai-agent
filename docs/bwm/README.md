@@ -23,13 +23,14 @@ behavior summaries.
 - Config key: `datasets.bwm_behavior.root`
 - Version: `2.0.0`
 - Current compression profile: `aggressive-pose-delta-wheel-native-left60-right60-body30`
-- Approx. size on disk: `3.5G`
-- Approx. file count: `476`
+- Approx. size on disk: `5.2G`
+- Public archive (tar) size: `2.9G`
+- Approx. file count: `480`
 - Sessions: `459`
 - Trials: `295,920`
-- Session shards written: `458`
-- Wheel sessions written: `396`
-- Pose sessions written: `453`
+- Session shards written: `459`
+- Wheel sessions written: `459` (100%)
+- Pose sessions written: `444` (96.7%)
 - Main contents:
   - `metadata/sessions.parquet`
   - `metadata/trials.parquet`
@@ -47,11 +48,15 @@ behavior summaries.
 
 Pose naming note: per camera, the build prefers Lightning Pose over DeepLabCut
 whenever both trackers' datasets are present for a session (measured coverage:
-LP available for 437/437 leftCamera, 433/433 rightCamera, 253/260 bodyCamera
-sessions with any tracker; only 8 camera-instances are DLC-only). The local
-schema uses tracker-agnostic `pose_*` table, column, and compression-profile
-names, and `metadata/pose_availability.parquet` records which tracker
-(`lightningPose` or `dlc`) was used per camera/session via its `tracker` column.
+LP available for 436/437 leftCamera, 432/432 rightCamera, 253/260 bodyCamera
+sessions with any tracker; only 8 camera-instances total are DLC-only: 1
+leftCamera, 7 bodyCamera). The local schema uses tracker-agnostic `pose_*`
+table, column, and compression-profile names, and
+`metadata/pose_availability.parquet` records which tracker (`lightningPose` or
+`dlc`) was used per camera/session via its `tracker` column. Pose likelihood is
+never thresholded (`likelihood_thr=0`), matching the pre-2.0.0 DLC-glob
+behavior; low-confidence keypoint estimates are kept, with the `_likelihood`
+column available for downstream filtering.
 
 Best detailed references:
 - [Dataset spec](./behavior.md)

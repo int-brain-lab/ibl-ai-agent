@@ -14,18 +14,33 @@ tables and the build report instead of aborting the whole release.
 
 Pose naming note: per camera, the build prefers Lightning Pose over DeepLabCut
 whenever both trackers' datasets are present for a session (measured coverage:
-LP available for 437/437 leftCamera, 433/433 rightCamera, 253/260 bodyCamera
-sessions with any tracker; only 8 camera-instances are DLC-only). The local
-`bwm_behavior` schema uses tracker-agnostic `pose_*` table, column, and
-compression-profile names, such as `metadata/pose_availability.parquet`,
-`features/pose_trial_features.parquet`, and `pose_present`. The `tracker`
-column on `metadata/pose_availability.parquet` records which tracker
-(`lightningPose` or `dlc`) was actually used for each `(eid, camera)` row.
+LP available for 436/437 leftCamera, 432/432 rightCamera, 253/260 bodyCamera
+sessions with any tracker; only 8 camera-instances total are DLC-only: 1
+leftCamera, 7 bodyCamera). The local `bwm_behavior` schema uses tracker-agnostic
+`pose_*` table, column, and compression-profile names, such as
+`metadata/pose_availability.parquet`, `features/pose_trial_features.parquet`,
+and `pose_present`. The `tracker` column on `metadata/pose_availability.parquet`
+records which tracker (`lightningPose` or `dlc`) was actually used for each
+`(eid, camera)` row.
+
+Likelihood note: pose keypoint estimates are never thresholded by confidence
+(`likelihood_thr=0` is passed to `SessionLoader.load_pose`), matching the
+pre-2.0.0 DLC-glob behavior which also never thresholded. This is a deliberate
+choice made after finding that Lightning Pose and DeepLabCut can disagree
+sharply on confidence for the same keypoint/video (e.g. one session's LP
+`nose_tip_likelihood` on rightCamera had median 0.0013 while DLC's own
+confidence for the same keypoint was median 1.0); rather than pick a threshold
+that silently changes coverage relative to the old dataset, low-confidence
+estimates are kept and the `_likelihood` column is exposed for callers who want
+to filter downstream. Note `SessionLoader.load_pose`'s docstring is misleading
+here: it claims `likelihood_thr=1` "skips thresholding", but that actually NaNs
+every row; `likelihood_thr=0` is the value that truly disables it.
 
 Current implemented version:
 - dataset name: `bwm_behavior`
-- dataset version: `1.1.0`
-- final total size on disk: `3.5G`
+- dataset version: `2.0.0`
+- final total size on disk: `5.2G`
+- public archive (tar) size: `2.9G`
 - inspect command: `uv run ibl-ai-agent inspect-bwm-behavior`
 - build command: `uv run ibl-ai-agent build-bwm-behavior`
 - refresh/ensure command: `uv run ibl-ai-agent refresh-bwm-behavior`
@@ -347,10 +362,10 @@ Build from cache (and optional prefetch):
 UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent build-bwm-behavior --output-root <external-data-root>
 ```
 
-Build the `1.1.0` release directly:
+Build the `2.0.0` release directly:
 
 ```bash
-UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent build-bwm-behavior --target-version 1.1.0 --output-root <external-data-root>
+UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent build-bwm-behavior --target-version 2.0.0 --output-root <external-data-root>
 ```
 
 Write or refresh only the release tar/checksum for an already-built dataset:
@@ -362,7 +377,7 @@ UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent write-bwm-release-archive --dataset-r
 The latest release archive is written to:
 
 ```text
-reports/releases/bwm_behavior/1.1.0/bwm_behavior-1.1.0.tar
+reports/releases/bwm_behavior/2.0.0/bwm_behavior-2.0.0.tar
 ```
 
 What the tar is for:

@@ -54,7 +54,7 @@ Before planning a BWM analysis, inspect available configured dataset versions un
 If no local data location is configured and the question can use the public BWM
 derived datasets, tell the user that you are about to download them with
 `UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py`, state that
-`bwm_behavior` is about 3.5 GB and `bwm_ephys` is about 5 GB, state that the
+`bwm_behavior` is about 2.9 GB and `bwm_ephys` is about 5 GB, state that the
 archives will be extracted under `reports/datasets/` and configured in
 `data_locations.local.yaml`, and give the user a chance to stop before running
 the script. If `data_locations.local.yaml` already contains manual BWM roots, do
