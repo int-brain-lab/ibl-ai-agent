@@ -20,7 +20,7 @@ Default route:
 | unit features by region | local units plus `features/unit_features.parquet`, then `bwm_units` | report feature availability and tested-region thresholds |
 | event responses, PSTHs, timing | local units/trials/events, event-response features, spike shards | state event, window, binning, trial mask, response criterion |
 | spike timing, ACG, burstiness, depth/layer | local spike shards plus unit/channel metadata | define bin/window/zero-lag handling and anatomical split |
-| movement, quiescence, wheel, pose, reaction/movement time | `bwm_behavior` features and state epochs plus `bwm_ephys` spikes if neural | do not use movement-onset features as literal movement/quiescence unless labeled proxy; pose tables may have legacy `dlc_*` names |
+| movement, quiescence, wheel, pose, reaction/movement time | `bwm_behavior` features and state epochs plus `bwm_ephys` spikes if neural | do not use movement-onset features as literal movement/quiescence unless labeled proxy; pose tables use tracker-agnostic `pose_*` names with a `tracker` column (`lightningPose` or `dlc`) |
 | passive responsiveness | local passive-response features or passive assets plus spikes | use two-sided semantics unless excitation-only is requested; report passive coverage |
 | population correlation/covariance | local spike counts by declared state/epoch | state bin width, population definition, state segmentation |
 | decoding | BWM decoding examples plus local spike/trial tables | log target, alignment, bins, cross-validation, null baseline |

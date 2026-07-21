@@ -11,6 +11,53 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_behavior 2.0.0] - 2026-07-12
+
+### Added
+- Wheel data now available for all 459 sessions (up from 396/458 in `1.1.0`).
+- `tracker` column on `metadata/pose_availability.parquet` recording which tracker
+  (`lightningPose` or `dlc`) was used for each `(eid, camera)` row.
+
+### Changed
+- Wheel `timestamps`/`position`/`velocity` are now on a uniform 100 Hz grid with
+  filtered velocity, replacing the earlier irregular sampling. Re-validate
+  wheel-based analyses.
+- Pose tracker source now prefers Lightning Pose over DeepLabCut per camera
+  (measured coverage: LP available for 436/437 leftCamera, 432/432 rightCamera,
+  253/260 bodyCamera sessions with any tracker; only 8 camera-instances total are
+  DLC-only: 1 leftCamera, 7 bodyCamera). Pose present for 444/459 sessions overall.
+- Pose keypoint likelihood is **not** thresholded (`likelihood_thr=0` passed to
+  `SessionLoader.load_pose`), matching the pre-2.0.0 DLC-glob behavior, which
+  also never thresholded. This was a deliberate choice, not an oversight: LP and
+  DLC were found to disagree sharply on confidence for the same keypoint/video
+  (one session's LP `nose_tip_likelihood` on rightCamera had median 0.0013 while
+  DLC's own confidence for the same keypoint was median 1.0), and thresholding
+  would have silently changed coverage relative to the old dataset. The
+  `_likelihood` column is retained on every keypoint so downstream consumers can
+  filter themselves. Also note `SessionLoader.load_pose`'s docstring is
+  misleading: it claims `likelihood_thr=1` "skips thresholding", but that
+  actually NaNs every row; `likelihood_thr=0` is the value that truly disables
+  it.
+- Ensemble columns emitted by Lightning Pose for higher-value keypoints
+  (`_ens_median`, `_ens_var`, `_posterior_var` for pupil and paw keypoints) are
+  trimmed from the compressed release to keep the per-keypoint column shape
+  (`x`/`y`/`likelihood`) consistent with the old DLC-only schema. The raw build
+  (pre-compression) keeps the full ensemble columns.
+- Whisker/body motion energy and left-camera pupil diameter are now sourced via
+  `brainbox.io.one.SessionLoader.load_motion_energy`/`load_pupil` instead of a raw
+  `.features.pqt`/`.ROIMotionEnergy.npy` glob, since both are downstream
+  estimations from pose tracking.
+- All `dlc_*` tables, columns, and compression-strategy names are renamed to
+  tracker-agnostic `pose_*` (e.g. `metadata/dlc_availability.parquet` ->
+  `metadata/pose_availability.parquet`, `balanced-dlc-delta` ->
+  `balanced-pose-delta`). This is a breaking rename; there is no backward-compat
+  shim. Re-validate any analysis referencing the old `dlc_*` names.
+- Public archive size dropped from `3.5G` (`1.1.0`) to `2.9G` despite the added
+  wheel/pose coverage, due to the improved compression profile; on-disk
+  (extracted) size is `5.2G`.
+
+---
+
 ## [bwm_ephys 1.2.0] - 2026-06-08
 
 ### Added

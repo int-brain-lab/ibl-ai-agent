@@ -186,11 +186,11 @@ def prefetch_wheel(one_remote: Any, *, eid: str) -> None:
     one_remote.load_object(eid, "wheel", download_only=True)
 
 
-def prefetch_dlc(one_remote: Any, *, eid: str) -> None:
+def prefetch_pose(one_remote: Any, *, eid: str) -> None:
     failures: list[str] = []
     for camera_name in session_assets.CAMERA_NAMES:
         try:
-            one_remote.load_object(eid, camera_name, attribute=["times", "dlc", "features"], download_only=True)
+            one_remote.load_object(eid, camera_name, attribute=["times", "dlc", "lightningPose", "features", "ROIMotionEnergy"], download_only=True)
         except Exception as exc:
             failures.append(f"{camera_name}: {exc}")
     if len(failures) == len(session_assets.CAMERA_NAMES):

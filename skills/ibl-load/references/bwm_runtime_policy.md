@@ -54,7 +54,7 @@ Before planning a BWM analysis, inspect available configured dataset versions un
 If no local data location is configured and the question can use the public BWM
 derived datasets, tell the user that you are about to download them with
 `UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py`, state that
-`bwm_behavior` is about 3.5 GB and `bwm_ephys` is about 5 GB, state that the
+`bwm_behavior` is about 2.9 GB and `bwm_ephys` is about 5 GB, state that the
 archives will be extracted under `reports/datasets/` and configured in
 `data_locations.local.yaml`, and give the user a chance to stop before running
 the script. If `data_locations.local.yaml` already contains manual BWM roots, do
@@ -64,7 +64,7 @@ Prefer the newest version whose schema directly covers the scientific quantity. 
 
 Use dataset surfaces by semantic domain:
 - `bwm_ephys`: units, insertions, sessions, regions, good-unit spike shards, task event-response features, passive ephys features. From version 1.2.0 onward, root-level full-cluster waveforms, waveform features, and autocorrelograms are also available.
-- `bwm_behavior`: trial behavior, wheel movement features, movement/quiescence state epochs, pose features, behavioral event-aligned features. Current schemas may expose pose tables with legacy `dlc_*` names.
+- `bwm_behavior`: trial behavior, wheel movement features, movement/quiescence state epochs, pose features, behavioral event-aligned features. From version 2.0.0 onward, pose tables use tracker-agnostic `pose_*` names, and `metadata/pose_availability.parquet` has a `tracker` column recording whether each camera/session used `lightningPose` or `dlc` (Lightning Pose is preferred per camera whenever available).
 If one answer needs both ephys and behavior surfaces, join only through stable keys such as `eid`, `trial_id`, `pid`, and `cluster_id`, and state the join grain in Methods.
 
 ## Table-surface selection

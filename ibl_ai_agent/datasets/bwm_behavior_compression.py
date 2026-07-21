@@ -15,17 +15,17 @@ import yaml
 from ibl_ai_agent.datasets import bwm_behavior, bwm_shared
 
 
-DEFAULT_DATASET_DIR = Path("reports/datasets/bwm_behavior/1.0.0")
+DEFAULT_DATASET_DIR = Path("reports/datasets/bwm_behavior") / bwm_behavior.RAW_BUILD_DIRNAME
 DEFAULT_STRATEGIES = (
     "lossless-baseline",
     "conservative",
     "balanced",
     "aggressive",
-    "balanced-dlc-delta",
-    "aggressive-dlc-delta",
-    "aggressive-dlc-delta-wheel-native-left60-right60-body30",
-    "aggressive-dlc-delta-wheel100-dlc50",
-    "aggressive-dlc-delta-30hz",
+    "balanced-pose-delta",
+    "aggressive-pose-delta",
+    "aggressive-pose-delta-wheel-native-left60-right60-body30",
+    "aggressive-pose-delta-wheel100-pose50",
+    "aggressive-pose-delta-30hz",
 )
 
 
@@ -54,7 +54,7 @@ class ValidationConfig:
     dataset_dir: Path = DEFAULT_DATASET_DIR
     output_root: Path = Path("reports/profiles")
     max_shards: int = 12
-    strategy_name: str = "aggressive-dlc-delta-30hz"
+    strategy_name: str = "aggressive-pose-delta-30hz"
     selection: str = "spread"
     verbose: bool = True
 
@@ -72,7 +72,7 @@ class FeatureValidationConfig:
     dataset_dir: Path = DEFAULT_DATASET_DIR
     output_root: Path = Path("reports/profiles")
     max_shards: int = 25
-    strategy_name: str = "aggressive-dlc-delta-30hz"
+    strategy_name: str = "aggressive-pose-delta-30hz"
     selection: str = "spread"
     verbose: bool = True
 
@@ -91,7 +91,7 @@ class Strategy:
     name: str
     xy_precision_px: float | None
     xy_delta: bool
-    per_column_dlc: bool
+    per_column_pose: bool
     likelihood_uint8: bool
     likelihood_bits: int
     other_float16: bool
@@ -101,8 +101,8 @@ class Strategy:
     wheel_velocity_precision: float | None
     wheel_velocity_dtype: str = "int16"
     wheel_downsample_rate_hz: float | None = None
-    dlc_downsample_rate_hz: float | None = None
-    dlc_camera_downsample_rates_hz: dict[str, float] | None = None
+    pose_downsample_rate_hz: float | None = None
+    pose_camera_downsample_rates_hz: dict[str, float] | None = None
     fixed_rate_timestamps: bool = False
 
 
@@ -111,7 +111,7 @@ STRATEGIES: dict[str, Strategy] = {
         name="lossless-baseline",
         xy_precision_px=None,
         xy_delta=False,
-        per_column_dlc=False,
+        per_column_pose=False,
         likelihood_uint8=False,
         likelihood_bits=8,
         other_float16=False,
@@ -124,7 +124,7 @@ STRATEGIES: dict[str, Strategy] = {
         name="conservative",
         xy_precision_px=0.1,
         xy_delta=False,
-        per_column_dlc=False,
+        per_column_pose=False,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=True,
@@ -137,7 +137,7 @@ STRATEGIES: dict[str, Strategy] = {
         name="balanced",
         xy_precision_px=0.25,
         xy_delta=False,
-        per_column_dlc=False,
+        per_column_pose=False,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=True,
@@ -150,7 +150,7 @@ STRATEGIES: dict[str, Strategy] = {
         name="aggressive",
         xy_precision_px=0.5,
         xy_delta=False,
-        per_column_dlc=False,
+        per_column_pose=False,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=True,
@@ -159,11 +159,11 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_position_precision=0.001,
         wheel_velocity_precision=0.005,
     ),
-    "balanced-dlc-delta": Strategy(
-        name="balanced-dlc-delta",
+    "balanced-pose-delta": Strategy(
+        name="balanced-pose-delta",
         xy_precision_px=0.25,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=False,
@@ -172,11 +172,11 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_position_precision=0.0005,
         wheel_velocity_precision=0.001,
     ),
-    "aggressive-dlc-delta": Strategy(
-        name="aggressive-dlc-delta",
+    "aggressive-pose-delta": Strategy(
+        name="aggressive-pose-delta",
         xy_precision_px=0.5,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=False,
@@ -185,11 +185,11 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_position_precision=0.001,
         wheel_velocity_precision=0.005,
     ),
-    "aggressive-dlc-delta-wheel-native-left60-right60-body30": Strategy(
-        name="aggressive-dlc-delta-wheel-native-left60-right60-body30",
+    "aggressive-pose-delta-wheel-native-left60-right60-body30": Strategy(
+        name="aggressive-pose-delta-wheel-native-left60-right60-body30",
         xy_precision_px=0.5,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=False,
@@ -197,14 +197,14 @@ STRATEGIES: dict[str, Strategy] = {
         timestamp_tick_s=0.001,
         wheel_position_precision=0.001,
         wheel_velocity_precision=0.005,
-        dlc_camera_downsample_rates_hz={"leftCamera": 60.0, "rightCamera": 60.0, "bodyCamera": 30.0},
+        pose_camera_downsample_rates_hz={"leftCamera": 60.0, "rightCamera": 60.0, "bodyCamera": 30.0},
         fixed_rate_timestamps=True,
     ),
-    "aggressive-dlc-delta-wheel100-dlc50": Strategy(
-        name="aggressive-dlc-delta-wheel100-dlc50",
+    "aggressive-pose-delta-wheel100-pose50": Strategy(
+        name="aggressive-pose-delta-wheel100-pose50",
         xy_precision_px=0.5,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=False,
@@ -214,14 +214,14 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_velocity_precision=0.005,
         wheel_velocity_dtype="int32",
         wheel_downsample_rate_hz=100.0,
-        dlc_downsample_rate_hz=50.0,
+        pose_downsample_rate_hz=50.0,
         fixed_rate_timestamps=True,
     ),
-    "compact-dlc-delta": Strategy(
-        name="compact-dlc-delta",
+    "compact-pose-delta": Strategy(
+        name="compact-pose-delta",
         xy_precision_px=1.0,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=4,
         other_float16=False,
@@ -230,11 +230,11 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_position_precision=0.001,
         wheel_velocity_precision=0.005,
     ),
-    "aggressive-dlc-delta-30hz": Strategy(
-        name="aggressive-dlc-delta-30hz",
+    "aggressive-pose-delta-30hz": Strategy(
+        name="aggressive-pose-delta-30hz",
         xy_precision_px=0.5,
         xy_delta=True,
-        per_column_dlc=True,
+        per_column_pose=True,
         likelihood_uint8=True,
         likelihood_bits=8,
         other_float16=False,
@@ -244,7 +244,7 @@ STRATEGIES: dict[str, Strategy] = {
         wheel_velocity_precision=0.005,
         wheel_velocity_dtype="int32",
         wheel_downsample_rate_hz=30.0,
-        dlc_downsample_rate_hz=30.0,
+        pose_downsample_rate_hz=30.0,
         fixed_rate_timestamps=True,
     ),
 }
@@ -691,9 +691,9 @@ def _feature_rows_for_shard(*, shard_path: Path, trial_groups: dict[str, pd.Data
 def _empty_feature_row_buckets() -> dict[str, list[dict[str, Any]]]:
     return {
         "wheel_availability": [],
-        "dlc_availability": [],
+        "pose_availability": [],
         "wheel_trial_features": [],
-        "dlc_trial_features": [],
+        "pose_trial_features": [],
         "event_aligned_behavior_features": [],
         "movement_state_epochs": [],
         "quiescence_state_epochs": [],
@@ -792,14 +792,15 @@ def _feature_rows_from_session_arrays(
         if timestamps.size == 0 or features.ndim != 2 or features.shape[0] != timestamps.shape[0]:
             continue
         camera_seen = True
-        rows["dlc_availability"].append(
+        rows["pose_availability"].append(
             {
                 "eid": eid,
                 "camera": str(camera_name),
-                "dlc_present": True,
+                "pose_present": True,
                 "n_frames": int(timestamps.size),
                 "t_start": float(timestamps[0]),
                 "t_end": float(timestamps[-1]),
+                "tracker": camera_meta.get("tracker"),
             }
         )
         mag = np.nanmean(np.abs(features.astype(float, copy=False)), axis=1) if features.size else np.asarray([], dtype=float)
@@ -807,19 +808,19 @@ def _feature_rows_from_session_arrays(
         for trial in trial_group.itertuples(index=False):
             stim = _trial_float(trial, "stimOn_times")
             fb = _trial_float(trial, "feedback_times")
-            stats = bwm_behavior._summarize_dlc_window(
+            stats = bwm_behavior._summarize_pose_window(
                 timestamps=timestamps,
                 features=features,
                 start=stim,
                 end=(fb if np.isfinite(fb) else stim),
             )
-            rows["dlc_trial_features"].append(
+            rows["pose_trial_features"].append(
                 {
                     "eid": eid,
                     "trial_id": int(getattr(trial, "trial_id")),
                     "camera": str(camera_name),
                     "window_spec": "stimOn:feedback",
-                    "dlc_present": True,
+                    "pose_present": True,
                     "feature_mean": stats["feature_mean"],
                     "feature_peak": stats["feature_peak"],
                 }
@@ -827,7 +828,7 @@ def _feature_rows_from_session_arrays(
         _append_event_feature_rows(rows["event_aligned_behavior_features"], eid=eid, signal_name=str(camera_name), prepared=prepared_mag, trial_group=trial_group)
 
     if not camera_seen:
-        rows["dlc_availability"].append({"eid": eid, "camera": "", "dlc_present": False, "n_frames": 0, "t_start": np.nan, "t_end": np.nan})
+        rows["pose_availability"].append({"eid": eid, "camera": "", "pose_present": False, "n_frames": 0, "t_start": np.nan, "t_end": np.nan, "tracker": None})
 
     return rows
 
@@ -875,12 +876,15 @@ def _coerce_feature_tables(tables: dict[str, pd.DataFrame]) -> tuple[pd.DataFram
         for col in ("t_start", "t_end"):
             wheel_availability[col] = pd.to_numeric(wheel_availability[col], errors="coerce").astype(np.float32)
 
-    dlc_availability = tables.get("dlc_availability", pd.DataFrame(columns=["eid", "camera", "dlc_present", "n_frames", "t_start", "t_end"]))
-    if not dlc_availability.empty:
-        dlc_availability["n_frames"] = dlc_availability["n_frames"].astype(np.int32)
-        dlc_availability["dlc_present"] = dlc_availability["dlc_present"].astype(bool)
+    pose_availability = tables.get("pose_availability", pd.DataFrame(columns=["eid", "camera", "pose_present", "n_frames", "t_start", "t_end", "tracker"]))
+    if not pose_availability.empty:
+        pose_availability["n_frames"] = pose_availability["n_frames"].astype(np.int32)
+        pose_availability["pose_present"] = pose_availability["pose_present"].astype(bool)
         for col in ("t_start", "t_end"):
-            dlc_availability[col] = pd.to_numeric(dlc_availability[col], errors="coerce").astype(np.float32)
+            pose_availability[col] = pd.to_numeric(pose_availability[col], errors="coerce").astype(np.float32)
+        if "tracker" not in pose_availability.columns:
+            pose_availability["tracker"] = None
+        pose_availability["tracker"] = pose_availability["tracker"].astype(object)
 
     wheel_features = tables.get("wheel_trial_features", pd.DataFrame(columns=["eid", "trial_id", "window_spec", "wheel_present", "movement_onset_time", "movement_peak_time", "movement_direction", "movement_amplitude", "mean_velocity", "max_velocity"]))
     if not wheel_features.empty:
@@ -889,12 +893,12 @@ def _coerce_feature_tables(tables: dict[str, pd.DataFrame]) -> tuple[pd.DataFram
         for col in ("movement_onset_time", "movement_peak_time", "movement_amplitude", "mean_velocity", "max_velocity"):
             wheel_features[col] = pd.to_numeric(wheel_features[col], errors="coerce").astype(np.float32)
 
-    dlc_features = tables.get("dlc_trial_features", pd.DataFrame(columns=["eid", "trial_id", "camera", "window_spec", "dlc_present", "feature_mean", "feature_peak"]))
-    if not dlc_features.empty:
-        dlc_features["trial_id"] = dlc_features["trial_id"].astype(np.int32)
-        dlc_features["dlc_present"] = dlc_features["dlc_present"].astype(bool)
+    pose_features = tables.get("pose_trial_features", pd.DataFrame(columns=["eid", "trial_id", "camera", "window_spec", "pose_present", "feature_mean", "feature_peak"]))
+    if not pose_features.empty:
+        pose_features["trial_id"] = pose_features["trial_id"].astype(np.int32)
+        pose_features["pose_present"] = pose_features["pose_present"].astype(bool)
         for col in ("feature_mean", "feature_peak"):
-            dlc_features[col] = pd.to_numeric(dlc_features[col], errors="coerce").astype(np.float32)
+            pose_features[col] = pd.to_numeric(pose_features[col], errors="coerce").astype(np.float32)
 
     event_features = tables.get("event_aligned_behavior_features", pd.DataFrame(columns=["eid", "trial_id", "signal_name", "event_name", "window_spec", "baseline", "peak", "peak_latency_ms", "mean_response", "modulation_index"]))
     if not event_features.empty:
@@ -922,14 +926,14 @@ def _coerce_feature_tables(tables: dict[str, pd.DataFrame]) -> tuple[pd.DataFram
         for col in ("fraction_time_moving", "fraction_time_quiescent", "median_movement_duration", "median_quiescence_duration"):
             behavior_state_session_features[col] = pd.to_numeric(behavior_state_session_features[col], errors="coerce").astype(np.float32)
 
-    return wheel_availability, dlc_availability, wheel_features, dlc_features, event_features, movement_state_epochs, quiescence_state_epochs, behavior_state_session_features
+    return wheel_availability, pose_availability, wheel_features, pose_features, event_features, movement_state_epochs, quiescence_state_epochs, behavior_state_session_features
 
 
 FEATURE_TABLE_KEYS = {
     "wheel_availability": ["eid"],
-    "dlc_availability": ["eid", "camera"],
+    "pose_availability": ["eid", "camera"],
     "wheel_trial_features": ["eid", "trial_id", "window_spec"],
-    "dlc_trial_features": ["eid", "trial_id", "camera", "window_spec"],
+    "pose_trial_features": ["eid", "trial_id", "camera", "window_spec"],
     "event_aligned_behavior_features": ["eid", "trial_id", "signal_name", "event_name", "window_spec"],
     "movement_state_epochs": ["eid", "movement_id"],
     "quiescence_state_epochs": ["eid", "quiescence_id"],
@@ -1105,8 +1109,8 @@ def _columns_for_array(meta: dict[str, Any], array_name: str) -> list[str] | Non
 def _prepare_candidate_arrays(arrays: dict[str, np.ndarray], *, strategy: Strategy) -> dict[str, np.ndarray]:
     if (
         strategy.wheel_downsample_rate_hz is None
-        and strategy.dlc_downsample_rate_hz is None
-        and not strategy.dlc_camera_downsample_rates_hz
+        and strategy.pose_downsample_rate_hz is None
+        and not strategy.pose_camera_downsample_rates_hz
     ):
         return arrays
 
@@ -1141,9 +1145,9 @@ def _prepare_candidate_arrays(arrays: dict[str, np.ndarray], *, strategy: Strate
 def _downsample_rate_for_signal(signal_name: str, strategy: Strategy) -> float | None:
     if signal_name == "wheel":
         return strategy.wheel_downsample_rate_hz
-    if strategy.dlc_camera_downsample_rates_hz is not None and signal_name in strategy.dlc_camera_downsample_rates_hz:
-        return strategy.dlc_camera_downsample_rates_hz[signal_name]
-    return strategy.dlc_downsample_rate_hz
+    if strategy.pose_camera_downsample_rates_hz is not None and signal_name in strategy.pose_camera_downsample_rates_hz:
+        return strategy.pose_camera_downsample_rates_hz[signal_name]
+    return strategy.pose_downsample_rate_hz
 
 
 def _encode_array_for_storage(
@@ -1222,7 +1226,7 @@ def _encode_feature_matrix_for_storage(
         spec.update({"entry": entry, "encoding": {"kind": "raw_blosc"}})
         return spec
     groups = _feature_column_groups(columns)
-    if strategy.per_column_dlc:
+    if strategy.per_column_pose:
         groups = {f"{group_name}:{idx}:{columns[idx]}": [idx] for group_name, indices in groups.items() for idx in indices}
     group_specs: list[dict[str, Any]] = []
     for group_name, indices in groups.items():
@@ -1470,7 +1474,7 @@ def _encode_feature_matrix(array_name: str, arr: np.ndarray, *, columns: list[st
     reconstructed = np.empty(matrix.shape, dtype=np.float32)
     total_bytes = 0
     groups = _feature_column_groups(columns)
-    if strategy.per_column_dlc:
+    if strategy.per_column_pose:
         groups = {f"{group_name}:{idx}:{columns[idx]}": [idx] for group_name, indices in groups.items() for idx in indices}
     for group_name, indices in groups.items():
         if not indices:
@@ -1499,7 +1503,7 @@ def _encode_feature_matrix(array_name: str, arr: np.ndarray, *, columns: list[st
         part["bytes"] = int(len(payload) + mask_bytes)
         part["payload_bytes"] = int(len(payload))
         part["nan_mask_bytes"] = int(mask_bytes)
-        if strategy.per_column_dlc:
+        if strategy.per_column_pose:
             part["column"] = columns[indices[0]]
         parts.append(part)
         total_bytes += int(part["bytes"])
@@ -1711,7 +1715,7 @@ def _reconstruct_feature_matrix(arr: np.ndarray, *, columns: list[str], strategy
 
     reconstructed = np.empty(matrix.shape, dtype=np.float32)
     groups = _feature_column_groups(columns)
-    if strategy.per_column_dlc:
+    if strategy.per_column_pose:
         groups = {f"{group_name}:{idx}:{columns[idx]}": [idx] for group_name, indices in groups.items() for idx in indices}
     for group_name, indices in groups.items():
         if not indices:
@@ -1825,7 +1829,7 @@ def _validation_row(*, shard: str, array_name: str, signal_class: str, source: n
 
 def _signal_class(array_name: str) -> str:
     if array_name.endswith(".features"):
-        return "dlc_features"
+        return "pose_features"
     if array_name.endswith(".timestamps"):
         return "timestamps"
     if array_name.startswith("wheel."):
@@ -1914,7 +1918,7 @@ def _render_summary(*, dataset_dir: Path, shards: list[Path], summary_df: pd.Dat
             "",
             "- Factors are measured against the current compressed `.blosc` payload sizes inside `sessions/*.zip`, not against raw NumPy bytes.",
             "- Candidate bytes are estimated from in-memory encoded arrays compressed with the existing Blosc zstd/shuffle codec plus NaN masks when needed.",
-            "- `conservative` keeps timestamps/wheel unchanged and quantizes DLC coordinates, likelihoods, and non-coordinate features.",
+            "- `conservative` keeps timestamps/wheel unchanged and quantizes pose coordinates, likelihoods, and non-coordinate features.",
             "- `balanced` and `aggressive` additionally quantize timestamps and wheel signals.",
             "- This profile is read-only: it does not rewrite dataset shards.",
             "",

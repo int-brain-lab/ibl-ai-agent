@@ -56,30 +56,6 @@ def find_camera_file(session_alf: Path, stems: list[str], suffixes: list[str]) -
     return None
 
 
-def find_camera_files(session_alf: Path, stems: list[str], suffixes: list[str]) -> list[Path]:
-    found: list[Path] = []
-    seen: set[Path] = set()
-    for stem in stems:
-        for suffix in suffixes:
-            for candidate in [session_alf / f"{stem}{suffix}", *sorted(session_alf.glob(f"*/{stem}{suffix}"))]:
-                if candidate.exists() and candidate not in seen:
-                    seen.add(candidate)
-                    found.append(candidate)
-    return found
-
-
-def camera_array_name(path: Path) -> str:
-    name = path.name
-    for suffix in (".dlc.npy", ".features.npy", ".times.npy", ".ROIMotionEnergy.npy"):
-        if name.endswith(suffix):
-            return name[:-len(suffix)]
-    if name.endswith(".pqt"):
-        return path.stem
-    if path.suffix == ".npy":
-        return path.stem
-    return name
-
-
 def write_numeric_parquet_columns(*, camera_group: Any, parquet_path: Path, compressor: Any) -> int:
     frame = pd.read_parquet(parquet_path)
     written = 0
@@ -122,14 +98,14 @@ def passive_assets_present(session_dir: Path | None) -> bool:
     return all(path is not None for path in found.values())
 
 
-def dlc_cameras_present(session_alf: Path | None) -> list[str]:
+def pose_cameras_present(session_alf: Path | None) -> list[str]:
     if session_alf is None:
         return []
     present: list[str] = []
     for camera_name in CAMERA_NAMES:
         stems = [camera_name, f"_ibl_{camera_name}"]
         has_times = find_camera_file(session_alf, stems, [".times.npy"]) is not None
-        has_dlc = find_camera_file(session_alf, stems, [".dlc.pqt", ".dlc.npy"]) is not None
-        if has_times and has_dlc:
+        has_pose = find_camera_file(session_alf, stems, [".lightningPose.pqt", ".lightningPose.npy", ".dlc.pqt", ".dlc.npy"]) is not None
+        if has_times and has_pose:
             present.append(camera_name)
     return present

@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from ibl_ai_agent.datasets import bwm_behavior, bwm_simple
-from ibl_ai_agent.datasets.bwm_behavior_upgrade import upgrade_bwm_behavior_dataset_compression
+from ibl_ai_agent.datasets.bwm_behavior_upgrade import TARGET_DATASET_VERSION, upgrade_bwm_behavior_dataset_compression
 from ibl_ai_agent.datasets.bwm_behavior_compression import (
     ProfileConfig,
     FeatureValidationConfig,
@@ -82,12 +82,107 @@ def _write_wheel_files(alf_root: Path) -> None:
     np.save(alf_root / "wheel.position.npy", np.asarray([0.0, 1.0, 1.5], dtype=np.float32))
 
 
-def _write_dlc_files(alf_root: Path) -> None:
+def _write_pose_files(alf_root: Path) -> None:
     np.save(alf_root / "leftCamera.times.npy", np.asarray([0.0, 0.5, 1.0], dtype=np.float64))
+    # Both trackers are written so tests can exercise the prefer-Lightning-Pose,
+    # fallback-to-DLC selection logic in ``_resolve_camera_trackers``.
+    np.save(alf_root / "leftCamera.lightningPose.npy", np.asarray([[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]], dtype=np.float32))
     np.save(alf_root / "leftCamera.dlc.npy", np.asarray([[1.0, 2.0], [1.5, 2.5], [2.0, 3.0]], dtype=np.float32))
     pd.DataFrame({"pupilDiameter": [1.0, 1.1, 1.2], "likelihood": [0.9, 0.8, 0.95]}).to_parquet(
         alf_root / "leftCamera.features.pqt", engine="pyarrow", compression="zstd", index=False
     )
+
+
+@pytest.fixture(autouse=True)
+def _offline_wheel_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Load synthetic wheel from local files so build tests run without ONE.
+
+    Production ``_prepare_wheel_payload`` resolves dataset revisions via ONE;
+    the synthetic fixtures write plain local ``.npy`` files, so this patches the
+    loader with an offline equivalent that applies the same 100 Hz interpolation
+    and Butterworth-filtered velocity as ``SessionLoader.load_wheel``.
+    """
+    from ibl_ai_agent.datasets import bwm_session_assets as sa
+
+    def _loader(*, row: object, cache_root: Path) -> dict:
+        from brainbox.io.one import interpolate_position, velocity_filtered
+
+        alf = sa.resolve_session_alf_dir(cache_root, lab=str(row.lab), subject=str(row.subject), date=str(row.date), session_number=int(row.session_number))
+        timestamps_path = sa.first_existing(alf, sa.WHEEL_TIMESTAMPS_CANDIDATES) if alf is not None else None
+        position_path = sa.first_existing(alf, sa.WHEEL_POSITION_CANDIDATES) if alf is not None else None
+        if timestamps_path is None or position_path is None:
+            return {"status": "missing", "eid": str(row.eid)}
+        raw_t = np.asarray(np.load(timestamps_path), dtype=np.float64)
+        raw_p = np.asarray(np.load(position_path), dtype=np.float64)
+        position, times = interpolate_position(raw_t, raw_p, freq=bwm_behavior.WHEEL_FS_HZ)
+        velocity, _acceleration = velocity_filtered(np.asarray(position, dtype=np.float64), fs=bwm_behavior.WHEEL_FS_HZ, corner_frequency=20, order=8)
+        return {
+            "status": "ok",
+            "eid": str(row.eid),
+            "timestamps": np.asarray(times, dtype=np.float64),
+            "position": np.asarray(position, dtype=np.float64),
+            "velocity": np.asarray(velocity, dtype=np.float32),
+            "fs": float(bwm_behavior.WHEEL_FS_HZ),
+        }
+
+    monkeypatch.setattr(bwm_behavior, "_prepare_wheel_payload", _loader)
+
+
+@pytest.fixture(autouse=True)
+def _offline_pose_payload(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Load synthetic pose/motion-energy/pupil data from local files so build tests run without ONE.
+
+    Production ``_prepare_pose_payload`` resolves per-camera tracker availability via
+    ``one.list_datasets`` and loads data through ``SessionLoader``; the synthetic fixtures write
+    plain local ALF-style files, so this patches the loader with an offline equivalent that
+    prefers ``.lightningPose`` over ``.dlc`` per camera, mirroring ``_resolve_camera_trackers``.
+    """
+    from ibl_ai_agent.datasets import bwm_session_assets as sa
+
+    def _loader(*, row: object, cache_root: Path) -> dict:
+        alf = sa.resolve_session_alf_dir(cache_root, lab=str(row.lab), subject=str(row.subject), date=str(row.date), session_number=int(row.session_number))
+        if alf is None:
+            return {"status": "missing", "eid": str(row.eid)}
+        cameras: dict = {}
+        for camera_name in bwm_behavior.CAMERA_NAMES:
+            stems = [camera_name, f"_ibl_{camera_name}"]
+            times_path = sa.find_camera_file(alf, stems, [".times.npy"])
+            if times_path is None:
+                continue
+            timestamps = np.asarray(np.load(times_path), dtype=np.float64)
+            lp_path = sa.find_camera_file(alf, stems, [".lightningPose.npy", ".lightningPose.pqt"])
+            dlc_path = sa.find_camera_file(alf, stems, [".dlc.npy", ".dlc.pqt"])
+            if lp_path is not None:
+                tracker, pose_path = "lightningPose", lp_path
+            elif dlc_path is not None:
+                tracker, pose_path = "dlc", dlc_path
+            else:
+                continue
+            pose_matrix = np.asarray(np.load(pose_path), dtype=np.float32)
+            matrices = [pose_matrix]
+            columns = [f"bodypart{idx}" for idx in range(pose_matrix.shape[1])]
+            skipped_sources: list[str] = []
+            features_path = sa.find_camera_file(alf, stems, [".features.pqt"])
+            if features_path is not None:
+                feats = pd.read_parquet(features_path)
+                if len(feats) == timestamps.shape[0]:
+                    matrices.append(feats.to_numpy(dtype=np.float32))
+                    columns.extend(list(feats.columns))
+                else:
+                    skipped_sources.append("pupil" if camera_name == "leftCamera" else "motion_energy")
+            features = np.concatenate(matrices, axis=1).astype(np.float32, copy=False)
+            cameras[camera_name] = {
+                "timestamps": timestamps,
+                "features": features,
+                "columns": columns,
+                "tracker": tracker,
+                "skipped_sources": skipped_sources,
+            }
+        if not cameras:
+            return {"status": "missing", "eid": str(row.eid)}
+        return {"status": "ok", "eid": str(row.eid), "cameras": cameras}
+
+    monkeypatch.setattr(bwm_behavior, "_prepare_pose_payload", _loader)
 
 
 def test_refresh_bwm_behavior_features_reuses_existing_session_shards(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -135,13 +230,13 @@ def test_refresh_bwm_behavior_features_reuses_existing_session_shards(tmp_path: 
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1)
     )
 
-    shard_path = outputs.dlc_store_path / "eid-1.zip"
+    shard_path = outputs.pose_store_path / "eid-1.zip"
     before_mtime = shard_path.stat().st_mtime_ns
     refreshed = bwm_behavior.refresh_bwm_behavior_features(dataset_dir=outputs.dataset_dir, cache_root=cache_root, verbose=False)
     assert refreshed.dataset_dir == outputs.dataset_dir
@@ -206,7 +301,7 @@ def test_build_bwm_behavior_dataset_small_synthetic(tmp_path: Path, monkeypatch:
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(
@@ -221,21 +316,21 @@ def test_build_bwm_behavior_dataset_small_synthetic(tmp_path: Path, monkeypatch:
     assert outputs.trials_path.exists()
     assert outputs.events_path.exists()
     assert outputs.wheel_availability_path.exists()
-    assert outputs.dlc_availability_path.exists()
+    assert outputs.pose_availability_path.exists()
     assert outputs.trial_behavior_features_path.exists()
     assert outputs.wheel_trial_features_path.exists()
-    assert outputs.dlc_trial_features_path.exists()
+    assert outputs.pose_trial_features_path.exists()
     assert outputs.event_aligned_behavior_features_path.exists()
     assert outputs.behavior_session_features_path.exists()
     assert outputs.movement_state_epochs_path.exists()
     assert outputs.quiescence_state_epochs_path.exists()
     assert outputs.behavior_state_session_features_path.exists()
     assert outputs.wheel_store_path.exists()
-    assert outputs.dlc_store_path.exists()
-    assert (outputs.dlc_store_path / "eid-1.zip").exists()
+    assert outputs.pose_store_path.exists()
+    assert (outputs.pose_store_path / "eid-1.zip").exists()
 
     provenance = yaml.safe_load(outputs.provenance_path.read_text(encoding="utf-8"))
-    assert provenance["storage"]["dlc_float_dtype"] == "float32"
+    assert provenance["storage"]["pose_float_dtype"] == "float32"
 
     wheel_availability = pd.read_parquet(outputs.wheel_availability_path)
     assert wheel_availability.loc[0, 'wheel_present']
@@ -243,15 +338,19 @@ def test_build_bwm_behavior_dataset_small_synthetic(tmp_path: Path, monkeypatch:
     assert set(['signed_contrast', 'choice_label', 'reaction_time', 'movement_time']).issubset(trial_behavior_features.columns)
     wheel_trial_features = pd.read_parquet(outputs.wheel_trial_features_path)
     assert set(['movement_direction', 'movement_amplitude', 'mean_velocity', 'max_velocity']).issubset(wheel_trial_features.columns)
-    dlc_trial_features = pd.read_parquet(outputs.dlc_trial_features_path)
-    assert set(['camera', 'feature_mean', 'feature_peak']).issubset(dlc_trial_features.columns)
-    assert 'leftCamera' in set(dlc_trial_features['camera'].astype(str))
+    pose_trial_features = pd.read_parquet(outputs.pose_trial_features_path)
+    assert set(['camera', 'feature_mean', 'feature_peak']).issubset(pose_trial_features.columns)
+    assert 'leftCamera' in set(pose_trial_features['camera'].astype(str))
+    pose_availability = pd.read_parquet(outputs.pose_availability_path)
+    assert 'tracker' in pose_availability.columns
+    left_row = pose_availability.loc[pose_availability['camera'] == 'leftCamera'].iloc[0]
+    assert left_row['tracker'] == 'lightningPose'
     event_aligned_behavior_features = pd.read_parquet(outputs.event_aligned_behavior_features_path)
     assert set(['signal_name', 'event_name', 'baseline', 'peak', 'peak_latency_ms', 'modulation_index']).issubset(event_aligned_behavior_features.columns)
     assert 'wheel' in set(event_aligned_behavior_features['signal_name'].astype(str))
     assert 'stimOn' in set(event_aligned_behavior_features['event_name'].astype(str))
     behavior_session_features = pd.read_parquet(outputs.behavior_session_features_path)
-    assert set(['performance', 'median_reaction_time', 'wheel_present', 'dlc_present']).issubset(behavior_session_features.columns)
+    assert set(['performance', 'median_reaction_time', 'wheel_present', 'pose_present']).issubset(behavior_session_features.columns)
     movement_state_epochs = pd.read_parquet(outputs.movement_state_epochs_path)
     assert set(['movement_id', 't_start', 't_end', 'duration_s', 'detector_name']).issubset(movement_state_epochs.columns)
     quiescence_state_epochs = pd.read_parquet(outputs.quiescence_state_epochs_path)
@@ -259,9 +358,10 @@ def test_build_bwm_behavior_dataset_small_synthetic(tmp_path: Path, monkeypatch:
     behavior_state_session_features = pd.read_parquet(outputs.behavior_state_session_features_path)
     assert set(['wheel_present', 'movement_epoch_count', 'quiescence_epoch_count', 'fraction_time_moving']).issubset(behavior_state_session_features.columns)
 
-    shard = bwm_behavior.load_behavior_session_shard(outputs.dlc_store_path / "eid-1.zip")
+    shard = bwm_behavior.load_behavior_session_shard(outputs.pose_store_path / "eid-1.zip")
     assert shard["leftCamera.features"].dtype == np.float32
     assert shard["meta"]["cameras"]["leftCamera"]["columns"]
+    assert shard["meta"]["cameras"]["leftCamera"]["tracker"] == "lightningPose"
 
 
 def test_upgrade_bwm_behavior_dataset_writes_release_tar(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -320,7 +420,7 @@ def test_upgrade_bwm_behavior_dataset_writes_release_tar(tmp_path: Path, monkeyp
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     base_outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1)
@@ -339,11 +439,11 @@ def test_upgrade_bwm_behavior_dataset_writes_release_tar(tmp_path: Path, monkeyp
     assert upgraded.archive_checksum_path is not None
     assert upgraded.archive_path.exists()
     assert upgraded.archive_checksum_path.exists()
-    assert upgraded.archive_path.parent == release_root / "bwm_behavior" / "1.1.0"
+    assert upgraded.archive_path.parent == release_root / "bwm_behavior" / TARGET_DATASET_VERSION
 
     with tarfile.open(upgraded.archive_path, mode="r") as tar:
         members = tar.getnames()
-    assert "bwm_behavior/1.1.0/metadata/sessions.parquet" in members
+    assert f"bwm_behavior/{TARGET_DATASET_VERSION}/metadata/sessions.parquet" in members
     assert all(".feature-refresh-cache" not in name for name in members)
 
 
@@ -376,7 +476,7 @@ def test_write_behavior_session_shards_resumes_without_rewriting(tmp_path: Path)
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     shard_dir = tmp_path / "sessions"
     first = bwm_behavior._write_behavior_session_shards(
@@ -451,7 +551,7 @@ def test_ensure_bwm_behavior_dataset_restores_missing_state_tables_from_shards(t
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1)
@@ -516,7 +616,7 @@ def test_inspect_bwm_behavior_dataset_flags_stale_schema(tmp_path: Path, monkeyp
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1)
@@ -580,7 +680,7 @@ def test_ensure_bwm_behavior_dataset_dry_run_does_not_write(tmp_path: Path, monk
     )
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     outputs = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1)
@@ -598,7 +698,7 @@ def test_ensure_bwm_behavior_dataset_dry_run_does_not_write(tmp_path: Path, monk
     assert "movement_state_epochs" in report["missing_derived_tables"]
 
 
-def test_build_bwm_behavior_dataset_partial_finalize_with_missing_dlc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_build_bwm_behavior_dataset_partial_finalize_with_missing_pose(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("numcodecs")
 
     roster = pd.DataFrame(
@@ -674,7 +774,7 @@ def test_build_bwm_behavior_dataset_partial_finalize_with_missing_dlc(tmp_path: 
     assert "- Partial build: `True`" in summary
 
 
-def test_build_bwm_behavior_dataset_strict_mode_raises_on_missing_dlc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_build_bwm_behavior_dataset_strict_mode_raises_on_missing_pose(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     pytest.importorskip("numcodecs")
 
     roster = pd.DataFrame(
@@ -752,9 +852,9 @@ def test_bwm_behavior_compression_profile_writes_reports(tmp_path: Path) -> None
     rng = np.random.default_rng(123)
     frames = 200
     columns = [
-        "_ibl_leftCamera_dlc__nose_tip_x",
-        "_ibl_leftCamera_dlc__nose_tip_y",
-        "_ibl_leftCamera_dlc__nose_tip_likelihood",
+        "_ibl_leftCamera_pose__nose_tip_x",
+        "_ibl_leftCamera_pose__nose_tip_y",
+        "_ibl_leftCamera_pose__nose_tip_likelihood",
         "_ibl_leftCamera_features__pupilDiameter_raw",
     ]
     arrays = {
@@ -790,11 +890,11 @@ def test_bwm_behavior_compression_profile_writes_reports(tmp_path: Path) -> None
             strategy_names=(
                 "lossless-baseline",
                 "conservative",
-                "balanced-dlc-delta",
-                "aggressive-dlc-delta-wheel-native-left60-right60-body30",
-                "aggressive-dlc-delta-wheel100-dlc50",
-                "compact-dlc-delta",
-                "aggressive-dlc-delta-30hz",
+                "balanced-pose-delta",
+                "aggressive-pose-delta-wheel-native-left60-right60-body30",
+                "aggressive-pose-delta-wheel100-pose50",
+                "compact-pose-delta",
+                "aggressive-pose-delta-30hz",
             ),
             verbose=False,
         )
@@ -806,11 +906,11 @@ def test_bwm_behavior_compression_profile_writes_reports(tmp_path: Path) -> None
     assert set(summary["strategy"]) == {
         "lossless-baseline",
         "conservative",
-        "balanced-dlc-delta",
-        "aggressive-dlc-delta-wheel-native-left60-right60-body30",
-        "aggressive-dlc-delta-wheel100-dlc50",
-        "compact-dlc-delta",
-        "aggressive-dlc-delta-30hz",
+        "balanced-pose-delta",
+        "aggressive-pose-delta-wheel-native-left60-right60-body30",
+        "aggressive-pose-delta-wheel100-pose50",
+        "compact-pose-delta",
+        "aggressive-pose-delta-30hz",
     }
     assert "compression_factor_vs_current" in summary.columns
     assert outputs.summary_path.read_text(encoding="utf-8").startswith("# BWM behavior compression profile")
@@ -824,9 +924,9 @@ def test_bwm_behavior_compression_validation_writes_reports(tmp_path: Path) -> N
     sessions_dir.mkdir(parents=True)
     frames = 120
     columns = [
-        "_ibl_leftCamera_dlc__nose_tip_x",
-        "_ibl_leftCamera_dlc__nose_tip_y",
-        "_ibl_leftCamera_dlc__nose_tip_likelihood",
+        "_ibl_leftCamera_pose__nose_tip_x",
+        "_ibl_leftCamera_pose__nose_tip_y",
+        "_ibl_leftCamera_pose__nose_tip_likelihood",
     ]
     arrays = {
         "wheel.timestamps": np.arange(frames * 10, dtype=np.float64) / 300.0,
@@ -860,7 +960,7 @@ def test_bwm_behavior_compression_validation_writes_reports(tmp_path: Path) -> N
             dataset_dir=dataset_dir,
             output_root=tmp_path / "profiles",
             max_shards=1,
-            strategy_name="aggressive-dlc-delta-30hz",
+            strategy_name="aggressive-pose-delta-30hz",
             verbose=False,
         )
     )
@@ -884,9 +984,9 @@ def test_bwm_behavior_compression_feature_validation_writes_reports(tmp_path: Pa
     frames = 120
     wheel_frames = 1200
     columns = [
-        "_ibl_leftCamera_dlc__nose_tip_x",
-        "_ibl_leftCamera_dlc__nose_tip_y",
-        "_ibl_leftCamera_dlc__nose_tip_likelihood",
+        "_ibl_leftCamera_pose__nose_tip_x",
+        "_ibl_leftCamera_pose__nose_tip_y",
+        "_ibl_leftCamera_pose__nose_tip_likelihood",
         "_ibl_leftCamera_features__pupilDiameter_raw",
     ]
     trials = pd.DataFrame(
@@ -946,7 +1046,7 @@ def test_bwm_behavior_compression_feature_validation_writes_reports(tmp_path: Pa
             dataset_dir=dataset_dir,
             output_root=tmp_path / "profiles",
             max_shards=1,
-            strategy_name="aggressive-dlc-delta-30hz",
+            strategy_name="aggressive-pose-delta-30hz",
             verbose=False,
         )
     )
@@ -1007,7 +1107,7 @@ def test_behavior_compressed_session_shard_roundtrip(tmp_path: Path) -> None:
         path,
         metadata=metadata,
         arrays=arrays,
-        strategy_name="aggressive-dlc-delta-wheel-native-left60-right60-body30",
+        strategy_name="aggressive-pose-delta-wheel-native-left60-right60-body30",
     )
 
     shard = bwm_behavior.load_behavior_session_shard(path)
@@ -1060,7 +1160,7 @@ def test_upgrade_bwm_behavior_dataset_compression_writes_v11(tmp_path: Path, mon
     alf_root = cache_root / "openalyx.internationalbrainlab.org" / "lab_a" / "Subjects" / "SUBJ_1" / "2020-01-01" / "001" / "alf"
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     source = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1, verbose=False)
@@ -1072,10 +1172,10 @@ def test_upgrade_bwm_behavior_dataset_compression_writes_v11(tmp_path: Path, mon
         verbose=False,
     )
 
-    assert upgraded.dataset_dir.name == "1.1.0"
+    assert upgraded.dataset_dir.name == TARGET_DATASET_VERSION
     shard = bwm_behavior.load_behavior_session_shard(upgraded.dataset_dir / "sessions" / "eid-1.zip")
     assert shard["meta"]["format"] == "ibl_ai_agent_behavior_session_shard_v2"
-    assert shard["meta"]["compression"]["profile"] == "aggressive-dlc-delta-wheel-native-left60-right60-body30"
+    assert shard["meta"]["compression"]["profile"] == "aggressive-pose-delta-wheel-native-left60-right60-body30"
     assert upgraded.schema_path.exists()
     assert upgraded.provenance_path.exists()
 
@@ -1122,7 +1222,7 @@ def test_upgrade_bwm_behavior_dataset_compression_resume_completed_is_noop(tmp_p
     alf_root = cache_root / "openalyx.internationalbrainlab.org" / "lab_a" / "Subjects" / "SUBJ_1" / "2020-01-01" / "001" / "alf"
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     source = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1, verbose=False)
@@ -1188,7 +1288,7 @@ def test_inspect_bwm_behavior_dataset_detects_upgrade_layout(tmp_path: Path, mon
     alf_root = cache_root / "openalyx.internationalbrainlab.org" / "lab_a" / "Subjects" / "SUBJ_1" / "2020-01-01" / "001" / "alf"
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     source = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1, verbose=False)
@@ -1204,7 +1304,7 @@ def test_inspect_bwm_behavior_dataset_detects_upgrade_layout(tmp_path: Path, mon
     report = bwm_behavior.inspect_bwm_behavior_dataset(dataset_dir=upgraded.dataset_dir)
 
     assert report["dataset_kind"] == "upgrade_v1_1"
-    assert report["expected_dataset_version"] == "1.1.0"
+    assert report["expected_dataset_version"] == TARGET_DATASET_VERSION
     assert report["expected_schema_version"] == 3
     assert report["schema_dataset_version_matches"] is True
     assert report["schema_version_matches"] is True
@@ -1252,7 +1352,7 @@ def test_refresh_bwm_behavior_features_from_shards_preserves_upgrade_sidecars(tm
     alf_root = cache_root / "openalyx.internationalbrainlab.org" / "lab_a" / "Subjects" / "SUBJ_1" / "2020-01-01" / "001" / "alf"
     alf_root.mkdir(parents=True, exist_ok=True)
     _write_wheel_files(alf_root)
-    _write_dlc_files(alf_root)
+    _write_pose_files(alf_root)
 
     source = bwm_behavior.build_bwm_behavior_dataset(
         bwm_behavior.BuildConfig(output_root=tmp_path / "out", cache_root=cache_root, allow_remote_fetch=False, jobs=1, verbose=False)
@@ -1275,8 +1375,8 @@ def test_refresh_bwm_behavior_features_from_shards_preserves_upgrade_sidecars(tm
     manifest = yaml.safe_load(upgraded.manifest_path.read_text(encoding="utf-8"))
     build_report = yaml.safe_load(upgraded.build_report_path.read_text(encoding="utf-8"))
 
-    assert schema["dataset_version"] == "1.1.0"
+    assert schema["dataset_version"] == TARGET_DATASET_VERSION
     assert schema["schema_version"] == 3
-    assert schema["compression_profile"] == "aggressive-dlc-delta-wheel-native-left60-right60-body30"
-    assert manifest["dataset_version"] == "1.1.0"
-    assert build_report["dataset_version"] == "1.1.0"
+    assert schema["compression_profile"] == "aggressive-pose-delta-wheel-native-left60-right60-body30"
+    assert manifest["dataset_version"] == TARGET_DATASET_VERSION
+    assert build_report["dataset_version"] == TARGET_DATASET_VERSION

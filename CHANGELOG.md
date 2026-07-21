@@ -9,6 +9,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `bwm_behavior` dataset version 2.0.0 with wheel recovery for all 459 sessions
+  and Lightning Pose preferred over DeepLabCut per camera.
+See `CHANGELOG_DATA.md` for further details.
+
+### Changed
+- `scripts/download_datasets.py`: `bwm_behavior` archive updated to version 2.0.0
+  (new filename, SHA1, and URL).
+
 ---
 
 ## [0.2.0] - 2026-06-08

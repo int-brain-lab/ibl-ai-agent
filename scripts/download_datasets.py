@@ -88,12 +88,12 @@ ARCHIVES: list[ArchiveSpec] = [
     ),
     ArchiveSpec(
         dataset="bwm_behavior",
-        version="1.1.0",
+        version="2.0.0",
         url=(
             "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
-            "ibl-agent-data/bwm_behavior-1.1.0.tar"
+            "ibl-agent-data/bwm_behavior-2.0.0.tar"
         ),
-        sha1="aa19a2ab3159c54b3f6b5889adf7a703681b152a",
+        sha1="1c37dd1c38d46ec80067c8a25772dfe2468a1ce1",
     ),
 ]
 
