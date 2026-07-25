@@ -142,7 +142,7 @@ LFP_STANDARD = LFPFileSpec(
         "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
         "ibl-agent-data/lf_compressed_all_bwm.h5"
     ),
-    sha1="2aa88d3ba52cabc89ccd345b846eecaa02cfebc6",
+    sha1="b84edd4b98602bec96279c3a9e42170c65dd48a6",
 )
 
 
