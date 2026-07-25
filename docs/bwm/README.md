@@ -106,6 +106,38 @@ cell-level waveform/ACG surfaces for analyses that need them.
 Best detailed references:
 - [Dataset spec](./ephys.md)
 
+## `bwm_lfp`
+
+Local compressed LFP dataset: all 699 BWM probe recordings in a single HDF5
+file, read via `lfpack.LFPackReader` (a drop-in for `spikeglx.Reader`).
+Opt-in — not downloaded by the default `download_datasets.py` run because of
+its size.
+
+- Config key: `datasets.bwm_lfp.root`
+- Version: `1.0.0`
+- Compression tier: `standard` only (the `lfpack` package also produces an
+  `aggressive` tier for its own uses; it is intentionally not distributed to
+  the agent)
+- Approx. size on disk: `14G`
+- Recordings: `699` (one per probe insertion, keyed by `pid`)
+- Channels per recording: `384`
+- Sample rate: `250 Hz` (decimated from `2500 Hz`)
+- Main contents:
+  - `lf_compressed_all_bwm.h5` — all 699 recordings, per-channel brain-region
+    annotations, saturation QC, and session-clock sync embedded per recording
+  - `schema.yaml` / `provenance.yaml` / `manifest.json` — authored by
+    `scripts/download_datasets.py` at download time (not shipped by `lfpack`)
+
+Requires the `lfp` extra to read (`uv sync --extra lfp`); download with:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp
+```
+
+Best detailed references:
+- [Dataset spec](./lfp.md)
+- `lfpack`'s own how-to: <https://int-brain-lab.github.io/lfpack/how-to/bwm-dataset.html>
+
 ## Proposed Compact Query Layer
 
 Many broad questions about where task, movement, pose, or behavioral
@@ -119,5 +151,5 @@ Design references:
 
 ## Supporting Docs
 
-See the detailed behavior and ephys pages in this directory for schema notes and
-loading guidance.
+See the detailed behavior, ephys, and LFP pages in this directory for schema
+notes and loading guidance.

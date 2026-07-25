@@ -14,5 +14,12 @@ datasets:
     root:
     preferred_version: latest
 
+  bwm_lfp:
+    # Opt-in, ~14 GB. Directory containing version folders such as 1.0.0/,
+    # or a specific dataset directory that contains schema.yaml.
+    # Download with: uv run python scripts/download_datasets.py --lfp
+    root:
+    preferred_version: latest
+
 one_cache:
   root:

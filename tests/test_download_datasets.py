@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import sys
 from pathlib import Path
 from types import ModuleType
+
+import pytest
+import yaml
 
 
 def _load_downloader() -> ModuleType:
@@ -93,3 +97,76 @@ def test_download_plan_flags_missing_manual_root(tmp_path: Path) -> None:
 
     assert not plan.downloads
     assert plan.invalid_manual_roots == [("bwm_ephys", missing_ephys_root)]
+
+
+def _lfp_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    """Load the downloader with LFP paths redirected under ``tmp_path``."""
+    module = _load_downloader()
+    monkeypatch.setattr(module, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(module, "LFP_DIR", tmp_path / "reports" / "datasets" / "bwm_lfp")
+    monkeypatch.setattr(module, "CONFIG_PATH", tmp_path / "data_locations.local.yaml")
+    return module
+
+
+def test_download_lfp_file_writes_sidecars_and_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _lfp_module(tmp_path, monkeypatch)
+    payload = b"fake-lfp-bytes"
+    spec = module.LFPFileSpec(
+        dataset="bwm_lfp",
+        version="1.0.0",
+        filename="lf_compressed_all_bwm.h5",
+        url="https://example.com/lf_compressed_all_bwm.h5",
+        sha1=hashlib.sha1(payload).hexdigest(),
+    )
+    calls = []
+
+    def fake_download_file(url: str, destination: Path) -> None:
+        calls.append(url)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(payload)
+
+    monkeypatch.setattr(module, "download_file", fake_download_file)
+
+    assert module.download_lfp_file(spec) == 0
+    assert calls == [spec.url]
+
+    target_dir = spec.target_dir
+    schema = yaml.safe_load((target_dir / "schema.yaml").read_text())
+    assert schema["dataset_name"] == "bwm_lfp"
+    assert schema["dataset_version"] == "1.0.0"
+    provenance = yaml.safe_load((target_dir / "provenance.yaml").read_text())
+    assert provenance["source"]["package"] == "lfpack"
+    manifest = yaml.safe_load((target_dir / "manifest.json").read_text())
+    assert manifest["files"] == [
+        {"path": "lf_compressed_all_bwm.h5", "sha1": spec.sha1, "size_bytes": len(payload)}
+    ]
+
+    config = yaml.safe_load(module.CONFIG_PATH.read_text())
+    assert config["datasets"]["bwm_lfp"] == {"root": "reports/datasets/bwm_lfp", "preferred_version": "latest"}
+
+    # Re-running with an already-verified file must not re-download.
+    assert module.download_lfp_file(spec) == 0
+    assert calls == [spec.url]
+
+
+def test_download_lfp_file_redownloads_on_sha1_mismatch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _lfp_module(tmp_path, monkeypatch)
+    good_payload = b"fake-lfp-bytes"
+    spec = module.LFPFileSpec(
+        dataset="bwm_lfp",
+        version="1.0.0",
+        filename="lf_compressed_all_bwm.h5",
+        url="https://example.com/lf_compressed_all_bwm.h5",
+        sha1=hashlib.sha1(good_payload).hexdigest(),
+    )
+    spec.target_path.parent.mkdir(parents=True)
+    spec.target_path.write_bytes(b"stale-bytes")
+
+    monkeypatch.setattr(
+        module,
+        "download_file",
+        lambda url, destination: destination.write_bytes(good_payload),
+    )
+
+    assert module.download_lfp_file(spec) == 0
+    assert spec.target_path.read_bytes() == good_payload
