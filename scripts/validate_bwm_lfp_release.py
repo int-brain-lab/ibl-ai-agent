@@ -77,13 +77,14 @@ def validate_bwm_lfp_release(
     provenance = _read_yaml(dataset_dir / "provenance.yaml", report, "provenance.yaml")
     manifest = _read_json(dataset_dir / "manifest.json", report, "manifest.json")
 
-    if schema:
+    if schema is not None:
         report.check(schema.get("dataset_name") == "bwm_lfp", "schema dataset_name is bwm_lfp")
         report.check(
             str(schema.get("dataset_version")) == expected_version,
             f"schema dataset_version is {expected_version}",
         )
-        store = (schema.get("stores") or {}).get("lf_compressed")
+        stores = schema.get("stores")
+        store = stores.get("lf_compressed") if isinstance(stores, dict) else None
         report.check(isinstance(store, dict), "schema advertises the lf_compressed store")
         if isinstance(store, dict):
             report.check(store.get("path") == expected_filename, f"schema store path is {expected_filename}")
@@ -97,20 +98,23 @@ def validate_bwm_lfp_release(
             )
             report.check(store.get("compression_tier") == "standard", "schema compression_tier is standard")
 
-    if provenance:
+    if provenance is not None:
         report.check(provenance.get("dataset_name") == "bwm_lfp", "provenance dataset_name is bwm_lfp")
         report.check(
             str(provenance.get("dataset_version")) == expected_version,
             f"provenance dataset_version is {expected_version}",
         )
+        source = provenance.get("source")
         report.check(
-            (provenance.get("source") or {}).get("package") == "lfpack",
+            isinstance(source, dict) and source.get("package") == "lfpack",
             "provenance records lfpack as the source package",
         )
 
     manifest_entry = None
-    if manifest:
-        files = manifest.get("files") or []
+    if manifest is not None:
+        files = manifest.get("files")
+        if not isinstance(files, list):
+            files = []
         manifest_entry = next(
             (item for item in files if isinstance(item, dict) and item.get("path") == expected_filename),
             None,

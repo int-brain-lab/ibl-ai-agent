@@ -170,3 +170,31 @@ def test_download_lfp_file_redownloads_on_sha1_mismatch(tmp_path: Path, monkeypa
 
     assert module.download_lfp_file(spec) == 0
     assert spec.target_path.read_bytes() == good_payload
+
+
+def test_download_lfp_file_repairs_sidecars_without_redownloading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = _lfp_module(tmp_path, monkeypatch)
+    payload = b"valid-lfp-bytes"
+    spec = module.LFPFileSpec(
+        dataset="bwm_lfp",
+        version="1.0.0",
+        filename="lf_compressed_all_bwm.h5",
+        url="https://example.com/lf_compressed_all_bwm.h5",
+        sha1=hashlib.sha1(payload).hexdigest(),
+    )
+    spec.target_path.parent.mkdir(parents=True)
+    spec.target_path.write_bytes(payload)
+    (spec.target_dir / "schema.yaml").write_text("dataset_name: stale\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        module,
+        "download_file",
+        lambda url, destination: pytest.fail("a verified LFP file must not be downloaded again"),
+    )
+
+    assert module.download_lfp_file(spec) == 0
+    assert yaml.safe_load((spec.target_dir / "schema.yaml").read_text())["dataset_name"] == "bwm_lfp"
+    assert (spec.target_dir / "provenance.yaml").exists()
+    assert (spec.target_dir / "manifest.json").exists()

@@ -464,7 +464,7 @@ def _build_lfp_manifest(spec: LFPFileSpec, *, sha1: str, size_bytes: int) -> dic
     }
 
 
-def _write_lfp_sidecars(spec: LFPFileSpec) -> None:
+def _write_lfp_sidecars(spec: LFPFileSpec, *, sha1: str | None = None) -> None:
     """Author schema.yaml/provenance.yaml/manifest.json next to the downloaded LFP file.
 
     These are an ``ibl-ai-agent`` registration convention, not part of the
@@ -473,7 +473,7 @@ def _write_lfp_sidecars(spec: LFPFileSpec) -> None:
     ``bwm_ephys``/``bwm_behavior``.
     """
     target_dir = spec.target_dir
-    sha1 = compute_sha1(spec.target_path)
+    sha1 = sha1 or compute_sha1(spec.target_path)
     size_bytes = spec.target_path.stat().st_size
     (target_dir / "schema.yaml").write_text(
         yaml.safe_dump(_build_lfp_schema(spec), sort_keys=False), encoding="utf-8"
@@ -509,12 +509,13 @@ def download_lfp_file(spec: LFPFileSpec) -> int:
     Returns 0 on success, 1 if the sha1 verification fails.
     """
     target_path = spec.target_path
-    if has_schema(spec.target_dir) and target_path.exists() and compute_sha1(target_path) == spec.sha1:
-        print(f"  {spec.dataset} {spec.version} already present and verified at {spec.target_dir}.")
-        _write_lfp_config()
-        return 0
-
     if target_path.exists():
+        actual_sha1 = compute_sha1(target_path)
+        if actual_sha1 == spec.sha1:
+            print(f"  {spec.dataset} {spec.version} already present and verified at {spec.target_dir}.")
+            _write_lfp_sidecars(spec, sha1=actual_sha1)
+            _write_lfp_config()
+            return 0
         print(f"  {target_path} present but not verified — re-downloading.")
         target_path.unlink()
 
@@ -525,7 +526,7 @@ def download_lfp_file(spec: LFPFileSpec) -> int:
     except RuntimeError as exc:
         print(f"  {exc}")
         return 1
-    _write_lfp_sidecars(spec)
+    _write_lfp_sidecars(spec, sha1=spec.sha1)
     _write_lfp_config()
     return 0
 
