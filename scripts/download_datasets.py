@@ -433,7 +433,8 @@ def _build_lfp_schema(spec: LFPFileSpec) -> dict[str, Any]:
                 "reader": "lfpack.LFPackReader",
                 "recording_key": "pid",
                 "n_recordings": 699,
-                "n_channels": 384,
+                "n_channels": [96, 384],
+                "channel_count_distribution": {96: 4, 384: 695},
                 "sample_rate_hz": 250,
                 "compression_tier": "standard",
             }

@@ -134,6 +134,8 @@ def test_download_lfp_file_writes_sidecars_and_config(tmp_path: Path, monkeypatc
     schema = yaml.safe_load((target_dir / "schema.yaml").read_text())
     assert schema["dataset_name"] == "bwm_lfp"
     assert schema["dataset_version"] == "1.0.0"
+    assert schema["stores"]["lf_compressed"]["n_channels"] == [96, 384]
+    assert schema["stores"]["lf_compressed"]["channel_count_distribution"] == {96: 4, 384: 695}
     provenance = yaml.safe_load((target_dir / "provenance.yaml").read_text())
     assert provenance["source"]["package"] == "lfpack"
     manifest = yaml.safe_load((target_dir / "manifest.json").read_text())

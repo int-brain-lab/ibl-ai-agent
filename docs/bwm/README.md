@@ -120,11 +120,12 @@ its size.
   the agent)
 - Approx. size on disk: `14G`
 - Recordings: `699` (one per probe insertion, keyed by `pid`)
-- Channels per recording: `384`
+- Channels per recording: `384` for 695 recordings; `96` for four NP2.4
+  recordings
 - Sample rate: `250 Hz` (decimated from `2500 Hz`)
 - Main contents:
   - `lf_compressed_all_bwm.h5` — all 699 recordings, per-channel brain-region
-    annotations, saturation QC, and session-clock sync embedded per recording
+    annotations, saturation QC, and session-clock sync where available
   - `schema.yaml` / `provenance.yaml` / `manifest.json` — authored by
     `scripts/download_datasets.py` at download time (not shipped by `lfpack`)
 

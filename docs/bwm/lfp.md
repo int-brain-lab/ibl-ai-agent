@@ -52,12 +52,13 @@ even though nothing here is built by this repo's own pipeline.
 ## Contents
 
 One HDF5 file holding all `699` BWM probe recordings, keyed by `pid`:
-- `384` channels per recording
+- `384` channels for `695` recordings and `96` channels for four NP2.4
+  recordings from subject `NR_0029`
 - `250 Hz` sample rate (decimated from `2500 Hz`)
 - per-channel brain-region annotations (`acronym`, `atlas_id`, MNI coordinates)
 - per-recording saturation (ADC-clipping) QC table
-- a sync-corrected session-clock time axis (`sr.times`) for aligning to
-  trial events and spike times
+- a sync-corrected session-clock time axis (`sr.times`) when `sr.t0` is finite;
+  seven recordings without sync instead expose recording-relative times
 
 ## Reading
 
@@ -74,13 +75,19 @@ the API here; see:
 Carried over from `lfpack`'s own release notes — check these before trusting
 a result:
 
-- **Saturation events**: ADC-clipped stretches are detected and muted
-  (zeroed) in the decompressed output. Check `sr.saturation_mask`/
-  `sr.saturation_times()` before trusting amplitude in a window of interest.
+- **Saturation events**: ADC-clipped stretches are detected and muted before
+  lossy compression. Decompressed values in those stretches are not guaranteed
+  to be exactly zero, so use `sr.saturation_mask`/`sr.saturation_times()` rather
+  than testing sample values. In this release, 121 of 699 recordings have more
+  than 1% saturated source samples and 16 exceed 10% (maximum 23.9%).
 - **Missing sync for 7 probes**: `t0_sync`/`fs_sync` could not be computed
   for 7 probes across 4 sessions due to an upstream session-level sync
-  data-quality issue; `sr.t0` returns `NaN` for these
+  data-quality issue; `sr.t0` returns `NaN` and `sr.times` is
+  recording-relative for these
   ([lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8)).
+- **Saturation interval boundaries**: interval stop times can extend up to one
+  decimated sample beyond `sr.times[-1]` because intervals are rounded
+  outwards; `sr.saturation_mask` clips them safely.
 - **High-frequency roll-off**: the SVD + wavelet-packet codec trades off
   power above roughly 20-30 Hz for compression ratio, more so at the
   (undistributed) aggressive tier.

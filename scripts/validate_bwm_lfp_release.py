@@ -5,7 +5,7 @@ by lfpack; its schema.yaml/provenance.yaml/manifest.json are authored by
 scripts/download_datasets.py rather than shipped inside an archive. This
 script checks those sidecars are present and consistent, and (when the
 optional `lfp` extra is installed) opens the file to confirm the recording
-count.
+and channel-count distributions.
 
 Usage:
     UV_CACHE_DIR=.uv-cache uv run python scripts/validate_bwm_lfp_release.py \
@@ -28,7 +28,7 @@ import yaml
 DEFAULT_EXPECTED_VERSION = "1.0.0"
 DEFAULT_EXPECTED_FILENAME = "lf_compressed_all_bwm.h5"
 DEFAULT_EXPECTED_N_RECORDINGS = 699
-DEFAULT_EXPECTED_N_CHANNELS = 384
+DEFAULT_EXPECTED_CHANNEL_COUNT_DISTRIBUTION = {96: 4, 384: 695}
 
 REQUIRED_ROOT_FILES = ("schema.yaml", "provenance.yaml", "manifest.json")
 
@@ -61,10 +61,16 @@ def validate_bwm_lfp_release(
     expected_version: str = DEFAULT_EXPECTED_VERSION,
     expected_filename: str = DEFAULT_EXPECTED_FILENAME,
     expected_n_recordings: int = DEFAULT_EXPECTED_N_RECORDINGS,
-    expected_n_channels: int = DEFAULT_EXPECTED_N_CHANNELS,
+    expected_channel_count_distribution: dict[int, int] | None = None,
 ) -> ValidationReport:
     dataset_dir = dataset_dir.expanduser().resolve()
     report = ValidationReport(dataset_dir=dataset_dir)
+    expected_channel_count_distribution = (
+        DEFAULT_EXPECTED_CHANNEL_COUNT_DISTRIBUTION
+        if expected_channel_count_distribution is None
+        else expected_channel_count_distribution
+    )
+    expected_n_channels = sorted(expected_channel_count_distribution)
 
     report.check(dataset_dir.exists(), f"dataset directory exists: {dataset_dir}")
     if not dataset_dir.exists():
@@ -94,7 +100,14 @@ def validate_bwm_lfp_release(
             )
             report.check(
                 store.get("n_channels") == expected_n_channels,
-                f"schema n_channels is {expected_n_channels}",
+                f"schema n_channels are {expected_n_channels}",
+            )
+            normalized_distribution = _normalize_channel_count_distribution(
+                store.get("channel_count_distribution")
+            )
+            report.check(
+                normalized_distribution == expected_channel_count_distribution,
+                f"schema channel_count_distribution is {expected_channel_count_distribution}",
             )
             report.check(store.get("compression_tier") == "standard", "schema compression_tier is standard")
 
@@ -154,6 +167,19 @@ def validate_bwm_lfp_release(
                 report.check(
                     len(recordings) == expected_n_recordings, f"file contains {expected_n_recordings} recordings"
                 )
+                try:
+                    channel_count_distribution: dict[int, int] = {}
+                    for recording in recordings:
+                        reader = lfpack.LFPackReader(str(data_path), recording=recording, scale=0)
+                        channel_count_distribution[reader.nc] = channel_count_distribution.get(reader.nc, 0) + 1
+                except Exception as exc:
+                    report.failures.append(f"failed to inspect recording channel counts with lfpack: {exc}")
+                else:
+                    report.details["channel_count_distribution"] = channel_count_distribution
+                    report.check(
+                        channel_count_distribution == expected_channel_count_distribution,
+                        f"file channel-count distribution is {expected_channel_count_distribution}",
+                    )
 
     return report
 
@@ -164,6 +190,15 @@ def _sha1(path: Path, chunk_size: int = 1024 * 1024) -> str:
         for chunk in iter(lambda: file_handle.read(chunk_size), b""):
             hasher.update(chunk)
     return hasher.hexdigest()
+
+
+def _normalize_channel_count_distribution(payload: Any) -> dict[int, int] | None:
+    if not isinstance(payload, dict):
+        return None
+    try:
+        return {int(key): int(value) for key, value in payload.items()}
+    except (TypeError, ValueError):
+        return None
 
 
 def _read_yaml(path: Path, report: ValidationReport, label: str) -> dict[str, Any] | None:
@@ -218,7 +253,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--expected-version", default=DEFAULT_EXPECTED_VERSION)
     parser.add_argument("--expected-filename", default=DEFAULT_EXPECTED_FILENAME)
     parser.add_argument("--expected-n-recordings", type=int, default=DEFAULT_EXPECTED_N_RECORDINGS)
-    parser.add_argument("--expected-n-channels", type=int, default=DEFAULT_EXPECTED_N_CHANNELS)
+    parser.add_argument("--expected-96-channel-recordings", type=int, default=4)
+    parser.add_argument("--expected-384-channel-recordings", type=int, default=695)
     return parser.parse_args(argv)
 
 
@@ -229,7 +265,10 @@ def main(argv: list[str] | None = None) -> int:
         expected_version=args.expected_version,
         expected_filename=args.expected_filename,
         expected_n_recordings=args.expected_n_recordings,
-        expected_n_channels=args.expected_n_channels,
+        expected_channel_count_distribution={
+            96: args.expected_96_channel_recordings,
+            384: args.expected_384_channel_recordings,
+        },
     )
     _print_report(report)
     return 0 if report.ok else 1
