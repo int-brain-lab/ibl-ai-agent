@@ -246,6 +246,7 @@ def register(app: typer.Typer) -> None:
         typer.echo(f"Requested sessions: {outputs.requested_sessions}")
         typer.echo(f"Already present: {outputs.already_present_sessions}")
         typer.echo(f"Fetched now: {outputs.fetched_sessions}")
+        typer.echo(f"Unavailable remotely: {outputs.unavailable_sessions}")
         typer.echo(f"Jobs: {outputs.jobs}")
         typer.echo(f"Failed: {outputs.failed_sessions}")
         typer.echo(f"Final present sessions: {outputs.final_present_sessions}")
@@ -297,7 +298,7 @@ def register(app: typer.Typer) -> None:
         ),
         prefetch_missing: bool = typer.Option(
             True,
-            help="Detect missing required assets and populate the local cache before building.",
+            help="Detect missing required assets and passive prefetch candidates, then populate remotely available files before building.",
         ),
         require_signals: bool = typer.Option(
             True,

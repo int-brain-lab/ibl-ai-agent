@@ -108,6 +108,7 @@ class PassivePrefetchOutputs:
     requested_sessions: int
     already_present_sessions: int
     fetched_sessions: int
+    unavailable_sessions: int
     failed_sessions: int
     final_present_sessions: int
     jobs: int
@@ -524,6 +525,7 @@ def prefetch_bwm_ephys_passive(*, cache_root: Path, output_root: Path, limit_ins
         "summary": {
             "already_present_sessions": already_present,
             "fetched_sessions": passive_summary["fetched"],
+            "unavailable_sessions": passive_summary["unavailable"],
             "failed_sessions": passive_summary["failed"],
             "final_present_sessions": int(final_scan['signals']['passive']['present_sessions']),
             "final_missing_sessions": len(final_scan['signals']['passive']['missing']),
@@ -535,7 +537,7 @@ def prefetch_bwm_ephys_passive(*, cache_root: Path, output_root: Path, limit_ins
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = reports_dir / f"passive_prefetch_{bwm_shared.now_tag()}.yaml"
     report_path.write_text(yaml.safe_dump(report, sort_keys=False), encoding="utf-8")
-    return PassivePrefetchOutputs(report_path=report_path, requested_sessions=int(roster['eid'].nunique()), already_present_sessions=already_present, fetched_sessions=passive_summary["fetched"], failed_sessions=passive_summary["failed"], final_present_sessions=int(final_scan['signals']['passive']['present_sessions']), jobs=int(jobs))
+    return PassivePrefetchOutputs(report_path=report_path, requested_sessions=int(roster['eid'].nunique()), already_present_sessions=already_present, fetched_sessions=passive_summary["fetched"], unavailable_sessions=passive_summary["unavailable"], failed_sessions=passive_summary["failed"], final_present_sessions=int(final_scan['signals']['passive']['present_sessions']), jobs=int(jobs))
 
 
 def inspect_bwm_ephys_cache(config: BuildConfig, *, roster: pd.DataFrame | None = None) -> dict[str, Any]:
@@ -622,9 +624,10 @@ def _run_preflight(config: BuildConfig, *, reporter: BuildProgressReporter) -> P
         "actions": [],
     }
     stages.append(reporter.stage_done("preflight", perf, started_at, insertions=int(len(roster)), sessions=int(roster['eid'].nunique())))
-    if config.prefetch_missing and _preflight_has_missing_required_inputs(initial_scan):
+    if config.prefetch_missing and _preflight_needs_prefetch(initial_scan):
         if not config.allow_remote_fetch:
-            reporter.emit("Missing required assets detected, but remote fetch is disabled. Re-run with --allow-remote-fetch to populate the local ONE cache automatically.")
+            reporter.emit("Missing local assets detected, but remote fetch is disabled. Re-run with --allow-remote-fetch to populate remotely available inputs automatically.")
+            prefetch_report["final"] = final_scan
         else:
             prefetch_report, prefetch_stage = _prefetch_required_inputs(config, roster=roster, initial_scan=initial_scan, reporter=reporter, prefetch_report=prefetch_report)
             stages.append(prefetch_stage)
@@ -632,8 +635,10 @@ def _run_preflight(config: BuildConfig, *, reporter: BuildProgressReporter) -> P
             reporter.emit(_format_scan_summary(final_scan, title="Post-prefetch cache scan"))
     else:
         prefetch_report["final"] = final_scan
-        if not _preflight_has_missing_required_inputs(initial_scan):
-            reporter.emit("Preflight: all required assets are already present in the local cache.")
+        if not _preflight_needs_prefetch(initial_scan):
+            reporter.emit("Preflight: all locally expected assets are already present in the cache.")
+        elif not config.prefetch_missing:
+            reporter.emit("Preflight: local assets are missing and automatic prefetch is disabled.")
     if config.require_signals and _preflight_has_missing_required_inputs(final_scan):
         failure_report_path = _write_failure_prefetch_report(config.output_root / DATASET_NAME, prefetch_report)
         raise BuildError(f"Required signal assets are still missing after preflight/prefetch. See {failure_report_path} for details.")
@@ -663,7 +668,7 @@ def _prefetch_required_inputs(config: BuildConfig, *, roster: pd.DataFrame, init
     final_scan = inspect_bwm_ephys_cache(config, roster=roster)
     prefetch_report["actions"] = actions
     prefetch_report["final"] = final_scan
-    stage = reporter.stage_done("prefetch", perf, started_at, spikes_requested=len(initial_scan['signals']['spikes']['missing']), spikes_fetched=spike_summary['fetched'], spikes_failed=spike_summary['failed'], passive_requested=len(initial_scan['signals']['passive']['missing']), passive_fetched=passive_summary['fetched'], passive_failed=passive_summary['failed'], progress_reports=progress_metric + passive_progress_metric)
+    stage = reporter.stage_done("prefetch", perf, started_at, spikes_requested=len(initial_scan['signals']['spikes']['missing']), spikes_fetched=spike_summary['fetched'], spikes_failed=spike_summary['failed'], passive_requested=len(initial_scan['signals']['passive']['missing']), passive_fetched=passive_summary['fetched'], passive_unavailable=passive_summary['unavailable'], passive_failed=passive_summary['failed'], progress_reports=progress_metric + passive_progress_metric)
     return prefetch_report, stage
 
 
@@ -780,10 +785,11 @@ def _prefetch_spikes(one_remote: Any, *, eid: str, probe_name: str) -> None:
 def _run_passive_prefetch_jobs(*, cache_root: Path, items: list[dict[str, Any]], jobs: int, reporter: BuildProgressReporter, label: str) -> tuple[list[dict[str, Any]], dict[str, int], int]:
     actions: list[dict[str, Any]] = []
     fetched = 0
+    unavailable = 0
     failed = 0
     if not items:
         reporter.emit(f"{label}: no missing passive datasets.")
-        return actions, {"fetched": 0, "failed": 0}, 0
+        return actions, {"fetched": 0, "unavailable": 0, "failed": 0}, 0
     started_at = perf_counter()
     progress_reports = 0
     with ThreadPoolExecutor(max_workers=max(1, jobs)) as executor:
@@ -800,11 +806,13 @@ def _run_passive_prefetch_jobs(*, cache_root: Path, items: list[dict[str, Any]],
                 actions.append(result)
                 if result['status'] == 'fetched':
                     fetched += 1
+                elif result['status'] == 'unavailable':
+                    unavailable += 1
                 else:
                     failed += 1
             progress_reports += 1
             reporter.emit(_progress_line(label, len(items) - len(pending), len(items), started_at, current=result.get('eid'), state=result['status']))
-    return actions, {"fetched": fetched, "failed": failed}, progress_reports
+    return actions, {"fetched": fetched, "unavailable": unavailable, "failed": failed}, progress_reports
 
 
 def _prefetch_passive_task(*, cache_root: Path, item: dict[str, Any]) -> dict[str, Any]:
@@ -818,10 +826,14 @@ def _prefetch_passive_task(*, cache_root: Path, item: dict[str, Any]) -> dict[st
             date=item['date'],
             session_number=int(item['session_number']),
         )
-        still_missing = bwm_session_assets.passive_missing_filenames(session_dir)
-        if not still_missing:
-            return {"kind": "passive", **item, "status": "fetched", "dataset_statuses": statuses, "session_dir": str(session_dir) if session_dir else ""}
-        return {"kind": "passive", **item, "status": "failed", "dataset_statuses": statuses, "still_missing_files": still_missing}
+        still_missing = set(bwm_session_assets.passive_missing_filenames(session_dir))
+        available_files = {name for name, status in statuses.items() if status != 'unavailable'}
+        still_missing_available = sorted(still_missing.intersection(available_files))
+        unavailable_files = sorted(name for name, status in statuses.items() if status == 'unavailable')
+        if still_missing_available:
+            return {"kind": "passive", **item, "status": "failed", "dataset_statuses": statuses, "still_missing_available_files": still_missing_available, "unavailable_files": unavailable_files}
+        status = "fetched" if any(value == 'fetched' for value in statuses.values()) else "unavailable"
+        return {"kind": "passive", **item, "status": status, "dataset_statuses": statuses, "unavailable_files": unavailable_files, "session_dir": str(session_dir) if session_dir else ""}
     except Exception as exc:
         return {"kind": "passive", **item, "status": "failed", "error": str(exc)}
 
@@ -832,6 +844,10 @@ def _spike_assets_present(revision_dir: Path) -> bool:
 
 def _preflight_has_missing_required_inputs(scan: dict[str, Any]) -> bool:
     return (not scan['aggregate_tables']['clusters']['present']) or (not scan['aggregate_tables']['trials']['present']) or bool(scan['signals']['spikes']['missing'])
+
+
+def _preflight_needs_prefetch(scan: dict[str, Any]) -> bool:
+    return _preflight_has_missing_required_inputs(scan) or bool(scan['signals']['passive']['missing'])
 
 
 def _format_scan_summary(scan: dict[str, Any], *, title: str) -> str:
@@ -1644,7 +1660,14 @@ def _build_report(*, config: BuildConfig, sessions_df: pd.DataFrame, insertions_
         'package_versions': bwm_simple._package_versions(),
         'row_counts': {'sessions': int(len(sessions_df)), 'insertions': int(len(insertions_df)), 'units': int(len(units_df)), 'channels': int(len(channels_df)), 'trials': int(len(trials_df)), 'events': int(len(events_df)), 'unit_features': int(len(unit_features_df)), 'event_response_features': int(len(event_response_features_df))},
         'stores': {'spikes': spike_stats},
-        'prefetch': {'enabled': bool(config.prefetch_missing), 'attempted': prefetch_attempted, 'initial_missing_required_assets': _preflight_has_missing_required_inputs(prefetch_report['initial']), 'final_missing_required_assets': _preflight_has_missing_required_inputs(prefetch_report['final'])},
+        'prefetch': {
+            'enabled': bool(config.prefetch_missing),
+            'attempted': prefetch_attempted,
+            'initial_missing_required_assets': _preflight_has_missing_required_inputs(prefetch_report['initial']),
+            'final_missing_required_assets': _preflight_has_missing_required_inputs(prefetch_report['final']),
+            'initial_missing_prefetch_candidates': _preflight_needs_prefetch(prefetch_report['initial']),
+            'final_missing_prefetch_candidates': _preflight_needs_prefetch(prefetch_report['final']),
+        },
         'stages': [{'name': stage.name, 'started_at': stage.started_at, 'elapsed_s': stage.elapsed_s, 'details': stage.details} for stage in stages],
     }
 
@@ -1665,9 +1688,11 @@ def _build_summary(*, sessions_df: pd.DataFrame, insertions_df: pd.DataFrame, un
         f"- Spike insertions written: {spike_stats['insertions_written']:,}",
         '', '## Workflow', '',
         f"- Initial missing required assets: `{_preflight_has_missing_required_inputs(prefetch_report['initial'])}`",
+        f"- Initial missing prefetch candidates: `{_preflight_needs_prefetch(prefetch_report['initial'])}`",
         f"- Prefetch enabled: `{prefetch_report['config']['prefetch_missing']}`",
         f"- Prefetch attempted: `{bool(prefetch_report.get('actions'))}`",
         f"- Final missing required assets: `{_preflight_has_missing_required_inputs(prefetch_report['final'])}`",
+        f"- Final missing prefetch candidates: `{_preflight_needs_prefetch(prefetch_report['final'])}`",
         f"- Parallel jobs: `{spike_stats['jobs']}`",
         f"- Spike shard bytes written: `{spike_stats.get('bytes_written', 0)}`",
         f"- Spike metrics file: `{spike_stats.get('metrics_path', SPIKE_METRICS_FILENAME)}`",

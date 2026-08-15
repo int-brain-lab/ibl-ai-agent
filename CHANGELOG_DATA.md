@@ -11,6 +11,24 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_ephys 1.2.1] - 2026-08-14
+
+### Fixed
+- Restored 52 remotely available passive files missing from the release cache
+  across 48 sessions: 42 period tables, 7 RFM arrays, 2 Gabor tables, and 1
+  stimulus table.
+- `metadata/passive_events.parquet` now has 7,086,291 rows (+126,639), with each
+  passive-period event family covering all 428 sessions advertised by the
+  frozen remote manifest.
+- `features/passive_response_features.parquet` now has 606,275 rows (+28,709).
+  The repair is append-only: every prior feature row is preserved, and the new
+  keys correspond exactly to the recovered session/event-family pairs.
+- Release availability, semantic keys, feature event denominators, provenance,
+  manifest hashes, and an independently extracted archive were validated before
+  publication.
+
+---
+
 ## [bwm_behavior 2.0.0] - 2026-07-12
 
 ### Added

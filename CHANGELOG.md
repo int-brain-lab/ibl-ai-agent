@@ -17,6 +17,11 @@ See `CHANGELOG_DATA.md` for further details.
 ### Changed
 - `scripts/download_datasets.py`: `bwm_behavior` archive updated to version 2.0.0
   (new filename, SHA1, and URL).
+- `bwm_ephys` passive preflight now queries the remote per-session manifest,
+  fetches locally missing files that are actually available, and records genuine
+  remote absence separately from query or download failures.
+- `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
+  with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
 
 ---
 
