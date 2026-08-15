@@ -38,7 +38,8 @@ notebook = [
 dev = [
   "pytest>=8.3",
   "pytest-cov>=5.0",
-  "ruff>=0.6",
+  # Ruff 0.16 enables rules that expose hundreds of pre-existing violations.
+  "ruff>=0.6,<0.16",
   "mypy>=1.11",
 ]
 
