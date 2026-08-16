@@ -29,6 +29,34 @@ Prefer:
 Policy:
 - Use the reader-native compression workflow before custom archive logic.
 
+### Compressed LFP access (lfpack / BWM LFP dataset)
+Use when the task reads the lossy-compressed LFP `.h5` store (e.g. the 699-recording BWM LFP dataset,
+`lf_compressed_all_bwm.h5`, registered as `bwm_lfp` — see `skills/ibl-load/references/bwm_runtime_policy.md`) rather than raw `.lf.bin`.
+
+Prefer:
+- `lfpack.LFPackReader` — a drop-in for `spikeglx.Reader`; decompresses chunks on demand (SVD + wavelet-packet).
+
+Use this for:
+- opening one recording by `pid`: `LFPackReader(h5, recording=pid, scale=0)`
+- chunked, memory-safe reads: `sr[s0:s1, :]` → `(n_samples, nc)` float32 volts (never loads the whole file)
+- `bin_channels=4` to sum adjacent channels (384 to 96 bins; 96 to 24 bins) for brainwide sweeps
+- session-clock alignment via `sr.times` when `sr.t0` is finite; per-channel region/coords via `sr.channels`; PID list via `LFPackReader.recordings(h5)`
+
+`lfpack` is an optional extra (`ibl-ai-agent[lfp]`), not installed by default. Before first use,
+check whether `import lfpack` succeeds; if not, tell the user and offer to run
+`UV_CACHE_DIR=.uv-cache uv sync --extra lfp` before proceeding, rather than silently failing or
+falling back to raw `spikeglx.Reader` on the uncompressed `.lf.bin`.
+
+Policy:
+- lfpack self-documents — consult its own docs rather than restating the API: <https://int-brain-lab.github.io/lfpack/>
+  (`how-to/bwm-dataset`, `how-to/binned-reads`, `reference/LFPackReader`) or `help(lfpack.LFPackReader)`.
+- Align to trial/spike times with `sr.times` only after checking that `sr.t0` is
+  finite. For the seven unsynchronized recordings, `sr.times` is
+  recording-relative and cannot be aligned to session-clock events directly.
+- Use `sr.saturation_mask` or `sr.saturation_times()` to exclude ADC-clipped
+  stretches. Muting happens before lossy compression, so decompressed samples
+  within marked stretches are not guaranteed to equal zero.
+
 ### Destriping raw AP/LFP data
 Use when the task is about line-noise/common-mode cleanup on raw probe traces before inspection or sorting.
 

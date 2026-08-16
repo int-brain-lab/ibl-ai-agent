@@ -18,11 +18,19 @@ BWM_DATASET_DEFAULTS = {
         "root": REPO_ROOT / "reports" / "datasets" / "bwm_ephys",
         "size": "about 5 GB",
         "why": "local spike shards, unit/session metadata, and passive ephys tables avoid slow per-session ONE loading",
+        "download_hint": "UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py",
     },
     "bwm_behavior": {
         "root": REPO_ROOT / "reports" / "datasets" / "bwm_behavior",
         "size": "about 3.5 GB",
         "why": "local trial, wheel, movement-state, pose, and behavior feature tables avoid slow per-session ONE loading",
+        "download_hint": "UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py",
+    },
+    "bwm_lfp": {
+        "root": REPO_ROOT / "reports" / "datasets" / "bwm_lfp",
+        "size": "about 14 GB (opt-in)",
+        "why": "the compressed LFP store lets the agent read any of the 699 BWM recordings without a raw ONE/SpikeGLX download",
+        "download_hint": "UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp",
     },
 }
 
@@ -202,6 +210,7 @@ def _missing_bwm_dataset_message(name: str, *, configured_root: Path | None) -> 
         f"For BWM analyses, stop before falling back to ONE/session loaders. "
         f"Ask the user whether to download/configure {name}: it is {info['size']} and is expected by default under "
         f"{_display_path(expected)}. This is needed because {info['why']}. "
+        f"Download with: {info['download_hint']}. "
         "Alternatives are: point data_locations.local.yaml at an existing dataset root, run the public downloader, "
         "or explicitly use ONE/session loaders only after explaining which required field is missing from the local dataset."
     )

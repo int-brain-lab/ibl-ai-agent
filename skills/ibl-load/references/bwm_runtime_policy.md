@@ -44,6 +44,7 @@ Resolution order:
 Configured roots:
 - `datasets.bwm_ephys.root`
 - `datasets.bwm_behavior.root`
+- `datasets.bwm_lfp.root` (compressed LFP `.h5`, opt-in; download/register with `scripts/download_datasets.py --lfp`, ~14 GB; reading it needs the optional `lfp` extra, `uv sync --extra lfp`)
 
 Each root may be a directory containing version folders with `schema.yaml`, or one exact dataset directory containing `schema.yaml`. Do not assume `reports/datasets` exists.
 
@@ -65,6 +66,7 @@ Prefer the newest version whose schema directly covers the scientific quantity. 
 Use dataset surfaces by semantic domain:
 - `bwm_ephys`: units, insertions, sessions, regions, good-unit spike shards, task event-response features, passive ephys features. From version 1.2.0 onward, root-level full-cluster waveforms, waveform features, and autocorrelograms are also available.
 - `bwm_behavior`: trial behavior, wheel movement features, movement/quiescence state epochs, pose features, behavioral event-aligned features. From version 2.0.0 onward, pose tables use tracker-agnostic `pose_*` names, and `metadata/pose_availability.parquet` has a `tracker` column recording whether each camera/session used `lightningPose` or `dlc` (Lightning Pose is preferred per camera whenever available).
+- `bwm_lfp`: lossy-compressed LFP (250 Hz, 384 channels for 695 recordings and 96 for four NP2.4 recordings, standard tier only) for all 699 BWM probe recordings, keyed by `pid`. Read via `lfpack.LFPackReader` (see `ibl-neuropixel`); align to trials/spikes with `sr.times` only when `sr.t0` is finite, use recording-relative time otherwise, and use `bin_channels=4` for brainwide sweeps. Opt-in/not part of the default two-dataset download; requires the `lfp` extra to read.
 If one answer needs both ephys and behavior surfaces, join only through stable keys such as `eid`, `trial_id`, `pid`, and `cluster_id`, and state the join grain in Methods.
 
 ## Table-surface selection

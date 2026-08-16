@@ -17,6 +17,14 @@ Common reader attributes used in repo examples:
 - `Reader.nc`
 - `Reader.nsync`
 
+## `lfpack`
+- `LFPackReader(h5_file, recording=None, scale=0, bin_channels=1)` — drop-in for `spikeglx.Reader` over the compressed LFP `.h5`
+- `LFPackReader.recordings(h5_file)` — list available recording ids (BWM: `pid`s)
+- `LFPackReader.__getitem__(slice)` → `(n_samples, nc)` float32 volts
+- reader attributes: `.fs`, `.nc`, `.ns`, `.times`, `.channels`, `.channels_full`, `.geometry`
+- Optional extra (`ibl-ai-agent[lfp]`); import-check before use and offer `uv sync --extra lfp` if missing.
+- Full API and BWM how-to: <https://int-brain-lab.github.io/lfpack/> (do not restate here; refresh from `help(...)`).
+
 ## `ibldsp.voltage`
 - `destripe(raw, fs=None, neuropixel_version=None, ...)`
 - `decompress_destripe_cbin(sr_file, output_file=None, nprocesses=None, ...)`

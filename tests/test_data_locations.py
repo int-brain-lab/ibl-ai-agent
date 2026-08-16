@@ -128,3 +128,30 @@ def test_missing_bwm_dataset_error_instructs_stop_before_one_fallback(tmp_path: 
     assert "stop before falling back to ONE/session loaders" in message
     assert "about 5 GB" in message
     assert "reports/datasets/bwm_ephys" in message
+
+
+def test_bwm_lfp_resolves_through_the_same_schema_based_registry(tmp_path: Path) -> None:
+    dataset_dir = tmp_path / "bwm_lfp" / "1.0.0"
+    dataset_dir.mkdir(parents=True)
+    (dataset_dir / "schema.yaml").write_text("dataset_name: bwm_lfp\n", encoding="utf-8")
+    config = tmp_path / "data_locations.local.yaml"
+    config.write_text(
+        f"datasets:\n  bwm_lfp:\n    root: {(tmp_path / 'bwm_lfp').as_posix()!r}\n    preferred_version: latest\n",
+        encoding="utf-8",
+    )
+
+    locations = load_data_locations(config)
+
+    assert resolve_dataset_dir("bwm_lfp", locations) == dataset_dir
+
+
+def test_missing_bwm_lfp_error_points_at_the_opt_in_lfp_flag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = tmp_path / "reports" / "datasets" / "bwm_lfp"
+    monkeypatch.setitem(BWM_DATASET_DEFAULTS["bwm_lfp"], "root", root)
+
+    with pytest.raises(DataLocationError) as exc_info:
+        resolve_dataset_dir("bwm_lfp")
+
+    message = str(exc_info.value)
+    assert "about 14 GB (opt-in)" in message
+    assert "scripts/download_datasets.py --lfp" in message

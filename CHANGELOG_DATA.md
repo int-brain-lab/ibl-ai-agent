@@ -29,6 +29,44 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_lfp 1.0.0] - 2026-07-25
+
+### Added
+- First registered release of `bwm_lfp`, a compressed LFP companion to
+  `bwm_ephys`/`bwm_behavior`: all `699` BWM probe recordings in a single
+  `lf_compressed_all_bwm.h5` file, `384` channels for 695 recordings and `96`
+  for four NP2.4 recordings, `250 Hz` (decimated from `2500 Hz`), built with
+  `lfpack`'s SVD + wavelet-packet codec.
+- Only the **standard** compression tier (~119x) is distributed to the
+  agent; `lfpack` also produces an aggressive tier for its own uses, which
+  is intentionally not shipped here.
+- Each recording embeds per-channel brain-region annotations, a time axis
+  (`sr.times`) that is session-clock synchronized when `sr.t0` is finite, and
+  a saturation (ADC-clipping) QC table.
+- Opt-in download via `scripts/download_datasets.py --lfp`; unlike
+  `bwm_ephys`/`bwm_behavior`, not part of the default download flow because
+  of its size (~14 GB).
+- Unlike the other two datasets, the archive is produced upstream by the
+  `lfpack` package (in `ephys-atlas`), not built by this repo; its
+  `schema.yaml`/`provenance.yaml`/`manifest.json` are authored by
+  `scripts/download_datasets.py` itself at download time to plug it into
+  the same schema-based dataset registry.
+
+### Known limitations
+- Sync could not be computed for 7 probes across 4 sessions; `sr.t0` is
+  `NaN` and `sr.times` is recording-relative for these
+  ([lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8)).
+- Saturation affects more than 1% of source samples in 121 recordings and more
+  than 10% in 16 recordings (maximum 23.9%); use `sr.saturation_mask` rather
+  than testing decompressed values for exact zeros.
+- The compression codec attenuates power above roughly 20-30 Hz.
+- Per-channel impedance/analog-filter differences show up as amplitude
+  outliers below ~1.5 Hz.
+
+See [docs/bwm/lfp.md](docs/bwm/lfp.md) for the full dataset spec.
+
+---
+
 ## [bwm_behavior 2.0.0] - 2026-07-12
 
 ### Added

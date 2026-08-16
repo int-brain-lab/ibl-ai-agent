@@ -117,6 +117,9 @@ Yes. It will download the main compressed BWM data, and may offer to download mo
 **How much disk space do the public BWM derived datasets need?**
 
 Less than 10 GB for all spikes from good units and behavior data from the BWM.
+A compressed LFP dataset (`bwm_lfp`, ~14 GB) is also available but opt-in —
+it is not downloaded by default; fetch it with
+`scripts/download_datasets.py --lfp`.
 
 See [docs/bwm/README.md](docs/bwm/README.md) for more details. You
 will also need working space for generated artifacts.
