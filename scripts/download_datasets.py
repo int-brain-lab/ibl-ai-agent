@@ -2,16 +2,20 @@
 
 Usage:
     UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py
+    UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
+import json
 import shutil
 import sys
 import tempfile
 import urllib.request
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -39,6 +43,13 @@ BWM_DATASET_ROOTS = {
     "bwm_ephys": DATASETS_DIR / "bwm_ephys",
     "bwm_behavior": DATASETS_DIR / "bwm_behavior",
 }
+
+# bwm_lfp is opt-in (--lfp, ~14 GB) and deliberately excluded from
+# BWM_DATASET_ROOTS/ARCHIVES so it never joins the default two-dataset flow.
+LFP_DIR = DATASETS_DIR / "bwm_lfp"
+BWM_LFP_VERSION = "1.0.0"
+LFP_SCHEMA_VERSION = 1
+LFP_MIN_PACKAGE_VERSION = "0.1.0"
 
 
 @dataclass(frozen=True)
@@ -96,6 +107,43 @@ ARCHIVES: list[ArchiveSpec] = [
         sha1="1c37dd1c38d46ec80067c8a25772dfe2468a1ce1",
     ),
 ]
+
+
+@dataclass(frozen=True)
+class LFPFileSpec:
+    """Spec for the single-file ``bwm_lfp`` dataset (HDF5, no archive to extract).
+
+    Shares ``dataset``/``version``/``sha1`` with :class:`ArchiveSpec` so
+    :func:`verify_archive` can be reused as-is.
+    """
+    dataset: str
+    version: str
+    filename: str
+    url: str
+    sha1: str
+
+    @property
+    def target_dir(self) -> Path:
+        """Local versioned directory for this file (``bwm_lfp/<version>/``)."""
+        return LFP_DIR / self.version
+
+    @property
+    def target_path(self) -> Path:
+        return self.target_dir / self.filename
+
+
+# Only the standard-compression tier is exposed for download; the aggressive
+# tier is not distributed to the agent.
+LFP_STANDARD = LFPFileSpec(
+    dataset="bwm_lfp",
+    version=BWM_LFP_VERSION,
+    filename="lf_compressed_all_bwm.h5",
+    url=(
+        "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
+        "ibl-agent-data/lf_compressed_all_bwm.h5"
+    ),
+    sha1="b84edd4b98602bec96279c3a9e42170c65dd48a6",
+)
 
 
 def _is_s3_url(url: str) -> bool:
@@ -372,6 +420,118 @@ def write_default_config(config: dict[str, Any]) -> None:
     print(f"  wrote {CONFIG_PATH.relative_to(REPO_ROOT)}")
 
 
+def _build_lfp_schema(spec: LFPFileSpec) -> dict[str, Any]:
+    """Author the ``schema.yaml`` contract for ``bwm_lfp`` (lfpack ships no schema of its own)."""
+    return {
+        "dataset_name": spec.dataset,
+        "dataset_version": spec.version,
+        "schema_version": LFP_SCHEMA_VERSION,
+        "stores": {
+            "lf_compressed": {
+                "path": spec.filename,
+                "format": "lfpack_hdf5",
+                "reader": "lfpack.LFPackReader",
+                "recording_key": "pid",
+                "n_recordings": 699,
+                "n_channels": [96, 384],
+                "channel_count_distribution": {96: 4, 384: 695},
+                "sample_rate_hz": 250,
+                "compression_tier": "standard",
+            }
+        },
+    }
+
+
+def _build_lfp_provenance(spec: LFPFileSpec) -> dict[str, Any]:
+    return {
+        "dataset_name": spec.dataset,
+        "dataset_version": spec.version,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "source": {
+            "package": "lfpack",
+            "min_package_version": LFP_MIN_PACKAGE_VERSION,
+            "compression_tier": "standard",
+            "upstream_url": spec.url,
+            "upstream_sha1": spec.sha1,
+        },
+    }
+
+
+def _build_lfp_manifest(spec: LFPFileSpec, *, sha1: str, size_bytes: int) -> dict[str, Any]:
+    return {
+        "dataset_name": spec.dataset,
+        "dataset_version": spec.version,
+        "files": [{"path": spec.filename, "sha1": sha1, "size_bytes": size_bytes}],
+    }
+
+
+def _write_lfp_sidecars(spec: LFPFileSpec, *, sha1: str | None = None) -> None:
+    """Author schema.yaml/provenance.yaml/manifest.json next to the downloaded LFP file.
+
+    These are an ``ibl-ai-agent`` registration convention, not part of the
+    upstream ``lfpack`` release, so we author them ourselves at download time
+    to plug ``bwm_lfp`` into the same schema-based dataset resolution used by
+    ``bwm_ephys``/``bwm_behavior``.
+    """
+    target_dir = spec.target_dir
+    sha1 = sha1 or compute_sha1(spec.target_path)
+    size_bytes = spec.target_path.stat().st_size
+    (target_dir / "schema.yaml").write_text(
+        yaml.safe_dump(_build_lfp_schema(spec), sort_keys=False), encoding="utf-8"
+    )
+    (target_dir / "provenance.yaml").write_text(
+        yaml.safe_dump(_build_lfp_provenance(spec), sort_keys=False), encoding="utf-8"
+    )
+    (target_dir / "manifest.json").write_text(
+        json.dumps(_build_lfp_manifest(spec, sha1=sha1, size_bytes=size_bytes), indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(f"  wrote schema.yaml, provenance.yaml, manifest.json into {target_dir}")
+
+
+def _write_lfp_config() -> None:
+    """Add ``datasets.bwm_lfp`` to ``data_locations.local.yaml`` without touching other keys."""
+    config = read_config()
+    payload = dict(config)
+    datasets = dict(payload.get("datasets") or {})
+    raw = dict(datasets.get("bwm_lfp") or {})
+    raw["root"] = LFP_DIR.relative_to(REPO_ROOT).as_posix()
+    raw.setdefault("preferred_version", "latest")
+    datasets["bwm_lfp"] = raw
+    payload["datasets"] = datasets
+    payload.setdefault("one_cache", {"root": None})
+    CONFIG_PATH.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    print(f"  wrote bwm_lfp -> {CONFIG_PATH.relative_to(REPO_ROOT)}")
+
+
+def download_lfp_file(spec: LFPFileSpec) -> int:
+    """Download the ``bwm_lfp`` HDF5 file, verify it, author sidecars, and register it.
+
+    Returns 0 on success, 1 if the sha1 verification fails.
+    """
+    target_path = spec.target_path
+    if target_path.exists():
+        actual_sha1 = compute_sha1(target_path)
+        if actual_sha1 == spec.sha1:
+            print(f"  {spec.dataset} {spec.version} already present and verified at {spec.target_dir}.")
+            _write_lfp_sidecars(spec, sha1=actual_sha1)
+            _write_lfp_config()
+            return 0
+        print(f"  {target_path} present but not verified — re-downloading.")
+        target_path.unlink()
+
+    print(f"\n[{spec.url}]")
+    download_file(spec.url, target_path)
+    try:
+        verify_archive(spec, target_path)
+    except RuntimeError as exc:
+        print(f"  {exc}")
+        return 1
+    _write_lfp_sidecars(spec, sha1=spec.sha1)
+    _write_lfp_config()
+    return 0
+
+
 def main() -> int:
     """Download missing public BWM archives and configure local BWM roots.
 
@@ -385,6 +545,21 @@ def main() -> int:
              but at least one of them does not resolve to a dataset; the
              config is left untouched so the user can fix or remove it.
     """
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--lfp",
+        action="store_true",
+        default=False,
+        help=(
+            "Download only the bwm_lfp dataset (standard-compression tier, ~14 GB) "
+            "instead of the default bwm_ephys/bwm_behavior archives."
+        ),
+    )
+    args = parser.parse_args()
+
+    if args.lfp:
+        return download_lfp_file(LFP_STANDARD)
+
     config = read_config()
     plan = plan_current_archives(config)
 

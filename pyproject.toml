@@ -29,6 +29,9 @@ ibl = [
   "ibllib>=3.3",
   "brainbox<=0.0.9",
 ]
+lfp = [
+  "lfpack>=0.1.0",
+]
 notebook = [
   "jupyter>=1.1",
   "jupyter-mcp-server>=0.1",
@@ -38,7 +41,9 @@ notebook = [
 dev = [
   "pytest>=8.3",
   "pytest-cov>=5.0",
-  "ruff>=0.6",
+  # ruff 0.16.0 changed its default rule set and surfaces ~368 pre-existing
+  # violations across unrelated files; cap until those are cleaned up separately.
+  "ruff>=0.6,<0.16",
   "mypy>=1.11",
 ]
 
@@ -65,6 +70,11 @@ target-version = "py310"
 [tool.uv]
 constraint-dependencies = [
   "PyQt5-Qt5==5.15.2; sys_platform == 'win32'",
+]
+required-environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+  "sys_platform == 'win32'",
 ]
 
 [tool.uv.sources]

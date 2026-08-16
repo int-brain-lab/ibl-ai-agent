@@ -16,6 +16,18 @@ The script downloads the public `bwm_ephys` and `bwm_behavior` archives into
 `reports/datasets/` and writes `data_locations.local.yaml`. Approximate download
 sizes are listed in `docs/bwm/README.md`.
 
+The compressed LFP dataset (`bwm_lfp`, ~14 GB, standard-compression tier) is
+opt-in and not part of this default flow, since most sessions never need raw
+LFP access. Fetch and register it separately with:
+
+```bash
+UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp
+```
+
+Reading it also needs the `lfp` extra (`uv sync --extra lfp`) for the
+`lfpack` package — see `docs/bwm/README.md` and
+`skills/ibl-neuropixel/references/neuropixel_routing.md`.
+
 If the datasets are already present under `reports/datasets/`, the script skips
 the download and refreshes the local config. Runtime loading also auto-detects
 valid BWM datasets in the default `reports/datasets/<dataset_name>/` location
@@ -64,6 +76,9 @@ datasets:
   bwm_behavior:
     root: reports/datasets/bwm_behavior
     preferred_version: latest
+  bwm_lfp:
+    root: reports/datasets/bwm_lfp
+    preferred_version: latest
 one_cache:
   root: "C:/Users/<user>/Downloads/ONE"
 ```
@@ -97,6 +112,7 @@ from ibl_ai_agent.data_locations import resolve_dataset_dir
 
 bwm_ephys_dir = resolve_dataset_dir("bwm_ephys")
 bwm_behavior_dir = resolve_dataset_dir("bwm_behavior")
+bwm_lfp_dir = resolve_dataset_dir("bwm_lfp")
 ```
 
 If no local data location is configured, BWM agents may offer to run the public
