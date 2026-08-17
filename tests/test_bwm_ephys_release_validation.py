@@ -27,7 +27,7 @@ def _write_table(path: Path, frame: pd.DataFrame) -> None:
     frame.to_parquet(path, engine="pyarrow", compression="zstd", index=False)
 
 
-def _write_synthetic_ephys_release(root: Path, *, version: str = "1.2.0") -> None:
+def _write_synthetic_ephys_release(root: Path, *, version: str = "1.2.1") -> None:
     root.mkdir(parents=True, exist_ok=True)
     (root / "spikes" / "pid-1").mkdir(parents=True)
     schema = {
@@ -99,7 +99,7 @@ def _write_synthetic_ephys_release(root: Path, *, version: str = "1.2.0") -> Non
 
 def test_validate_synthetic_bwm_ephys_1_2_release(tmp_path: Path) -> None:
     module = _load_validator()
-    dataset_dir = tmp_path / "bwm_ephys" / "1.2.0"
+    dataset_dir = tmp_path / "bwm_ephys" / "1.2.1"
     _write_synthetic_ephys_release(dataset_dir)
 
     report = module.validate_bwm_ephys_release(
@@ -117,10 +117,10 @@ def test_validate_synthetic_bwm_ephys_1_2_release(tmp_path: Path) -> None:
 
 def test_validate_synthetic_bwm_ephys_1_2_release_compares_legacy(tmp_path: Path) -> None:
     module = _load_validator()
-    current_dir = tmp_path / "bwm_ephys" / "1.2.0"
-    legacy_dir = tmp_path / "bwm_ephys" / "1.1.0"
+    current_dir = tmp_path / "bwm_ephys" / "1.2.1"
+    legacy_dir = tmp_path / "bwm_ephys" / "1.2.0"
     _write_synthetic_ephys_release(current_dir)
-    _write_synthetic_ephys_release(legacy_dir, version="1.1.0")
+    _write_synthetic_ephys_release(legacy_dir, version="1.2.0")
 
     report = module.validate_bwm_ephys_release(
         current_dir,
@@ -135,9 +135,46 @@ def test_validate_synthetic_bwm_ephys_1_2_release_compares_legacy(tmp_path: Path
     assert any("preserves legacy row count" in check for check in report.checks)
 
 
+def test_validate_corrective_release_accepts_append_only_passive_rows(tmp_path: Path) -> None:
+    module = _load_validator()
+    current_dir = tmp_path / "bwm_ephys" / "1.2.1"
+    legacy_dir = tmp_path / "bwm_ephys" / "1.2.0"
+    _write_synthetic_ephys_release(current_dir)
+    _write_synthetic_ephys_release(legacy_dir, version="1.2.0")
+
+    passive_events_path = current_dir / "metadata/passive_events.parquet"
+    passive_events = pd.read_parquet(passive_events_path)
+    passive_events = pd.concat(
+        [passive_events, pd.DataFrame({"eid": ["eid-2"], "event_id": [1]})],
+        ignore_index=True,
+    )
+    _write_table(passive_events_path, passive_events)
+
+    passive_features_path = current_dir / "features/passive_response_features.parquet"
+    passive_features = pd.read_parquet(passive_features_path)
+    passive_features = pd.concat(
+        [passive_features, pd.DataFrame({"pid": ["pid-2"], "cluster_id": [1]})],
+        ignore_index=True,
+    )
+    _write_table(passive_features_path, passive_features)
+
+    report = module.validate_bwm_ephys_release(
+        current_dir,
+        compare_legacy=legacy_dir,
+        expected_cluster_rows=2,
+        expected_cluster_columns=10,
+        expected_array_bins=4,
+        expected_table_rows={},
+    )
+
+    assert report.ok, report.failures
+    assert "metadata/passive_events.parquet preserves all legacy rows" in report.checks
+    assert "features/passive_response_features.parquet preserves all legacy rows" in report.checks
+
+
 def test_validate_synthetic_bwm_ephys_release_rejects_misaligned_arrays(tmp_path: Path) -> None:
     module = _load_validator()
-    dataset_dir = tmp_path / "bwm_ephys" / "1.2.0"
+    dataset_dir = tmp_path / "bwm_ephys" / "1.2.1"
     _write_synthetic_ephys_release(dataset_dir)
     np.save(dataset_dir / "clusters.acgs_log.npy", np.ones((1, 4), dtype=np.float16))
 

@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 import yaml
 
-from ibl_ai_agent.datasets import bwm_ephys, bwm_simple
+from ibl_ai_agent.datasets import bwm_ephys, bwm_shared, bwm_simple
 
 
 class DummyBrainRegions:
@@ -87,6 +87,133 @@ def _write_pose_files(alf_root: Path) -> None:
     pd.DataFrame({"pupilDiameter": [1.0, 1.1, 1.2], "likelihood": [0.9, 0.8, 0.95]}).to_parquet(
         alf_root / "leftCamera.features.pqt", engine="pyarrow", compression="zstd", index=False
     )
+
+
+def _passive_only_missing_scan() -> dict:
+    return {
+        "aggregate_tables": {
+            "clusters": {"present": True},
+            "trials": {"present": True},
+        },
+        "selection": {"insertions": 1, "sessions": 1},
+        "signals": {
+            "spikes": {
+                "required_insertions": 1,
+                "present_insertions": 1,
+                "missing": [],
+            },
+            "passive": {
+                "required_sessions": 1,
+                "present_sessions": 0,
+                "missing": [
+                    {
+                        "eid": "eid-1",
+                        "missing_files": ["_ibl_passivePeriods.intervalsTable.csv"],
+                    }
+                ],
+            },
+        },
+    }
+
+
+def test_passive_only_gap_triggers_prefetch_but_is_not_required() -> None:
+    scan = _passive_only_missing_scan()
+
+    assert bwm_ephys._preflight_needs_prefetch(scan)
+    assert not bwm_ephys._preflight_has_missing_required_inputs(scan)
+
+
+def test_preflight_attempts_passive_only_prefetch_without_blocking_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    roster = pd.DataFrame([{"pid": "pid-1", "eid": "eid-1"}])
+    scan = _passive_only_missing_scan()
+    called = False
+
+    monkeypatch.setattr(bwm_simple, "_load_roster", lambda limit_insertions: roster)
+    monkeypatch.setattr(bwm_ephys, "inspect_bwm_ephys_cache", lambda config, roster: scan)
+
+    def fake_prefetch(config, *, roster, initial_scan, reporter, prefetch_report):
+        nonlocal called
+        called = True
+        prefetch_report["actions"] = [
+            {"kind": "passive", "eid": "eid-1", "status": "unavailable"}
+        ]
+        prefetch_report["final"] = scan
+        stage = bwm_ephys.StageMetric(
+            name="prefetch",
+            started_at="2026-08-14T00:00:00+00:00",
+            elapsed_s=0.0,
+            details={"passive_unavailable": 1},
+        )
+        return prefetch_report, stage
+
+    monkeypatch.setattr(bwm_ephys, "_prefetch_required_inputs", fake_prefetch)
+
+    result = bwm_ephys._run_preflight(
+        bwm_ephys.BuildConfig(
+            output_root=tmp_path,
+            cache_root=tmp_path / "cache",
+            allow_remote_fetch=True,
+            prefetch_missing=True,
+            require_signals=True,
+            verbose=False,
+        ),
+        reporter=bwm_ephys.BuildProgressReporter(verbose=False),
+    )
+
+    assert called
+    assert result.final_scan is scan
+
+
+def test_prefetch_passive_distinguishes_available_from_unavailable() -> None:
+    period_name = "_ibl_passivePeriods.intervalsTable.csv"
+    rfm_name = "_ibl_passiveRFM.times.npy"
+
+    class DummyOne:
+        def __init__(self):
+            self.loaded = []
+
+        def list_datasets(self, eid, *, details, query_type):
+            assert eid == "eid-1"
+            assert details is True
+            assert query_type == "remote"
+            return pd.DataFrame(
+                {
+                    "rel_path": [f"alf/{period_name}", f"alf/{rfm_name}"],
+                    "exists": [True, False],
+                    "default_revision": [True, True],
+                    "collection": ["alf", "alf"],
+                    "revision": ["2026-08-14", "2026-08-14"],
+                }
+            )
+
+        def load_dataset(self, eid, dataset_name, **kwargs):
+            self.loaded.append((eid, dataset_name, kwargs))
+
+    one = DummyOne()
+    statuses = bwm_shared.prefetch_passive(
+        one,
+        eid="eid-1",
+        dataset_names=[period_name, rfm_name],
+    )
+
+    assert statuses == {period_name: "fetched", rfm_name: "unavailable"}
+    assert [item[1] for item in one.loaded] == [period_name]
+
+
+def test_prefetch_passive_does_not_treat_manifest_failure_as_unavailable() -> None:
+    class FailingOne:
+        def list_datasets(self, eid, *, details, query_type):
+            raise ConnectionError("manifest unavailable")
+
+    with pytest.raises(ConnectionError, match="manifest unavailable"):
+        bwm_shared.prefetch_passive(
+            FailingOne(),
+            eid="eid-1",
+            dataset_names=["_ibl_passivePeriods.intervalsTable.csv"],
+        )
 
 
 def test_build_bwm_ephys_dataset_small_synthetic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

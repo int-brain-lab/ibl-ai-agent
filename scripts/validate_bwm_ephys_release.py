@@ -24,7 +24,7 @@ import pandas as pd
 import yaml
 
 
-DEFAULT_EXPECTED_VERSION = "1.2.0"
+DEFAULT_EXPECTED_VERSION = "1.2.1"
 DEFAULT_EXPECTED_CLUSTER_ROWS = 621_733
 DEFAULT_EXPECTED_CLUSTER_COLUMNS = 59
 DEFAULT_EXPECTED_ARRAY_BINS = 128
@@ -72,10 +72,15 @@ EXPECTED_TABLE_ROWS = {
     "metadata/trials.parquet": 295_920,
     "metadata/events.parquet": 2_066_041,
     "metadata/passive_sessions.parquet": 459,
-    "metadata/passive_events.parquet": 6_959_652,
+    "metadata/passive_events.parquet": 7_086_291,
     "features/unit_features.parquet": 75_395,
     "features/event_response_features.parquet": 376_975,
-    "features/passive_response_features.parquet": 577_566,
+    "features/passive_response_features.parquet": 606_275,
+}
+
+APPEND_ONLY_CORRECTION_TABLES = {
+    "metadata/passive_events.parquet": {"passive_event_id"},
+    "features/passive_response_features.parquet": set(),
 }
 
 
@@ -326,7 +331,18 @@ def _compare_legacy_tables(report: ValidationReport, dataset_dir: Path, legacy_d
             continue
         missing_columns = sorted(set(legacy.columns) - set(current.columns))
         report.check(not missing_columns, f"{relative} preserves legacy columns")
-        report.check(len(current) == len(legacy), f"{relative} preserves legacy row count")
+        if relative in APPEND_ONLY_CORRECTION_TABLES:
+            ignored = APPEND_ONLY_CORRECTION_TABLES[relative]
+            compare_columns = [column for column in legacy.columns if column not in ignored]
+            legacy_hashes = pd.util.hash_pandas_object(legacy[compare_columns], index=False).to_numpy()
+            current_hashes = pd.util.hash_pandas_object(current[compare_columns], index=False).to_numpy()
+            report.check(len(current) >= len(legacy), f"{relative} does not lose rows")
+            report.check(
+                np.isin(legacy_hashes, current_hashes).all(),
+                f"{relative} preserves all legacy rows",
+            )
+        else:
+            report.check(len(current) == len(legacy), f"{relative} preserves legacy row count")
 
     current_spikes = dataset_dir / "spikes"
     legacy_spikes = legacy_dir / "spikes"

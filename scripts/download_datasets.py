@@ -90,12 +90,12 @@ class ArchivePlan:
 ARCHIVES: list[ArchiveSpec] = [
     ArchiveSpec(
         dataset="bwm_ephys",
-        version="1.2.0",
+        version="1.2.1",
         url=(
             "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
-            "ibl-agent-data/bwm_ephys-1.2.0.tar"
+            "ibl-agent-data/bwm_ephys-1.2.1.tar"
         ),
-        sha1="6661a59b3397bcc6c0c58295da33c01630ba07e3",
+        sha1="b18c5c7a2944be510800010eb3df90aac84a2a52",
     ),
     ArchiveSpec(
         dataset="bwm_behavior",

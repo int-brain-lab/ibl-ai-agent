@@ -9,6 +9,7 @@ import tarfile
 import zipfile
 
 import numpy as np
+import pandas as pd
 
 from ibl_ai_agent.datasets import bwm_simple
 from ibl_ai_agent.datasets import bwm_session_assets as session_assets
@@ -199,11 +200,16 @@ def prefetch_pose(one_remote: Any, *, eid: str) -> None:
 
 def prefetch_passive(one_remote: Any, *, eid: str, dataset_names: list[str] | tuple[str, ...] | None = None) -> dict[str, str]:
     wanted = list(dataset_names or session_assets.PASSIVE_DATASET_FILENAMES)
+    locations = _resolve_remote_dataset_locations(one_remote, eid=eid, dataset_names=wanted)
     statuses: dict[str, str] = {}
     failures: list[str] = []
     for dataset_name in wanted:
+        location = locations[dataset_name]
+        if location is None:
+            statuses[dataset_name] = "unavailable"
+            continue
+        collection, revision = location
         try:
-            collection, revision = _resolve_remote_dataset_location(one_remote, eid=eid, dataset_name=dataset_name)
             one_remote.load_dataset(
                 eid,
                 dataset_name,
@@ -216,31 +222,58 @@ def prefetch_passive(one_remote: Any, *, eid: str, dataset_names: list[str] | tu
         except Exception as exc:
             statuses[dataset_name] = f"failed: {exc}"
             failures.append(f"{dataset_name}: {exc}")
-    if failures and len(failures) == len(wanted):
+    available_count = sum(location is not None for location in locations.values())
+    if failures and len(failures) == available_count:
         raise RuntimeError("; ".join(failures))
     return statuses
 
 
-def _resolve_remote_dataset_location(one_remote: Any, *, eid: str, dataset_name: str) -> tuple[str | None, str | None]:
-    try:
-        details = one_remote.list_datasets(
-            eid,
-            filename=dataset_name,
-            details=True,
-            query_type="remote",
-        )
-    except Exception:
-        details = None
+def _resolve_remote_dataset_locations(
+    one_remote: Any,
+    *,
+    eid: str,
+    dataset_names: list[str] | tuple[str, ...],
+) -> dict[str, tuple[str | None, str | None] | None]:
+    """Resolve remotely available datasets in one manifest query.
+
+    A missing manifest row means that the dataset is unavailable, while a query
+    exception is allowed to propagate so it cannot be mistaken for absence.
+    """
+    details = one_remote.list_datasets(eid, details=True, query_type="remote")
     if details is None:
-        return "alf", None
-    if hasattr(details, "empty"):
-        if details.empty:
-            return "alf", None
-        row = details.iloc[0]
-        collection = row["collection"] if "collection" in details.columns and row.get("collection") else "alf"
-        revision = row["revision"] if "revision" in details.columns and row.get("revision") else None
-        return collection, revision
-    return "alf", None
+        raise RuntimeError(f"Remote dataset manifest query returned no result for EID {eid}.")
+
+    locations: dict[str, tuple[str | None, str | None] | None] = {
+        name: None for name in dataset_names
+    }
+    if not hasattr(details, "empty"):
+        raise RuntimeError(
+            f"Remote dataset manifest query returned an unsupported result for EID {eid}."
+        )
+    if details.empty:
+        return locations
+    if "rel_path" not in details.columns:
+        raise RuntimeError(f"Remote dataset manifest lacks rel_path for EID {eid}.")
+
+    available = details
+    if "exists" in available.columns:
+        available = available.loc[available["exists"].fillna(False)]
+    basenames = available["rel_path"].map(lambda value: Path(str(value)).name)
+    for dataset_name in dataset_names:
+        matches = available.loc[basenames.eq(dataset_name)]
+        if matches.empty:
+            continue
+        if "default_revision" in matches.columns:
+            default_matches = matches.loc[matches["default_revision"].fillna(False)]
+            if not default_matches.empty:
+                matches = default_matches
+        row = matches.iloc[0]
+        collection_value = row.get("collection")
+        revision_value = row.get("revision")
+        collection = "alf" if pd.isna(collection_value) or not str(collection_value) else str(collection_value)
+        revision = None if pd.isna(revision_value) or not str(revision_value) else str(revision_value)
+        locations[dataset_name] = (collection, revision)
+    return locations
 
 
 class _HashingWriter:
