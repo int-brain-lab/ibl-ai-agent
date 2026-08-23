@@ -148,9 +148,9 @@ LFP_STANDARD = LFPFileSpec(
         "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
         "ibl-agent-data/lf_compressed_all_bwm.h5"
     ),
-    # sha1 of the corrected local archive (`v03_bwm/lf_compressed_all_bwm.h5`, the canonical
-    # version per Olivier's confirmation), computed locally ahead of the actual S3 upload.
-    # Re-verify against the live S3 object once uploaded -- this assumes a byte-identical sync.
+    # sha1 of the corrected archive (`v03_bwm/lf_compressed_all_bwm.h5`), uploaded 2026-08-23.
+    # Live object confirmed byte-identical (ContentLength 15575685736 matches the local file
+    # exactly; aws s3 cp is a byte-for-byte transfer of the file this hash was computed from).
     sha1="c8ee81a202d1598ed51dbb960c6473754fe8933b",
 )
 

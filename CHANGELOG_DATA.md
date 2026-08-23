@@ -11,7 +11,7 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [bwm_lfp 1.1.0] - TODO(fix/lfpack-sync-issue-8): fill in on release
+## [bwm_lfp 1.1.0] - 2026-08-23
 
 ### Fixed
 - Corrected sync for the 11 probes flagged in
