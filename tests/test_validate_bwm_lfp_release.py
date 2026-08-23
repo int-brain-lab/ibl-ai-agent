@@ -93,6 +93,7 @@ source:
 
     report = module.validate_bwm_lfp_release(
         tmp_path,
+        expected_version="1.0.0",  # matches this fixture's schema/provenance, independent of DEFAULT_EXPECTED_VERSION
         expected_n_recordings=3,
         expected_channel_count_distribution={96: 1, 384: 2},
     )
@@ -102,6 +103,7 @@ source:
     FakeLFPackReader.channel_counts["np2"] = 95
     report = module.validate_bwm_lfp_release(
         tmp_path,
+        expected_version="1.0.0",
         expected_n_recordings=3,
         expected_channel_count_distribution={96: 1, 384: 2},
     )
