@@ -57,8 +57,9 @@ One HDF5 file holding all `699` BWM probe recordings, keyed by `pid`:
 - `250 Hz` sample rate (decimated from `2500 Hz`)
 - per-channel brain-region annotations (`acronym`, `atlas_id`, MNI coordinates)
 - per-recording saturation (ADC-clipping) QC table
-- a sync-corrected session-clock time axis (`sr.times`) when `sr.t0` is finite;
-  seven recordings without sync instead expose recording-relative times
+- a sync-corrected session-clock time axis (`sr.times`), non-linear (knot-based)
+  where the registered sync itself has real non-linear structure, falling back to
+  an affine outside the knot range
 
 ## Reading
 
@@ -80,11 +81,12 @@ a result:
   to be exactly zero, so use `sr.saturation_mask`/`sr.saturation_times()` rather
   than testing sample values. In this release, 121 of 699 recordings have more
   than 1% saturated source samples and 16 exceed 10% (maximum 23.9%).
-- **Missing sync for 7 probes**: `t0_sync`/`fs_sync` could not be computed
-  for 7 probes across 4 sessions due to an upstream session-level sync
-  data-quality issue; `sr.t0` returns `NaN` and `sr.times` is
-  recording-relative for these
-  ([lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8)).
+- **Sync for 11 probes corrected in `bwm_lfp 1.1.0`**: 4 raw-pulse defect
+  classes (`dropped_edges`, `duplicate_burst`, `single_edge_glitch`,
+  `irregular_3A_reference`) previously left `sr.t0` as `NaN` for 7 probes and
+  silently wrong for another 4 — re-derived from raw sync pulses and fixed; see
+  [lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8) and the
+  [full write-up](https://oliche.github.io/oliche-quarto/analyses/2026-08-lfpack-sync-issues/index.html).
 - **Saturation interval boundaries**: interval stop times can extend up to one
   decimated sample beyond `sr.times[-1]` because intervals are rounded
   outwards; `sr.saturation_mask` clips them safely.

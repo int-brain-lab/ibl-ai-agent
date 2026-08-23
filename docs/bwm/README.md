@@ -125,7 +125,8 @@ its size.
 - Sample rate: `250 Hz` (decimated from `2500 Hz`)
 - Main contents:
   - `lf_compressed_all_bwm.h5` — all 699 recordings, per-channel brain-region
-    annotations, saturation QC, and session-clock sync where available
+    annotations, saturation QC, and session-clock sync (non-linear where the
+    registered sync has real non-linear structure)
   - `schema.yaml` / `provenance.yaml` / `manifest.json` — authored by
     `scripts/download_datasets.py` at download time (not shipped by `lfpack`)
 

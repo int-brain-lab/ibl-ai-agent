@@ -47,9 +47,15 @@ BWM_DATASET_ROOTS = {
 # bwm_lfp is opt-in (--lfp, ~14 GB) and deliberately excluded from
 # BWM_DATASET_ROOTS/ARCHIVES so it never joins the default two-dataset flow.
 LFP_DIR = DATASETS_DIR / "bwm_lfp"
-BWM_LFP_VERSION = "1.0.0"
+# 1.1.0, not a patch bump: every recording gains new sync_samples/sync_times knot data
+# (schema addition), and many probes' t0_sync/fs_sync scalars shift slightly even where nothing
+# was previously flagged broken (see lfpack#8 / CHANGELOG_DATA.md).
+BWM_LFP_VERSION = "1.1.0"
 LFP_SCHEMA_VERSION = 1
-LFP_MIN_PACKAGE_VERSION = "0.1.0"
+# TODO(fix/lfpack-sync-issue-8): confirm against the actual released lfpack version once
+# int-brain-lab/lfpack#14 merges and ships (currently unreleased on the lfpack side; 0.4.0 is
+# the expected next version per lfpack's own CHANGELOG.md, not yet tagged).
+LFP_MIN_PACKAGE_VERSION = "0.4.0"
 
 
 @dataclass(frozen=True)
@@ -142,7 +148,10 @@ LFP_STANDARD = LFPFileSpec(
         "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
         "ibl-agent-data/lf_compressed_all_bwm.h5"
     ),
-    sha1="b84edd4b98602bec96279c3a9e42170c65dd48a6",
+    # sha1 of the corrected archive (`v03_bwm/lf_compressed_all_bwm.h5`), uploaded 2026-08-23.
+    # Live object confirmed byte-identical (ContentLength 15575685736 matches the local file
+    # exactly; aws s3 cp is a byte-for-byte transfer of the file this hash was computed from).
+    sha1="c8ee81a202d1598ed51dbb960c6473754fe8933b",
 )
 
 

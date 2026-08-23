@@ -11,6 +11,14 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_lfp 1.1.0] - 2026-08-23
+
+### Fixed
+- Corrected sync for the 11 probes flagged in
+  [lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8).
+
+---
+
 ## [bwm_ephys 1.2.1] - 2026-08-14
 
 ### Fixed
