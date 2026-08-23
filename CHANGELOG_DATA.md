@@ -15,27 +15,7 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - Corrected sync for the 11 probes flagged in
-  [lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8): 5 `dropped_edges`
-  (probe channel free-running at ~2x rate for the last 10-15% of the recording), 3
-  `duplicate_burst` (ADC full-scale saturation confirmed via raw AP), 2
-  `single_edge_glitch`, 1 `irregular_3A_reference` (locked onto an unreliable
-  `frame2ttl` instead of `right_camera`). `sr.t0` was previously `NaN` for 7 of these
-  and silently wrong (a bad affine, no crash) for the other 4.
-- `lfpack` now stores the registered ALF sync knot pairs verbatim
-  (`sync_samples`/`sync_times`) instead of collapsing every probe to one re-fitted
-  global affine; `sr.times` interpolates through them where present, falling back to
-  the derived affine outside their range. `sr.t0`/`sr.fs` remain plain scalars for
-  every existing caller — no API change.
-- Full write-up:
-  [oliche.github.io/oliche-quarto/analyses/2026-08-lfpack-sync-issues](https://oliche.github.io/oliche-quarto/analyses/2026-08-lfpack-sync-issues/index.html).
-
-### Known limitations
-- Saturation affects more than 1% of source samples in 121 recordings and more
-  than 10% in 16 recordings (maximum 23.9%); use `sr.saturation_mask` rather
-  than testing decompressed values for exact zeros.
-- The compression codec attenuates power above roughly 20-30 Hz.
-- Per-channel impedance/analog-filter differences show up as amplitude
-  outliers below ~1.5 Hz.
+  [lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8).
 
 ---
 
