@@ -148,12 +148,10 @@ LFP_STANDARD = LFPFileSpec(
         "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
         "ibl-agent-data/lf_compressed_all_bwm.h5"
     ),
-    # TODO(fix/lfpack-sync-issue-8): placeholder until the corrected file is actually uploaded
-    # to S3 -- compute the real sha1 from that exact uploaded file and paste it in before
-    # merging. Deliberately not a plausible-looking value: this must fail loudly (hash
-    # mismatch -> forced re-download) rather than silently keep matching a stale file, and
-    # must not slip through review unfilled.
-    sha1="TODO_FILL_IN_AFTER_S3_UPLOAD_1c7a2b3e4d5f6081920a1b2c3d4e5f60",
+    # sha1 of the corrected local archive (`v03_bwm/lf_compressed_all_bwm.h5`, the canonical
+    # version per Olivier's confirmation), computed locally ahead of the actual S3 upload.
+    # Re-verify against the live S3 object once uploaded -- this assumes a byte-identical sync.
+    sha1="c8ee81a202d1598ed51dbb960c6473754fe8933b",
 )
 
 
