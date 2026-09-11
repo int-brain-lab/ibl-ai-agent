@@ -35,6 +35,10 @@ The report should have the following sections:
   - Include any caveats of this result (positive or negative)
   - Describe any lessons learned for future AI-based analyses of this data
 
+## Prose style
+
+State findings directly: figure + 1-2 sentence caption/interpretation. No boilerplate transitions or restating section purpose.
+
 ## Figures
 
 For HTML reports (`format: html`), always set `lightbox: true` in the YAML header so figures are clickable/zoomable. This option has no effect on PDF reports (`format: pdf`).
