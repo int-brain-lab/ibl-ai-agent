@@ -10,8 +10,8 @@ Most users interact with this repository through a coding agent, usually the
 Codex CLI, rather than by calling the `ibl-ai-agent` CLI directly.
 
 Open the agent in the repository root, ask one focused scientific question,
-review the exploratory plan, and let the agent create a project under
-`projects/<project_slug>/`.
+review the exploratory plan, and let the agent create a project under the
+configured project root (default `projects/`).
 
 Example questions:
 
@@ -94,17 +94,24 @@ use strategy review rounds with adversarial subagents
 
 ## Project Outputs
 
-Scientific work should be saved under one project directory:
+Scientific work should be saved under one project directory. Resolve
+`project_root` from the optional repo-root `ibl-agent.local.yaml`, relative to
+the repository if needed; otherwise use `projects/`. The canonical contract is
+in [AGENTS.md](../AGENTS.md).
 
 ```text
-projects/<project_slug>/
+<project_root>/<project_slug>/
   question.md
   TODO.md
   change-log.md
   artifacts/
   exploratory-analyses/
   confirmatory-analyses/
-  report.html
+  report.qmd
+  report/
+    report.html
+    ...required web assets...
+  instruction-suggestions.md  # optional, private guidance proposals
 ```
 
 Use these files for persistent scientific state:
@@ -119,7 +126,10 @@ Use these files for persistent scientific state:
 - `exploratory-analyses/`: scripts, figures, and outputs used to refine the
   question or metrics.
 - `confirmatory-analyses/`: locked analysis scripts and statistical outputs.
-- `report.html`: final report.
+- `report.qmd`: Quarto source, outside the publishable directory.
+- `report/`: rendered HTML and required web assets only. The publisher collects
+  web files recursively from this directory; do not pass the whole project.
+- `instruction-suggestions.md`: optional proposals for durable guidance changes.
 
 Older reviewed or experimental flows may still write to `projects/public-analysis/`,
 `reports/validations/`, or `reports/ask_runs/`. Treat those as specialized

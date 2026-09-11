@@ -24,19 +24,19 @@ Before performing a large run, estimate how long it will take based on previous 
 
 ## Save intermediate results
 
-Many analyses require intermediate computational steps such as ACGs or PSTHs, which are subsequently used in ways not yet finalized. To save time, consider saving these as checkpoint files in `projects/<project_slug>/artifacts` in a way that allows them to be created and resused as needed. Make sure the artifacts can be added to, so existing computations do not need to be rerun.
+Save reusable computations such as ACGs or PSTHs in the project's `artifacts/` directory (see Project directory). Keep checkpoints incremental so new computations can be added without rerunning existing ones.
 
 Do this whenever you think the results of a computation will possibly be used again. If you find yourself running a computation twice, that is a sign you should have saved an artifact.
 
 ## Keep a running plan
 
-Before starting an empirical analysis project, make a list of steps to perform in `projects/<project_slug>/TODO.md`. Give each step a check box `[ ]`. When a step is complete make it `[X]`, also listing any code and output files generated.
+Before starting an empirical analysis project, resolve its directory as described below and create `TODO.md`. Give each step a check box `[ ]`. When a step is complete make it `[X]`, also listing any code and output files generated.
 
 The TODO should also list points when to consult the user for feedback.  Before starting execution, show this plan to the user and ask for feedback, including on how often they want to be consulted. By default, consult the user often during exploratory analysis, and certainly before proceding to confirmatory analysis.  When consulting the user provide plentiful explanatory plots.
 
-Keep a running summary of the explicated question and term definitions in `projects/<project_slug>/question.md`
+Keep a running summary of the explicated question and term definitions in the project's `question.md`.
 
-Both `TODO.md` and `question.md` can be dynamic: as exploration proceeds, the question and TODO items not yet performed can change.  But don't change items already completed. When making changes to either file, save in `projects/<project_slug>/change-log.md`
+Both `TODO.md` and `question.md` can be dynamic: as exploration proceeds, the question and TODO items not yet performed can change. But don't change items already completed. Record changes to either file in the project's `change-log.md`.
 
 
 ## Communication style
@@ -91,16 +91,17 @@ directory as the project root. Resolve a relative `project_root` against the
 repository root.
 
 If no local config is present, use the repository-local `projects/` directory.
-All outputs for a session belong under `<project_root>/<project_slug>/`, and
+All scientific project outputs belong under `<project_root>/<project_slug>/`, and
 nowhere else.
 
 - `<project_root>/<project_slug>/question.md` a dynamic document containing the original question, current refined explication, definitions of terms, and definition of exploration and confirmation sets;
 - `<project_root>/<project_slug>/TODO.md` for a sequential list of steps performed and planned. Change [ ] to [X] on completion and list output files generated. You can change future plans in the list but do not change descriptions of steps already performed
 - `<project_root>/<project_slug>/change-log.md` a list of changes to `question.md` and `TODO.md`, with date-times
 - `<project_root>/<project_slug>/artifacts` for things like intermediate npy files for later reuse
-- `<project_root>/<project_slug>/exploratory-analyses` for python files and outputs of exploratory analyses
+- `<project_root>/<project_slug>/exploratory-analyses` for Python files, validation diagnostics, risk notes, and outputs of exploratory analyses
 - `<project_root>/<project_slug>/confirmatory-analyses` for python files and outputs of confirmatory analyses
-- `<project_root>/<project_slug>/report.html` for final report including motivation, didactic example figures, and figures illustrating summary analysis
+- `<project_root>/<project_slug>/report/` for the rendered HTML report (`report.html`) and required web assets only; keep source documents and private notes outside this publishable directory
+- `<project_root>/<project_slug>/instruction-suggestions.md` for proposed durable guidance changes, when useful
 
 ## File naming
 

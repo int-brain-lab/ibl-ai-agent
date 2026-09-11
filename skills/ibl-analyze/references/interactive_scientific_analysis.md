@@ -14,14 +14,7 @@ Metric validation is a user-facing gate, not only a section inside the final scr
 Read-only repository inspection and planning are autonomous. A reply approving a clearly proposed next action authorizes that action; do not request the same approval again. If the proposed action was ambiguous, clarify before execution. Do not infer authorization for downloads, metric acceptance, scale-up, confirmation, or publication from a generic "proceed" unless that specific action was clearly proposed. Preserve the split, metric-validation, large-run, and confirmatory approval gates in `AGENTS.md` and `skills/exploration-confirmation/SKILL.md`.
 
 ## Artifact Routing
-Before writing scientific artifacts, classify the artifact type.
-
-- Metric/data/feature validation artifacts, adversarial metric checks, risk notes, and supporting figures: `reports/validations/<slug>/`.
-- Final reviewed analysis scripts and reports for a scientist-facing question: `projects/public-analysis/`.
-- Durable scientific caveats and interpretive background: `skills/ibl-analyze/references/scientific_caveats/`.
-- Cross-cutting workflow corrections or historical correction notes: `docs/agent_corrections.md`.
-
-Metric-validation pilots should not be routed to `projects/public-analysis/` unless the user explicitly asks for a reviewed final-answer artifact or the validation is inseparable from that final answer.
+Follow the project-directory contract in `AGENTS.md`, including its configured `project_root`. Put validation scripts, diagnostics, and metric risk notes in `exploratory-analyses/`, and reusable intermediate computations in `artifacts/`. Proposed durable guidance changes follow `skills/skill-maintenance/SKILL.md`; analysis feedback alone does not authorize editing repo guidance.
 
 ## Lifecycle
 1. **Clarify the scientific intent.** Identify the biological motivation, hypothesis or comparison, desired scale, data scope, and expected output. Ask targeted questions when these choices would materially change the answer.

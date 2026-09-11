@@ -107,7 +107,9 @@ statistics, and caveats.
 
 **Where do outputs go?**
 
-Scientific outputs should go under `projects/<project_slug>/`. See
+Scientific outputs go under the configured project root, defaulting to
+`projects/<project_slug>/`. Rendered reports and their web assets go in its
+dedicated `report/` directory. See
 [docs/workflow.md](docs/workflow.md).
 
 **Does it download data?**

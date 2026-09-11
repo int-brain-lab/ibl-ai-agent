@@ -10,7 +10,7 @@ description: Use this skill to produce a final report of a project.
 
 ## Output format
 
-The output report should read similarly to a scientific research paper. Prepare a PDF document using Quarto, in `projects\<project slug>\report`
+Prepare a scientific report using Quarto, with HTML as the default and PDF only when requested. Resolve the project directory using `AGENTS.md`; render HTML to `<project_root>/<project_slug>/report/report.html`, with only required web assets alongside it. Keep Quarto sources and private notes outside `report/`, because the publisher collects web files recursively from that directory.
 
 The report should have the following sections:
 
@@ -47,7 +47,7 @@ The report should contain plentiful figures. Include all figures made in the ori
 
 ## AI instruction file suggestions
 
-Think whether this project taught you any lessons that could improve performance in future sessions. If so, suggest text to add to or remove from your instruction files (AGENTS.md, SKILL.md, and references), using `skills/skill-maintenance/SKILL.md`. Do not edit the files, but list the suggested additions/removals in the report.  Also produce md files containing any new suggested text in the reports directory.
+If the project suggests reusable improvements to agent guidance, follow `skills/skill-maintenance/SKILL.md` and write proposals in `<project_root>/<project_slug>/instruction-suggestions.md`, outside the publishable report directory. Do not edit durable guidance without approval.
 
 When suggesting edits, prioritize edits that would be generally useful for future project, for example alterations in workflow, quality control, or data management, over edits that are specific to this project, for example new metrics or analysis techniques.
 
@@ -65,10 +65,10 @@ Before publishing, warn the user exactly:
 >
 > How to check before confirming: open the rendered HTML report in a browser; review the title, text, figures, captions, tables, links, hover text, and appendices; use browser search for your name, username, computer name, institution, email addresses, local paths such as `C:\Users` or `/home`, passwords, tokens, subject identifiers, and unpublished or private data; then review the `files_to_publish` manifest printed by the publishing command.
 
-If the user confirms public publishing, use:
+If the user confirms public publishing, use the resolved project path (replace the placeholder below):
 
 ```bash
-ibl-ai-agent publish-report-to-github projects/<project_slug>/report --owner <github_owner> --repo ibl-ai-agent-reports --slug <project_slug> --confirm-public
+ibl-ai-agent publish-report-to-github "<project_root>/<project_slug>/report" --owner <github_owner> --repo ibl-ai-agent-reports --slug <project_slug> --confirm-public
 ```
 
 The public URL will be:
