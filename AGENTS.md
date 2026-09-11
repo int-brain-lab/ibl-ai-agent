@@ -100,6 +100,7 @@ nowhere else.
 - `<project_root>/<project_slug>/artifacts` for things like intermediate npy files for later reuse
 - `<project_root>/<project_slug>/exploratory-analyses` for Python files, validation diagnostics, risk notes, and outputs of exploratory analyses
 - `<project_root>/<project_slug>/confirmatory-analyses` for python files and outputs of confirmatory analyses
+- `<project_root>/<project_slug>/report.qmd` for Quarto source; optional `report.pdf` alongside it when requested
 - `<project_root>/<project_slug>/report/` for the rendered HTML report (`report.html`) and required web assets only; keep source documents and private notes outside this publishable directory
 - `<project_root>/<project_slug>/instruction-suggestions.md` for proposed durable guidance changes, when useful
 

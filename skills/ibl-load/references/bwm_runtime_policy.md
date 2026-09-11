@@ -5,7 +5,6 @@ Canonical runtime policy for Brain Wide Map questions.
 Use this as the shared policy reference for:
 - `ibl-load`
 - `ibl-analyze`
-- `scientific-analysis`
 
 ## Core policy
 1. For Brain Wide Map questions, start by resolving user-local BWM dataset roots from `data_locations.local.yaml`, project-level `data_locations.local.yaml`, `IBL_AGENT_DATA_LOCATIONS`, or the repo default `reports/datasets/<dataset_name>` location, then check schemas before choosing a loading path.

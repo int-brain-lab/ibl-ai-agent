@@ -21,13 +21,14 @@ scientist-facing workflow.
 - `skills/ibl-report/`: report-writing conventions.
 - `skills/skill-maintenance/`: maintenance workflow for skill files.
 
-Default plain-question flow:
+Illustrative empirical-analysis flow (conditional routing and required reads are
+defined in [AGENTS.md](../AGENTS.md)):
 
 ```text
 AGENTS.md -> exploration-confirmation -> ibl-access/ibl-load -> ibl-analyze -> ibl-report
 ```
 
-These skills define how Codex should interpret a question, choose data-loading
+These skills define how the coding agent should interpret a question, choose data-loading
 patterns, write code, evaluate metrics, and report results.
 
 ## Runtime And Developer Tools

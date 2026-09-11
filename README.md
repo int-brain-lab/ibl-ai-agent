@@ -8,19 +8,21 @@ To use it: clone this repository, start your coding agent inside the main direct
 
 - A **work in progress**.
 - An invitation for feedback, issues, pull requests, and collaborators.
-- A repository designed for agentic coding workflows, **requiring an agentic coding subscription**.
+- A repository designed for agentic coding workflows with file and shell access.
 - A **scientist-in-the-loop** workflow, not a one-shot answer generator.
 - A way to ask focused questions about IBL data.
 - A compressed representation of the **IBL Brain Wide Map (BWM) data** that makes BWM analyses easier and quicker.
 
-The agent is primarily tested with OpenAI Codex using GPT5-5. Claude Code has also been tested but less extensively.
+Previous testing reported by the maintainers used OpenAI Codex with GPT5-5, and Claude Code less extensively. This is historical experience, not a compatibility guarantee for current models. Cheaper and open-weight models have not been established as compatible by this repo's tests.
+
+Your coding agent needs to read `AGENTS.md` and referenced files, edit files, run shell commands, and pause for user feedback. Access and payment requirements depend on the agent and provider. `CLAUDE.md` points to the same repository instructions; other agents may need to be directed to `AGENTS.md` explicitly.
 
 ## What This Is Not
 
 - It can make mistakes, and does not guarantee correct scientific answers.
 - **You are responsible** for any scientific results produced. The agent does not replace your judgment. Before believing any conclusions, let alone publishing them, you still need to inspect the assumptions, plots, statistics, and code.
 - It is not meant to run unattended. The best workflow is interactive: explore data and refine hypotheses with the agent before performing your confirmatory analysis.
-- It is not for processing raw Neuropixels or video data - just the preprocessed spikes, task, and video information.
+- The main workflow uses preprocessed spikes, task, and video information. Specialized guidance also covers raw Neuropixels/SpikeGLX preprocessing; raw video preprocessing is outside the main workflow.
 - The Agent is specifically designed for analysis of IBL data, not general neurodata.
 - **You are responsible** for API, compute, storage, and download costs. Be careful with pay-as-you-go plans: long agent sessions, high thinking mode, repeated retries, large analyses, or accidental loops could lead to high charges.
 - The IBL AI Agent maintainers are not responsible for any costs incurred while using this repository, or any results produced. 
@@ -31,7 +33,7 @@ The agent is primarily tested with OpenAI Codex using GPT5-5. Claude Code has al
 The agent is specialized for working on the **IBL Brain Wide Map (BWM)**, a large collaborative dataset mapping neural activity across the mouse brain during a decision-making task. The flagship paper is
 [A brain-wide map of neural activity during complex behaviour](https://www.nature.com/articles/s41586-025-09235-0).
 
-This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections.  Data from all BWM experiments fits into less than 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. The Agent will download these datasets into your repo directory (or another location of your choice), so ensure you have ~10GB free. 
+This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. Data from all BWM experiments fits into less than 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead.
 
 For more info on what data is downloaded, and what requires the API, ask the Agent!
 
@@ -54,7 +56,7 @@ project directory layout, and agent interaction pattern.
 
 The expected user path is to work from your own fork:
 
-1. **Install a coding agent** such as Codex or Claude Code, and purchase a monthly subscription.
+1. **Install a coding agent** such as Codex or Claude Code, and configure access through its supported provider.
 2. **Clone** this repository to a directory on your computer. If you don't know git, ask your agent to clone https://github.com/int-brain-lab/ibl-ai-agent into a local directory.
 3. **Start the coding agent from the cloned repository.**
 4. **Type `install`** to have the agent help you complete installation by downloading data files and installing other required tools.
@@ -62,7 +64,7 @@ The expected user path is to work from your own fork:
 
 ## Publishing Reports
 
-After Codex writes a final HTML report, it can publish the report to a
+After the agent writes a final HTML report, it can publish the report to a
 user-owned GitHub Pages repository. Publishing is always opt-in. Reports should
 be published to your own repository, not the `ibl-ai-agent` repository.
 
@@ -86,7 +88,6 @@ Some example reports can be found at https://kdharris101.github.io/ibl-ai-agent-
 
 This is work in progress! Current candidate directions:
 
-- A compressed LFP dataset.
 - Capability to export entire chat logs.
 - More "neuroscience folklore": suggested plots to make and analyses to try; mistakes to avoid; negative controls and failure modes.
 

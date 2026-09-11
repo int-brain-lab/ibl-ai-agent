@@ -10,7 +10,7 @@ description: Use this skill to produce a final report of a project.
 
 ## Output format
 
-Prepare a scientific report using Quarto, with HTML as the default and PDF only when requested. Resolve the project directory using `AGENTS.md`; render HTML to `<project_root>/<project_slug>/report/report.html`, with only required web assets alongside it. Keep Quarto sources and private notes outside `report/`, because the publisher collects web files recursively from that directory.
+Prepare a scientific report using Quarto. Resolve the project directory using `AGENTS.md`; save source as `report.qmd` and render HTML to `report/report.html`, with only required web assets alongside the HTML. PDF is an optional additional output at `report.pdf`; for an explicit PDF-only request, omit HTML and the Pages publishing offer. Keep source, PDF, and private notes outside `report/`, because the publisher collects web files recursively from that directory.
 
 The report should have the following sections:
 

@@ -22,6 +22,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 See `CHANGELOG_DATA.md` for further details.
 
 ### Changed
+- Scoped agent preflight and skill loading by task, reconciled download consent,
+  and aligned scientific artifacts with the configured project root and a dedicated
+  publishable `report/` directory. Clarified agent requirements and repaired stale
+  guidance references; extended local reference checks. Scientific approval gates
+  and publisher behavior are preserved.
 - `scripts/download_datasets.py`: `bwm_behavior` archive updated to version 2.0.0
   (new filename, SHA1, and URL).
 - `bwm_ephys` passive preflight now queries the remote per-session manifest,
