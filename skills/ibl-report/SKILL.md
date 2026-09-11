@@ -37,6 +37,8 @@ The report should have the following sections:
 
 ## Figures
 
+For HTML reports (`format: html`), always set `lightbox: true` in the YAML header so figures are clickable/zoomable. This option has no effect on PDF reports (`format: pdf`).
+
 The report should contain plentiful figures. Include all figures made in the original research except for "dead ends" that did not lead to the main results. Make new figures if necessary for illustration purposes, but do not conduct new research in the writeup phase.
 
 ## AI instruction file suggestions
