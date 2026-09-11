@@ -2,7 +2,8 @@
 
 ## Scientific Workflow
 
-Always follow the scientific workflow in `skills/exploration-confirmation/SKILL.md`
+For empirical scientific analysis projects, follow `skills/exploration-confirmation/SKILL.md`.
+Project planning files, data splits, execution preflight, and analysis approval gates apply to these projects. Conceptual scientific answers still require applicable metric semantics and caveats, but no project scaffold or execution preflight. Repository maintenance follows `skills/skill-maintenance/SKILL.md` when changing guidance.
 
 - Exploratory analysis to refine or change the original question in view of the data, define precise hypotheses, and provide preliminary evidence.
 - Confirmatory analysis to statistically confirm hypotheses
@@ -29,7 +30,7 @@ Do this whenever you think the results of a computation will possibly be used ag
 
 ## Keep a running plan
 
-Before starting work, make a list of steps to perform in `projects/<project_slug>/TODO.md`. Give each step a check box `[ ]`. When a step is complete make it `[X]`, also listing any code and output files generated.
+Before starting an empirical analysis project, make a list of steps to perform in `projects/<project_slug>/TODO.md`. Give each step a check box `[ ]`. When a step is complete make it `[X]`, also listing any code and output files generated.
 
 The TODO should also list points when to consult the user for feedback.  Before starting execution, show this plan to the user and ask for feedback, including on how often they want to be consulted. By default, consult the user often during exploratory analysis, and certainly before proceding to confirmatory analysis.  When consulting the user provide plentiful explanatory plots.
 
@@ -48,11 +49,13 @@ Only mention reading a skill or reference file when it materially changes what t
 
 ## Required Load Packets
 
-Plain IBL scientific question:
+Empirical IBL analysis project:
 - `skills/exploration-confirmation/SKILL.md`
-- `skills/scientific-coding-style/SKILL.md`
 - `skills/ibl-analyze/SKILL.md`
 - `skills/ibl-report/SKILL.md` when reporting results
+
+Scientific code generation or review:
+- `skills/scientific-coding-style/SKILL.md`
 
 Ambiguous scientific metric:
 - `skills/ibl-analyze/references/scientific_context_and_metric_semantics.md`
@@ -61,7 +64,7 @@ Ambiguous scientific metric:
 IBL data loading:
 - `skills/ibl-access/SKILL.md` when endpoint, auth, or query mode matters
 - `skills/ibl-load/SKILL.md`
-- `skills/ibl-load/references/data_loading.md`
+- `skills/ibl-load/references/data_loading.md` for non-BWM loading
 - `docs/data_locations.md` when local data paths are needed
 
 Brain Wide Map question:
@@ -106,8 +109,7 @@ Within these directories, name python and output files numerically prefixed to i
 ## Installation and preflight
 
 - If the user types `install`, read `skills/install/SKILL.md`, and interactively guide the user through the installation process.
-- Before the first research, report-writing, or publishing task in a fresh checkout, run a small setup preflight yourself. Check for a usable Python, `uv`, a project environment, core Python imports, Quarto for report rendering, Git/GitHub CLI for publishing, GitHub authentication when publishing is requested, and configured IBL data access or local dataset paths when data loading is needed.
-- If any of these items are missing **STOP**. Do not perform scientific analyses; instead use `skills/install/SKILL.md` to complete installation interactively with user input.
+- Before execution, check the prerequisites for the activity using `skills/install/SKILL.md`. If a required item is missing, complete that setup before the dependent activity; missing rendering or publishing tools do not block local analysis.
 
 ## Runtime Rules
 - Run autonomously for repository inspection, planning drafts, and code generation; do not ask the user to run shell commands manually.

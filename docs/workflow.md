@@ -39,7 +39,7 @@ This workflow is intended for:
 
 ## How It Works
 
-For a normal scientific question, the agent is expected to follow an
+For an empirical scientific analysis project, the agent is expected to follow an
 exploration-confirmation workflow:
 
 1. Explicate the question, terms, candidate metrics, data scope, event anchors,
@@ -58,8 +58,10 @@ exploration-confirmation workflow:
 8. Write a report with methods, caveats, figures, statistical results, and links
    to generated artifacts.
 
-The goal is not just to produce an answer. The goal is to make the reasoning,
-data choices, code path, and caveats inspectable.
+Conceptual answers use applicable scientific semantics and caveats without
+requiring project files, data splits, or execution preflight. Required tools are
+checked for the activity being performed, as defined in
+[the installation skill](../skills/install/SKILL.md).
 
 ## Typical Codex Session
 
@@ -78,9 +80,11 @@ Typical interaction:
 
 For Brain Wide Map questions, local derived datasets are preferred when they are
 configured and semantically sufficient. If they are missing and no manual data
-location has been configured, Codex should tell you that it is about to download
-the public BWM datasets, where it will put them, and how large they are, then
-give you a chance to stop before it runs the downloader.
+location has been configured, the agent should offer the public BWM download,
+state its size and fixed `reports/datasets/` destination, and obtain authorization.
+An already approved download does not need another approval. An existing copy
+elsewhere can be configured instead. See the
+[BWM policy](../skills/ibl-load/references/bwm_runtime_policy.md).
 
 If you want independent multi-agent review, ask explicitly, for example:
 

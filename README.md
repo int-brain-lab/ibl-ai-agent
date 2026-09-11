@@ -112,7 +112,7 @@ Scientific outputs should go under `projects/<project_slug>/`. See
 
 **Does it download data?**
 
-Yes. It will download the main compressed BWM data, and may offer to download more via the API. 
+It offers to download the main compressed BWM data to `reports/datasets/`, or can use an existing configured copy. Downloads require authorization; an already approved download does not need another approval. It may also offer additional data via the API.
 
 **How much disk space do the public BWM derived datasets need?**
 

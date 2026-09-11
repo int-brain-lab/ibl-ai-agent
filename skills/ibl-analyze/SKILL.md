@@ -1,6 +1,6 @@
 ---
 name: ibl-analyze
-description: Use this skill for quantitative scientific analysis of IBL data after the always-on scientific workflow in `AGENTS.md` is active.
+description: Use this skill for quantitative IBL analysis and scientific questions requiring metric semantics, QC, or statistical-unit guidance.
 ---
 
 # IBL Analyze
@@ -10,7 +10,7 @@ description: Use this skill for quantitative scientific analysis of IBL data aft
 - You need metric semantics, operator selection, QC, or statistical-unit guidance.
 
 ## Required first step
-Apply the `AGENTS.md` scientific workflow before choosing metrics or scaling up. This skill adds IBL-specific analysis details; it does not replace the metric-validation gate.
+For empirical analysis projects, apply the `AGENTS.md` scientific workflow. Before implementing or executing metric validation or downstream analysis, read `references/interactive_scientific_analysis.md` for its validation and feedback gates. For conceptual answers, consult the applicable scientific references without starting an analysis project.
 
 ## References
 - `references/scientific_context_and_metric_semantics.md`: semantic core for direct/operationalized/proxy metrics, row grain, event anchors, and stored-versus-recomputed decisions.
