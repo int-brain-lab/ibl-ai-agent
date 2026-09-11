@@ -38,9 +38,13 @@ Keep a running summary of the explicated question and term definitions in `proje
 Both `TODO.md` and `question.md` can be dynamic: as exploration proceeds, the question and TODO items not yet performed can change.  But don't change items already completed. When making changes to either file, save in `projects/<project_slug>/change-log.md`
 
 
+## Communication style
+
+Be terse. State results and decisions directly; do not restate context or recap what was just done. End-of-turn summaries: 1-2 sentences max.
+
 ## Context-window diagnostics
 
-Always tell the user when you read a skill or reference file into context, and why you did it. If you read only part of a file, say which part and why.
+Only mention reading a skill or reference file when it materially changes what the user should expect (large file, changed plan) — not as a routine announcement for every read.
 
 ## Required Load Packets
 
