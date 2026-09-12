@@ -10,8 +10,8 @@ Most users interact with this repository through a coding agent, usually the
 Codex CLI, rather than by calling the `ibl-ai-agent` CLI directly.
 
 Open the agent in the repository root, ask one focused scientific question,
-review the exploratory plan, and let the agent create a project under
-`projects/<project_slug>/`.
+review the exploratory plan, and let the agent create a project under the
+configured project root (default `projects/`).
 
 Example questions:
 
@@ -39,7 +39,7 @@ This workflow is intended for:
 
 ## How It Works
 
-For a normal scientific question, the agent is expected to follow an
+For an empirical scientific analysis project, the agent is expected to follow an
 exploration-confirmation workflow:
 
 1. Explicate the question, terms, candidate metrics, data scope, event anchors,
@@ -58,29 +58,33 @@ exploration-confirmation workflow:
 8. Write a report with methods, caveats, figures, statistical results, and links
    to generated artifacts.
 
-The goal is not just to produce an answer. The goal is to make the reasoning,
-data choices, code path, and caveats inspectable.
+Conceptual answers use applicable scientific semantics and caveats without
+requiring project files, data splits, or execution preflight. Required tools are
+checked for the activity being performed, as defined in
+[the installation skill](../skills/install/SKILL.md).
 
-## Typical Codex Session
+## Typical Agent Session
 
-Start the Codex CLI from the repository root and ask the scientific question
-directly. Codex reads `AGENTS.md` and the relevant skill files to decide how to
+Start the coding agent from the repository root and ask the scientific question
+directly. The agent reads `AGENTS.md` and the relevant skill files to decide how to
 load data, define metrics, run analyses, and report results.
 
 Typical interaction:
 
 1. You ask a focused question.
-2. Codex writes a project plan and question summary.
+2. The agent writes a project plan and question summary.
 3. You review the plan and adjust scope or definitions if needed.
-4. Codex performs exploratory diagnostics and shows plots.
+4. The agent performs exploratory diagnostics and shows plots.
 5. You approve or revise the confirmatory plan.
-6. Codex runs the confirmatory analysis and writes the final report.
+6. The agent runs the confirmatory analysis and writes the final report.
 
 For Brain Wide Map questions, local derived datasets are preferred when they are
 configured and semantically sufficient. If they are missing and no manual data
-location has been configured, Codex should tell you that it is about to download
-the public BWM datasets, where it will put them, and how large they are, then
-give you a chance to stop before it runs the downloader.
+location has been configured, the agent should offer the public BWM download,
+state its size and fixed `reports/datasets/` destination, and obtain authorization.
+An already approved download does not need another approval. An existing copy
+elsewhere can be configured instead. See the
+[BWM policy](../skills/ibl-load/references/bwm_runtime_policy.md).
 
 If you want independent multi-agent review, ask explicitly, for example:
 
@@ -90,17 +94,25 @@ use strategy review rounds with adversarial subagents
 
 ## Project Outputs
 
-Scientific work should be saved under one project directory:
+Scientific work should be saved under one project directory. Resolve
+`project_root` from the optional repo-root `ibl-agent.local.yaml`, relative to
+the repository if needed; otherwise use `projects/`. The canonical contract is
+in [AGENTS.md](../AGENTS.md).
 
 ```text
-projects/<project_slug>/
+<project_root>/<project_slug>/
   question.md
   TODO.md
   change-log.md
   artifacts/
   exploratory-analyses/
   confirmatory-analyses/
-  report.html
+  report.qmd
+  report.pdf  # optional; PDF-only requests omit report/
+  report/
+    report.html
+    ...required web assets...
+  instruction-suggestions.md  # optional, private guidance proposals
 ```
 
 Use these files for persistent scientific state:
@@ -115,19 +127,24 @@ Use these files for persistent scientific state:
 - `exploratory-analyses/`: scripts, figures, and outputs used to refine the
   question or metrics.
 - `confirmatory-analyses/`: locked analysis scripts and statistical outputs.
-- `report.html`: final report.
+- `report.qmd`: Quarto source, outside the publishable directory.
+- `report.pdf`: optional additional output, or the sole rendered output for an
+  explicit PDF-only request. GitHub Pages publication requires an HTML report.
+- `report/`: rendered HTML and required web assets only. The publisher collects
+  web files recursively from this directory; do not pass the whole project.
+- `instruction-suggestions.md`: optional proposals for durable guidance changes.
 
-Older reviewed or experimental flows may still write to `projects/public-analysis/`,
-`reports/validations/`, or `reports/ask_runs/`. Treat those as specialized
-development paths unless you explicitly request them.
+The [experimental ask runtime](ask/ASK_RUNTIME.md) uses `reports/ask_runs/` when
+explicitly requested; it is separate from the scientific project workflow.
 
 ## Current Boundaries
 
-- Use Codex plus the skill layer for normal scientific questions.
-- Codex CLI access requires an OpenAI plan or subscription that supports Codex.
+- Use a coding agent that can read `AGENTS.md` and referenced files, edit files,
+  run shell commands, and pause for scientific feedback. Provider access and
+  payment requirements depend on the chosen agent.
 - Use local BWM datasets and local ONE caches when configured and sufficient.
 - Use the CLI for diagnostics, development, profiles, and dataset maintenance.
-- Do not put large datasets in the repository.
+- Do not commit large datasets to the repository.
 - Treat `ibl_ai_agent/ask` and `reports/ask_runs/` as experimental unless you are
   working specifically on that runtime path.
 - Other coding agents may work with minor modifications, but that path is less

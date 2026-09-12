@@ -1,6 +1,6 @@
 ---
 name: skill-maintenance
-description: Use this skill when editing, refactoring, pruning, or reorganizing the repo-local IBL skill system; prefer brevity, canonical references, and continuous cleanup while preserving scientific guidance needed to answer IBL neuroscience questions.
+description: Use this skill when editing or reorganizing repo-local IBL skills and agent guidance.
 ---
 
 # Skill Maintenance
@@ -48,7 +48,7 @@ When a skill edit materially grows a file or the tree:
 
 ## Quality gates
 - A future agent should know which file to read next without loading the whole tree.
-- Runtime paths should favor `ibl-load`, `ibl-analyze`, `bwm-adversarial-review`, and `ibl-report`; maintainer notes should stay out of normal scientific answers.
+- Runtime paths should favor `ibl-load`, `ibl-analyze`, and `ibl-report`; maintainer notes should stay out of normal scientific answers.
 - Every skill edit should leave the tree clearer, better organized, or intentionally more complete. If it grows the tree, the added value should be explicit.
 
 ## Durable Instruction Maintenance

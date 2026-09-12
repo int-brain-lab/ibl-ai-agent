@@ -25,7 +25,7 @@ UV_CACHE_DIR=.uv-cache uv run pytest -q
 
 ## Changelog and versioning
 
-This project follows documents evolutions in two changelogs.
+This project records changes in two changelogs.
 
 - **`CHANGELOG.md`** — agent/code changes (version bumps, new features, skill updates).
 - **`CHANGELOG_DATA.md`** — dataset changes (new archive versions, schema additions, column changes).
@@ -71,10 +71,11 @@ its `schema.yaml`/`provenance.yaml`/`manifest.json` itself at download time
 
 ## Docs policy
 
-Authoritative docs are:
+Documentation owners are:
 
-- `docs/ARCHITECTURE.md`
-- `docs/ask/ASK_RUNTIME.md`
-- `docs/CONTRIBUTING.md`
+- `AGENTS.md` and `skills/`: agent instructions and scientific procedures.
+- `docs/workflow.md` and `docs/skills.md`: user-facing explanations of that workflow.
+- `docs/ARCHITECTURE.md` and `docs/ask/ASK_RUNTIME.md`: experimental runtime architecture and contracts.
+- `docs/CONTRIBUTING.md`: contribution and release procedures.
 
 If behavior changes, update docs in the same PR.

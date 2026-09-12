@@ -5,7 +5,6 @@ Canonical runtime policy for Brain Wide Map questions.
 Use this as the shared policy reference for:
 - `ibl-load`
 - `ibl-analyze`
-- `scientific-analysis`
 
 ## Core policy
 1. For Brain Wide Map questions, start by resolving user-local BWM dataset roots from `data_locations.local.yaml`, project-level `data_locations.local.yaml`, `IBL_AGENT_DATA_LOCATIONS`, or the repo default `reports/datasets/<dataset_name>` location, then check schemas before choosing a loading path.
@@ -30,7 +29,7 @@ I can download/configure it before analysis. The public archive is about <size> 
 Alternatives: point me to an existing local copy, use a different configured project data root, or explicitly allow a slower ONE/session-loader path if the local dataset lacks a required field.
 ```
 
-Do not run the downloader or remote fallback until the user has made that choice.
+Do not run the downloader or remote fallback until the user has authorized that action. If the user already approved the stated download and destination, proceed without asking again.
 
 ## Local dataset discovery
 Before planning a BWM analysis, load the user's data-location config. See `docs/data_locations.md`.
@@ -53,12 +52,13 @@ Before planning a BWM analysis, inspect available configured dataset versions un
 - `<bwm_behavior.root>/*/schema.yaml` or `<bwm_behavior.root>/schema.yaml`
 
 If no local data location is configured and the question can use the public BWM
-derived datasets, tell the user that you are about to download them with
+derived datasets, offer to download them with
 `UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py`, state that
 `bwm_behavior` is about 2.9 GB and `bwm_ephys` is about 5 GB, state that the
 archives will be extracted under `reports/datasets/` and configured in
-`data_locations.local.yaml`, and give the user a chance to stop before running
-the script. If `data_locations.local.yaml` already contains manual BWM roots, do
+`data_locations.local.yaml`, and obtain authorization before running the script
+unless already given. The downloader uses this fixed destination; an existing
+copy elsewhere can instead be configured. If `data_locations.local.yaml` already contains manual BWM roots, do
 not overwrite it; report missing or invalid schemas instead.
 
 Prefer the newest version whose schema directly covers the scientific quantity. Do not hard-code an older version when a newer local version exposes the same fields plus relevant extensions.

@@ -2,7 +2,7 @@
 
 This file is an approved correction log for durable, repo-local guidance that does not fit cleanly in one skill or reference file.
 
-Do not add entries from feedback alone. Follow the feedback assimilation policy with human approval in `AGENTS.md`: draft the generalized rule, show the target file and wording to the user, and edit this file only after explicit approval.
+Do not add entries from feedback alone. Follow the feedback assimilation policy in [the maintenance skill](../skills/skill-maintenance/SKILL.md): draft the generalized rule, show the target file and wording to the user, and edit this file only after explicit approval.
 
 ## How To Use
 
