@@ -1,12 +1,12 @@
 ---
 name: ibl-report
-description: Use this skill to produce a final report of a project.
+description: Use this skill to write a final report for an IBL scientific analysis project.
 ---
 
 # IBL Report
 
 ## Use this skill when
-- You need to perform a final writeup of a project.
+- You need to write a final report for an IBL scientific analysis project.
 
 ## Output format
 

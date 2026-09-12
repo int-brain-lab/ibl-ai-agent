@@ -43,7 +43,7 @@ When using a stored derived feature:
 - do not overinterpret the feature beyond its documented definition.
 
 ## BWM routing note
-For Brain Wide Map questions, read `../ibl-load/references/bwm_runtime_policy.md` first and `references/bwm_analysis_patterns.md` second. Do not restate or bypass BWM loading policy here.
+Read `../ibl-load/references/bwm_runtime_policy.md` when selecting or loading BWM data, and `references/bwm_analysis_patterns.md` when designing or implementing BWM analyses. Conceptual BWM questions need only the applicable scientific references.
 
 ## Anatomy routing note
 For questions involving cortical depth, laminar position, atlas slices, flatmaps, or CCF coordinate lookups, read `../ibl-anatomy/references/atlas_navigation.md`. Key entry points: `xyz_to_depth` for continuous cortical depth from CCF coords; `FlatMap` + `plot_scalar_on_flatmap` for dorsal-cortex flatmaps; `plot_points_on_slice` for probe/unit visualisation on atlas slices.

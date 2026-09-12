@@ -68,9 +68,9 @@ IBL data loading:
 - `docs/data_locations.md` when local data paths are needed
 
 Brain Wide Map question:
-- `skills/ibl-load/references/bwm_runtime_policy.md`
+- `skills/ibl-load/references/bwm_runtime_policy.md` when selecting or loading BWM data
 - `skills/ibl-load/references/bwm_ephys_spike_example.md` for local spike-shard code
-- `skills/ibl-analyze/references/bwm_analysis_patterns.md`
+- `skills/ibl-analyze/references/bwm_analysis_patterns.md` when designing or implementing BWM analyses
 
 Anatomical brain atlas navigation or brain region-based visualization:
 - `skills/ibl-anatomy/SKILL.md`
@@ -115,6 +115,7 @@ Within these directories, name python and output files numerically prefixed to i
 
 ## Runtime Rules
 - Run autonomously for repository inspection, planning drafts, and code generation; do not ask the user to run shell commands manually.
+- Within an authorized stage, complete the requested artifacts, run relevant checks, and fix failures caused by your changes; pause at the next applicable scientific approval gate. Once checks pass, repeat or broaden them only for new changes, failures, or unresolved concerns.
 - Do not connect to Alyx/ONE or external servers for default free-form questions unless the user asks for execution or live data.
 - Use standard IBL APIs and local references: `one.api.ONE`, `SessionLoader`, `SpikeSortingLoader`, and `BrainRegions`.
 - Keep scripts minimal: direct imports, constants, linear load -> compute -> summarize -> plot flow.
@@ -122,7 +123,7 @@ Within these directories, name python and output files numerically prefixed to i
 
 ## Brain Wide Map Defaults
 
-For BWM questions:
+When selecting or loading BWM data, or designing or implementing BWM analyses:
 - resolve local dataset roots from `data_locations.local.yaml`, a project-level `data_locations.local.yaml`, or `IBL_AGENT_DATA_LOCATIONS`;
 - inspect configured `bwm_ephys` and `bwm_behavior` schemas before choosing a loading path;
 - prefer the newest semantically sufficient user-local dataset surface;

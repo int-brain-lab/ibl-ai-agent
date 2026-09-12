@@ -1,6 +1,6 @@
 ---
 name: skill-maintenance
-description: Use this skill when editing, refactoring, pruning, or reorganizing the repo-local IBL skill system; prefer brevity, canonical references, and continuous cleanup while preserving scientific guidance needed to answer IBL neuroscience questions.
+description: Use this skill when editing or reorganizing repo-local IBL skills and agent guidance.
 ---
 
 # Skill Maintenance

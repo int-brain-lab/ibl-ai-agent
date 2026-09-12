@@ -1,6 +1,6 @@
 ---
 name: install
-description: Use this skill if the required tools are not yet installed.
+description: Use this skill to set up this repository or check prerequisites for analysis, data loading, report rendering, or publishing.
 ---
 
 # Preflight and Installation
