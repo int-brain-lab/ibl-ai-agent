@@ -6,8 +6,8 @@ the reference for how an interactive analysis should proceed.
 
 ## Default Interaction
 
-Most users interact with this repository through a coding agent, usually the
-Codex CLI, rather than by calling the `ibl-ai-agent` CLI directly.
+Most users interact with this repository through a coding agent, rather than
+by calling the `ibl-ai-agent` CLI directly.
 
 Open the agent in the repository root, ask one focused scientific question,
 review the exploratory plan, and let the agent create a project under the
@@ -34,7 +34,7 @@ This workflow is intended for:
 - IBL scientists asking exploratory or confirmatory data-analysis questions.
 - Researchers who want short, inspectable Python analyses rather than opaque
   notebook sprawl.
-- Developers maintaining Codex skills, profile tasks, or dataset-building
+- Developers maintaining agent skills, profile tasks, or dataset-building
   support for IBL workflows.
 
 ## How It Works

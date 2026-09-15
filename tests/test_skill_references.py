@@ -12,6 +12,12 @@ SKILL_DIR_NAMES = {
     for path in SKILLS_ROOT.iterdir()
     if path.is_dir() and path.name not in {"__pycache__"}
 }
+LOCAL_CONFIG_FILENAMES = {
+    "ibl-agent.local.yaml",
+    "data_locations.local.yaml",
+    "data_locations.yaml",
+    "schema.yaml",
+}
 
 
 def _iter_instruction_markdown_files() -> list[Path]:
@@ -33,12 +39,7 @@ def _resolve_skill_path(raw_path: str, source: Path) -> Path | None:
     if cleaned.startswith("reports/"):
         return None
 
-    if cleaned in {
-        "ibl-agent.local.yaml",
-        "data_locations.local.yaml",
-        "data_locations.yaml",
-        "schema.yaml",
-    }:
+    if cleaned in LOCAL_CONFIG_FILENAMES:
         return None
     if cleaned.startswith("./") or cleaned.startswith("../"):
         return (source.parent / cleaned).resolve()

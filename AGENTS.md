@@ -24,7 +24,7 @@ Before performing a large run, estimate how long it will take based on previous 
 
 ## Save intermediate results
 
-Save reusable computations such as ACGs or PSTHs in the project's `artifacts/` directory (see Project directory). Keep checkpoints incremental so new computations can be added without rerunning existing ones.
+Prefer datasets the repository already ships over recomputing: use the shipped `bwm_ephys` autocorrelograms (`clusters.acgs_log.npy`, `bwm_ephys` ≥ 1.2.0) instead of recomputing ACGs. Save other reusable computations not already provided, such as PSTHs, in the project's `artifacts/` directory (see Project directory). Keep checkpoints incremental so new computations can be added without rerunning existing ones.
 
 Do this whenever you think the results of a computation will possibly be used again. If you find yourself running a computation twice, that is a sign you should have saved an artifact.
 

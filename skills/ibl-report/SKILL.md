@@ -57,7 +57,7 @@ When suggesting edits, prioritize edits that would be generally useful for futur
 
 After writing the final Quarto HTML report, ask the user whether they want to publish it publicly on GitHub Pages. Publishing is always opt-in. If the user says yes, ask which GitHub account or organization should own the public report repository, and optionally ask for a URL slug if the project slug is not suitable.
 
-Before rendering or publishing, perform the needed setup checks yourself. Verify Quarto before report rendering. Verify `git`, `gh`, and `gh auth status` before GitHub Pages publishing. If a required tool is missing, explain the missing tool briefly, ask for permission to install or authenticate when needed, run the setup commands yourself where possible, and then resume the report workflow. Do not ask the user to run shell commands manually.
+Before rendering or publishing, follow `skills/install/SKILL.md` to check prerequisites (Quarto for rendering; `git`, `gh`, and `gh auth status` for GitHub Pages publishing). If a required tool is missing, explain the missing tool briefly, ask for permission to install or authenticate when needed, run the setup commands yourself where possible, and then resume the report workflow. Do not ask the user to run shell commands manually.
 
 Before publishing, warn the user exactly:
 

@@ -11,7 +11,7 @@ description: Use this skill when editing or reorganizing repo-local IBL skills a
 - Reducing duplication, pruning stale guidance, or adding a durable correction.
 
 ## Core rule
-Keep the skill system compact enough to load quickly and precise enough to answer neuroscientific questions on IBL data. Preserve scientific constraints; remove repeated prose, obsolete branches, and generic advice that Codex already knows.
+Keep the skill system compact enough to load quickly and precise enough to answer neuroscientific questions on IBL data. Preserve scientific constraints; remove repeated prose, obsolete branches, and generic advice that any coding agent already knows.
 
 ## Target structure
 - `AGENTS.md`: repo-wide runtime behavior.

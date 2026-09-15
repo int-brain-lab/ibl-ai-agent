@@ -13,7 +13,7 @@ To use it: clone this repository, start your coding agent inside the main direct
 - A way to ask focused questions about IBL data.
 - A compressed representation of the **IBL Brain Wide Map (BWM) data** that makes BWM analyses easier and quicker.
 
-Previous testing reported by the maintainers used OpenAI Codex with GPT5-5, and Claude Code less extensively. This is historical experience, not a compatibility guarantee for current models. Cheaper and open-weight models have not been established as compatible by this repo's tests.
+Previous testing reported by the maintainers used OpenAI Codex with GPT5-5, and Claude Code and Mistral less extensively. This is historical experience, not a compatibility guarantee for current models. Cheaper and open-weight models have not been established as compatible by this repo's tests.
 
 Your coding agent needs to read `AGENTS.md` and referenced files, edit files, run shell commands, and pause for user feedback. Access and payment requirements depend on the agent and provider. `CLAUDE.md` points to the same repository instructions; other agents may need to be directed to `AGENTS.md` explicitly.
 
@@ -33,7 +33,7 @@ Your coding agent needs to read `AGENTS.md` and referenced files, edit files, ru
 The agent is specialized for working on the **IBL Brain Wide Map (BWM)**, a large collaborative dataset mapping neural activity across the mouse brain during a decision-making task. The flagship paper is
 [A brain-wide map of neural activity during complex behaviour](https://www.nature.com/articles/s41586-025-09235-0).
 
-This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. Data from all BWM experiments fits into less than 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead.
+This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. The two default datasets (`bwm_ephys`, ~6 GB, including per-unit waveforms and autocorrelograms; `bwm_behavior`, ~2.9 GB) together fit in well under 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead. A larger, opt-in compressed LFP dataset (`bwm_lfp`, ~14 GB) is also available; see [docs/bwm/README.md](docs/bwm/README.md) for exact sizes and contents.
 
 For more info on what data is downloaded, and what requires the API, ask the Agent!
 
