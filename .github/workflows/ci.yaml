@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+        with:
+          # Without this, the action always installs whatever uv version was
+          # just released. uv 0.12.14/0.12.15 (released 2026-09-15) broke
+          # `uv sync` for this repo, so pin to the last version confirmed
+          # working (0.12.13) until a newer release is tested and confirmed.
+          version: "0.12.13"
       - uses: extractions/setup-just@v2
       - uses: actions/setup-python@v5
         with:
