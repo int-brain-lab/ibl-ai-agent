@@ -1,6 +1,8 @@
-# IBL AI Agent Architecture
+# Experimental Ask Runtime Architecture
 
-`ibl_ai_agent` is a fixed execution runtime for skill-generated analysis plans.
+The normal scientist-facing workflow uses `AGENTS.md` and the [skill layer](skills.md).
+This page describes `ibl_ai_agent/ask`, the experimental execution runtime for
+skill-generated analysis plans, and its supporting CLI modules.
 
 ## Core runtime split
 

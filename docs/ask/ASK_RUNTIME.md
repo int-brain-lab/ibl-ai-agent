@@ -15,7 +15,7 @@
 5. If `runtime_mode=full`, run strict preflight checks (deps, writable runtime dirs, ONE/Alyx auth).
 6. Render notebook and export HTML.
 7. If `runtime_mode=full` and execution is enabled, execute backend and extract typed result payload (`analysis_result.json`).
-7. Persist manifest + answer + plan/artifact files.
+8. Persist manifest + answer + plan/artifact files.
 
 ## Reliability contracts
 

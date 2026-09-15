@@ -5,7 +5,7 @@ references that keep the README short.
 
 ## Public User Docs
 
-- [Scientific workflow](./workflow.md): normal Codex-plus-skills workflow,
+- [Scientific workflow](./workflow.md): normal coding-agent and skills workflow,
   project outputs, interaction pattern, and current boundaries.
 - [Data locations](./data_locations.md): where local datasets live and how
   agents/scripts resolve them.
@@ -18,12 +18,12 @@ references that keep the README short.
 
 - [Skill layer](./skills.md): overview of the repository-local agent
   instructions.
-- [Architecture](./ARCHITECTURE.md): runtime architecture and boundaries.
+- [Architecture](./ARCHITECTURE.md): experimental runtime architecture and boundaries.
 - [Experimental ask/runtime notes](./ask/ASK_EXPERIMENTAL.md)
 - [Ask runtime](./ask/ASK_RUNTIME.md)
 - [Ask reliability hardening plan](./ask/ASK_RELIABILITY_HARDENING_PLAN.md)
 
-The normal public workflow is Codex plus repository skills. The `ibl-ai-agent ask`
+The normal public workflow uses a coding agent with repository skills. The `ibl-ai-agent ask`
 runtime remains experimental unless a task explicitly targets that path.
 
 ## Developer Docs

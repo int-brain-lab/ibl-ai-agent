@@ -11,19 +11,10 @@ Metric validation means showing that the metric measures the intended quantity f
 Metric validation is a user-facing gate, not only a section inside the final script or report. For custom, ambiguous, proxy, stored-derived, event-aligned, trial-aligned, neural, behavioral, or state metrics, produce the graphical validation diagnostics first, present them to the user, and wait for feedback before writing or running the main downstream analysis. Continue without waiting only when the user explicitly requests a quick draft, explicitly says to skip validation, or explicitly delegates continuation after seeing the diagnostic plan or metric risk note.
 
 ## Stepwise consent for open-ended analyses
-When the user asks to proceed with an interesting scientific analysis idea but has not explicitly requested script generation, artifact creation, live execution, or a full run, treat "proceed" or "yes" as permission for the next planning step only. Before nontrivial repository scans, data coverage checks, long-running commands, or implementation, state the next step, expected cost/scope, and what will not be done yet, then ask for confirmation.
-
-Do not launch broad schema scans, data fan-out, scientific-analysis generation, report creation, or analysis execution from a vague "yes" or "please proceed" alone.
+Read-only repository inspection and planning are autonomous. A reply approving a clearly proposed next action authorizes that action; do not request the same approval again. If the proposed action was ambiguous, clarify before execution. Do not infer authorization for downloads, metric acceptance, scale-up, confirmation, or publication from a generic "proceed" unless that specific action was clearly proposed. Preserve the split, metric-validation, large-run, and confirmatory approval gates in `AGENTS.md` and `skills/exploration-confirmation/SKILL.md`.
 
 ## Artifact Routing
-Before writing scientific artifacts, classify the artifact type.
-
-- Metric/data/feature validation artifacts, adversarial metric checks, risk notes, and supporting figures: `reports/validations/<slug>/`.
-- Final reviewed analysis scripts and reports for a scientist-facing question: `projects/public-analysis/`.
-- Durable scientific caveats and interpretive background: `skills/ibl-analyze/references/scientific_caveats/`.
-- Cross-cutting workflow corrections or historical correction notes: `docs/agent_corrections.md`.
-
-Metric-validation pilots should not be routed to `projects/public-analysis/` unless the user explicitly asks for a reviewed final-answer artifact or the validation is inseparable from that final answer.
+Follow the project-directory contract in `AGENTS.md`, including its configured `project_root`. Put validation scripts, diagnostics, and metric risk notes in `exploratory-analyses/`, and reusable intermediate computations in `artifacts/`. Proposed durable guidance changes follow `skills/skill-maintenance/SKILL.md`; analysis feedback alone does not authorize editing repo guidance.
 
 ## Lifecycle
 1. **Clarify the scientific intent.** Identify the biological motivation, hypothesis or comparison, desired scale, data scope, and expected output. Ask targeted questions when these choices would materially change the answer.

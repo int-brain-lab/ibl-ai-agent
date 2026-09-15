@@ -14,4 +14,4 @@ This directory stores reusable scientific background that should inform metric p
 - Mention applicable caveats in the metric proposal or validation report.
 - Use caveats to choose adversarial metric checks.
 - If diagnostics reveal unexpected structure, write a free-text metric risk note rather than forcing a pass/fail label.
-- Keep detailed analysis artifacts under `reports/validations/<slug>/`; keep only durable, reusable caveat summaries here.
+- Keep validation artifacts in the project's `exploratory-analyses/` directory, following `AGENTS.md`; keep only approved, durable caveat summaries here.
