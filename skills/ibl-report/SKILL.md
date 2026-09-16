@@ -34,6 +34,9 @@ The report should have the following sections:
   - Describe how the result relates to prior knowledge and the relevant literature
   - Include any caveats of this result (positive or negative)
   - Describe any lessons learned for future AI-based analyses of this data
+- Statistical information
+  - Generate a table displaying the statistical tests used.
+  - Entries should contain the specific test (e.g. Wilcoxon signed-rank test), associated figure, test comparison, the test statistic, degrees of freedom, p-value, and effect size. 
 
 ## Prose style
 
