@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - `scripts/validate_bwm_lfp_release.py`: release validator for `bwm_lfp`
   archives, mirroring `validate_bwm_ephys_release.py`'s role.
 See `CHANGELOG_DATA.md` for further details.
+- `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
 
 ### Changed
 - `scripts/download_datasets.py`: `bwm_behavior` archive updated to version 2.0.0
