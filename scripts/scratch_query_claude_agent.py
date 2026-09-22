@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, TextBlock, query
+from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, ResultMessage, TextBlock, query
 
 MODELS = {
     "opus": "claude-opus-5",
@@ -31,6 +31,12 @@ async def main(prompt: str, model: str) -> None:
             for block in message.content:
                 if isinstance(block, TextBlock):
                     print(block.text, end="", flush=True)
+        elif isinstance(message, ResultMessage):
+            print(f"\n\n--- Usage: {message.usage} ---")
+            print(f"--- Cost: ${message.total_cost_usd:.4f} ---")
+            # message.model_usage also gives a per-model breakdown (inputTokens,
+            # outputTokens, cacheReadInputTokens, costUSD, ...) when several
+            # models were involved in the query.
 
     print("\n--- Done ---")
 
