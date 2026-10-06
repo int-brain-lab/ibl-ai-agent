@@ -14,7 +14,7 @@ Canonical ONE/Alyx authentication patterns for public and private IBL access.
 
 ## Core calls
 ```python
-from one.api import ONE
+from one.api import ONE, One
 ```
 
 ```python
@@ -36,19 +36,17 @@ one = ONE(
 - `silent`: `True` for non-interactive calls, `False` when interactive auth is allowed.
 - `cache_dir` (if supported by installed ONE): local data cache location.
 - `cache_rest`: cache REST responses on disk (`None` lets ONE choose defaults).
-- `mode`: typically `"remote"` for Alyx-backed queries or `"local"` for cache-only.
+- `mode`: typically `"remote"` for Alyx-backed queries.
 
 ## Online/offline mode
 - `mode="remote"` for server-backed access.
-- `mode="local"` when operating from an existing local cache only.
+- Cache-only access requires `One(cache_dir=...)`, not `ONE(mode="local")`, whenever operating from an existing local cache only.
 
 ## Recommended runtime profiles
 ```python
 # Fast iterative analysis against already cached metadata + data
-one_local = ONE(
-    base_url="https://openalyx.internationalbrainlab.org",
-    mode="local",
-    silent=True,
+one_local = One(
+    cache_dir="<ONE_CACHE_DIR>"
 )
 
 # Fresh server-backed discovery and metadata refresh
@@ -80,11 +78,11 @@ one = ONE(base_url="https://openalyx.internationalbrainlab.org")
 
 Operational guidance for this repo:
 - Prefer the normal public OpenAlyx configuration above for BWM paper questions.
-- If a local cache is already populated, `mode="local"` remains the preferred rerun mode.
+- If a local cache is already populated, `One(cache_dir=...)` remains the preferred rerun mode.
 - Some upstream example scripts include `password="international"` for public access examples; treat that as an example-specific detail, not a general requirement for all generated code.
 
 ## Cache behavior guidance
-- Use `mode="local"` for repeated notebook reruns when you do not need fresh Alyx state.
+- Use `One(cache_dir=...)` for repeated notebook reruns when you do not need fresh Alyx state.
 - Use `one.alyx.rest(..., no_cache=True)` for specific calls when you suspect stale cached REST responses.
 - Prefer query-level freshness toggles (`no_cache=True`) over globally disabling caching.
 

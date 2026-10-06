@@ -14,6 +14,7 @@ os.environ.setdefault("MPLCONFIGDIR", str(_MPLCONFIGDIR))
 
 from brainwidemap import bwm_query, download_aggregate_tables  # noqa: E402
 from iblatlas.regions import BrainRegions  # noqa: E402
+from ibl_ai_agent.core.access import require_online  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
@@ -156,6 +157,7 @@ def _load_roster(*, limit_insertions: int | None = None) -> pd.DataFrame:
 
 
 def _make_one(cache_root: Path, *, mode: str) -> Any:
+    require_online()
     from one.api import ONE
 
     return ONE(

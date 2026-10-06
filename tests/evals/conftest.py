@@ -39,11 +39,24 @@ def _model_id(cfg: dict) -> str:
 
 
 def _parse_nodeid(nodeid: str) -> tuple[str, str] | None:
-    """Extract (model_id, question_id) from a parametrized test node id."""
-    m = re.search(r"\[(.+)-([^-\[]+)\]$", nodeid)
+    """Extract (model_id, question_id) from a parametrized test node id.
+
+    Pytest joins parameter ids with "-", and both halves contain hyphens of
+    their own (``mistral/ministral-8b-latest-bwm-neuron-count-by-region``), so
+    the split point cannot be found by pattern alone. Model ids are known from
+    the grid, so match the known prefix and treat the remainder as the question.
+    """
+    m = re.search(r"\[(.+)\]$", nodeid)
     if not m:
         return None
-    return m.group(1), m.group(2)
+    params = m.group(1)
+    for model_id in sorted((_model_id(cfg) for cfg in _load_models()), key=len, reverse=True):
+        if model_id and params.startswith(f"{model_id}-"):
+            return model_id, params[len(model_id) + 1 :]
+    # Unknown grid (e.g. a test parametrized some other way): fall back to
+    # splitting at the last hyphen rather than losing the row entirely.
+    model, _, question = params.rpartition("-")
+    return (model, question) if model else None
 
 
 def pytest_generate_tests(metafunc) -> None:

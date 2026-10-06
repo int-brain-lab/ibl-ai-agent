@@ -30,7 +30,15 @@ class NeuronCountMetric(BaseMetric):
 
     def measure(self, test_case: LLMTestCase, *args, **kwargs) -> float:
         clean = re.sub(r"(\d),(\d)", r"\1\2", test_case.actual_output)
-        missing = [str(n) for counts in self.expected.values() for n in counts if str(n) not in clean]
+        # Match whole numbers only. A plain substring test passes "5" against
+        # the "5" inside "2657", so a short expected value can be satisfied by
+        # a coincidence in an unrelated number -- a silent false pass.
+        missing = [
+            str(n)
+            for counts in self.expected.values()
+            for n in counts
+            if not re.search(rf"(?<!\d){n}(?!\d)", clean)
+        ]
         self.score = 0.0 if missing else 1.0
         output_preview = test_case.actual_output.replace("\n", " | ")[:200]
         self.reason = (

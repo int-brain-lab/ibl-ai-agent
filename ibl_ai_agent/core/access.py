@@ -17,6 +17,19 @@ class AccessError(RuntimeError):
     """Raised when IBL access setup or query fails."""
 
 
+class OfflineModeError(AccessError):
+    """Raised when a remote call is attempted while IBL_AGENT_DATA_OFFLINE=1."""
+
+
+def require_online() -> None:
+    """Raise ``OfflineModeError`` if offline mode is enabled via ``IBL_AGENT_DATA_OFFLINE=1``."""
+    if os.environ.get("IBL_AGENT_DATA_OFFLINE") == "1":
+        raise OfflineModeError(
+            "Offline mode is enabled (IBL_AGENT_DATA_OFFLINE=1); remote Alyx/ONE and dataset "
+            "downloads are disabled. Use configured local data or unset IBL_AGENT_DATA_OFFLINE."
+        )
+
+
 class AccessMode(str, Enum):
     public = "public"
     private = "private"
@@ -41,6 +54,7 @@ class SessionQuery:
     date_start: date | None = None
     date_end: date | None = None
     limit: int = 20
+
 
 
 def resolve_mode(mode: AccessMode | str) -> AccessMode:
@@ -95,6 +109,8 @@ def connect_one(
     interactive: bool = True,
     silent: bool = True,
 ) -> tuple[Any, AccessStatus]:
+
+    require_online()
     resolved_mode = resolve_mode(mode)
     resolved_url = resolve_base_url(resolved_mode, base_url)
     user, pwd = _credentials(resolved_mode, username, password)

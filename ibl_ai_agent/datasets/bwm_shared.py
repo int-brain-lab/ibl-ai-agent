@@ -11,6 +11,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
+from ibl_ai_agent.core.access import require_online
 from ibl_ai_agent.datasets import bwm_simple
 from ibl_ai_agent.datasets import bwm_session_assets as session_assets
 
@@ -168,6 +169,7 @@ def write_release_archive(
 
 
 def make_remote_one(cache_root: Path) -> Any:
+    require_online()
     from one.api import ONE
 
     remote_cache_dir = cache_root / "alyx.internationalbrainlab.org"

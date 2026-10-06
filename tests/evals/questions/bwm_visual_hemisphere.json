@@ -1,0 +1,33 @@
+[
+  {
+    "id": "bwm-visual-cortex-by-hemisphere",
+    "question": "Using the local bwm_ephys dataset, how many good units were recorded in visual cortex (the areas under VIS in the Allen hierarchy), split by hemisphere? And how many sessions have visual-cortex units in both hemispheres?",
+    "task": "codegen",
+    "packets": ["scientific", "data_loading", "bwm", "anatomy", "region_qc"],
+    "requires_data": "bwm_ephys",
+    "_notes": [
+      "Ground truth from metadata/units.parquet (good units only) joined to the",
+      "Allen hierarchy: 1783 left (x < 0), 235 right (x > 0), 2018 total, over 88",
+      "sessions, 5 of which have both hemispheres.",
+      "Trap 1: filtering acronyms that start with 'VIS' gives 3094 units, because",
+      "it sweeps in VISC (the visceral area) plus VISa and VISrl, which Allen",
+      "places under posterior parietal, not visual. Only hierarchy descendants of",
+      "VIS are correct. Observed: mistral-small answered 2657/437, the split that",
+      "prefix matching produces.",
+      "Trap 2: hemisphere is in neither atlas_id nor beryl_acronym; it comes from",
+      "the sign of the x coordinate.",
+      "Trap 3: the last part counts sessions, not units."
+    ],
+    "checks": [
+      {
+        "metric": "NeuronCountMetric",
+        "stage": "output",
+        "expected": {
+          "left_hemisphere": [1783],
+          "right_hemisphere": [235],
+          "both_hemisphere_sessions": [5]
+        }
+      }
+    ]
+  }
+]

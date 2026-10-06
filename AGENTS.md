@@ -113,6 +113,13 @@ Within these directories, name python and output files numerically prefixed to i
 - If the user types `install`, read `skills/install/SKILL.md`, and interactively guide the user through the installation process.
 - Before execution, check the prerequisites for the activity using `skills/install/SKILL.md`. If a required item is missing, complete that setup before the dependent activity; missing rendering or publishing tools do not block local analysis.
 
+## Data-offline mode
+At the start of a session, check whether `IBL_AGENT_DATA_OFFLINE` equals `1`. If so:
+- Work from configured local datasets only.
+- Cache-only loading is allowed via `one.api.One(cache_dir=...)`. Do not use `one.api.ONE(...)`: it returns an Alyx-backed client when `base_url`, `username`, or `password` is passed, or when `cache_dir` is omitted, so `mode="local"` does not guarantee offline.
+- Do not make remote Alyx/ONE calls, run dataset download scripts, or fetch data from any other remote sources.
+- If required data is missing, ask the user to provide it.
+
 ## Runtime Rules
 - Run autonomously for repository inspection, planning drafts, and code generation; do not ask the user to run shell commands manually.
 - Within an authorized stage, complete the requested artifacts, run relevant checks, and fix failures caused by your changes; pause at the next applicable scientific approval gate. Once checks pass, repeat or broaden them only for new changes, failures, or unresolved concerns.

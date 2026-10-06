@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from ibl_ai_agent.datasets import bwm_simple
+from ibl_ai_agent.core.access import OfflineModeError
 
 
 class DummyBrainRegions:
@@ -270,3 +271,8 @@ def test_build_bwm_simple_dataset_small_synthetic(
     assert build_report["row_counts"]["units"] == 1
     assert build_report["row_counts"]["trials"] == 2
     assert build_report["row_counts"]["channels"] == 2
+
+def test_make_one_offline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IBL_AGENT_DATA_OFFLINE", "1")
+    with pytest.raises(OfflineModeError):
+        bwm_simple._make_one(tmp_path, mode="remote")

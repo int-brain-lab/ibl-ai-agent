@@ -37,6 +37,15 @@ This repository uses a compressed representation of the BWM data. It contains th
 
 For more info on what data is downloaded, and what requires the API, ask the Agent!
 
+### Data-offline mode
+
+To use configured local datasets without downloading data, set `IBL_AGENT_DATA_OFFLINE` flag to `1` prior to starting your coding agent:
+```bash
+IBL_AGENT_DATA_OFFLINE=1 claude # codex
+```
+
+If required data is missing locally, the agent will ask you to provide it.
+
 ## Scientific Workflow
 
 IBL AI Agent is designed for interactive scientific work. Its design philosophy is that scientists usually start from conceptual questions, that usually need to be refined or changed before precise answers can be given. It takes the following steps:

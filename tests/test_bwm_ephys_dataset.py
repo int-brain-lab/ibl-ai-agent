@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from ibl_ai_agent.datasets import bwm_ephys, bwm_shared, bwm_simple
+from ibl_ai_agent.core.access import OfflineModeError
 
 
 class DummyBrainRegions:
@@ -616,3 +617,8 @@ def test_refresh_bwm_ephys_features_reuses_existing_spike_shards(tmp_path: Path,
     assert not event_response_features.empty
     assert "stimOn" in set(event_response_features["event_name"].astype(str))
     assert (outputs.dataset_dir / "feature_refresh_report.yaml").exists()
+
+def test_make_remote_one_offline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("IBL_AGENT_DATA_OFFLINE", "1")
+    with pytest.raises(OfflineModeError):
+        bwm_shared.make_remote_one(tmp_path)

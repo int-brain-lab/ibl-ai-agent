@@ -3,6 +3,10 @@
 DeepEval test suite for the IBL AI agent. Tests measure the quality of model outputs
 (code generation, skill selection) against known ground truths.
 
+Multi-provider data-loading evals (Claude / Mistral / Lightning AI) live in
+`test_dataloading.py`; see [ACTORS.md](ACTORS.md) for that architecture, how to
+run the grid, and how to add a provider.
+
 ## Setup
 
 **1. API keys** in `tests/evals/.env.local` (never committed):

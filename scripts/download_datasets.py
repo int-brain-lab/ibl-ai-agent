@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from ibl_ai_agent.core.access import require_online
 import boto3
 import yaml
 from boto3.s3.transfer import TransferConfig
@@ -210,6 +211,7 @@ def _download_http(url: str, destination: Path, chunk_size: int = 1024 * 1024) -
 
 def download_file(url: str, destination: Path) -> None:
     """Download ``url`` to ``destination``, using S3 multipart transfer when possible."""
+    require_online()
     destination.parent.mkdir(parents=True, exist_ok=True)
     if _is_s3_url(url):
         _download_s3(url, destination)
@@ -565,7 +567,7 @@ def main() -> int:
         ),
     )
     args = parser.parse_args()
-
+    require_online()
     if args.lfp:
         return download_lfp_file(LFP_STANDARD)
 

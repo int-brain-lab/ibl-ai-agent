@@ -135,6 +135,10 @@ UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent access check --mode public --interact
 
 Full execution requires live ONE/Alyx access.
 
+`Data-offline mode blocks ask`
+
+`IBL_AGENT_DATA_OFFLINE=1` disables remote Alyx/ONE access, including the `access check` command. Use the default `plan_only` mode, or clear the flag.
+
 `Notebook URL opens the wrong Jupyter server`
 
 Set `IBL_AGENT_JUPYTER_BASE_URL` and retry.

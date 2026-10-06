@@ -20,6 +20,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - `scripts/validate_bwm_lfp_release.py`: release validator for `bwm_lfp`
   archives, mirroring `validate_bwm_ephys_release.py`'s role.
 See `CHANGELOG_DATA.md` for further details.
+- `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
+- Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
 
 ### Changed
 - Scoped agent preflight and skill loading by task, reconciled download consent,

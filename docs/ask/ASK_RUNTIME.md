@@ -30,6 +30,12 @@
 
 If notebook execution fails, runtime fails result extraction.
 
+## Data-offline mode
+
+- `IBL_AGENT_DATA_OFFLINE` is not set up through this runtime; there is no local-cache ONE path.
+- Default `runtime_mode=plan_only` is unaffected.
+- With `runtime_mode=full`, the auth check fails with `OfflineModeError` from `connect_one` and is fatal, so `run_ask` and `ibl-ai-agent doctor` both fail.
+
 ## Key modules
 
 - `app/orchestrator.py`: top-level ask use-case.

@@ -1,0 +1,19 @@
+[
+  { "provider": "claude",    "model": "haiku",                          "name": "claude-haiku-4.5" },
+  { "provider": "claude",    "model": "sonnet",                         "name": "claude-sonnet-5" },
+  { "provider": "claude",    "model": "opus",                           "name": "claude-opus-5" },
+
+  { "provider": "mistral",   "model": "ministral-3b-latest" },
+  { "provider": "mistral",   "model": "ministral-8b-latest" },
+  { "provider": "mistral",   "model": "ministral-14b-latest" },
+  { "provider": "mistral",   "model": "mistral-small-latest" },
+  { "provider": "mistral",   "model": "magistral-small-latest" },
+  { "provider": "mistral",   "model": "mistral-medium-latest" },
+
+  { "provider": "lightning", "model": "lightning-ai/gemma-4-31B-it" },
+  { "provider": "lightning", "model": "lightning-ai/Qwen3.8-27B" },
+  { "provider": "lightning", "model": "lightning-ai/deepseek-v4.1-flash" },
+  { "provider": "lightning", "model": "openai/gpt-5-nano" },
+  { "provider": "lightning", "model": "openai/gpt-5-mini" },
+  { "provider": "lightning", "model": "google/gemini-2.5-flash" }
+]
