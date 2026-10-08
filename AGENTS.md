@@ -83,6 +83,9 @@ Raw Neuropixels or SpikeGLX preprocessing:
 Skill maintenance:
 - `skills/skill-maintenance/SKILL.md`
 
+Dataset ingestion:
+- `skills/data-ingest/SKILL.md`
+
 ## Project directory
 
 Before starting a scientific analysis, check for an optional repo-root
@@ -112,6 +115,7 @@ Within these directories, name python and output files numerically prefixed to i
 
 - If the user types `install`, read `skills/install/SKILL.md`, and interactively guide the user through the installation process.
 - Before execution, check the prerequisites for the activity using `skills/install/SKILL.md`. If a required item is missing, complete that setup before the dependent activity; missing rendering or publishing tools do not block local analysis.
+- When any package the work depends on is installed outside the lockfile (currently `spikepack`, used by data ingestion), run the project environment's interpreter directly (`.venv/bin/python`). Do not run `uv sync` or `uv run`, with or without `--no-sync`: both re-resolve the environment and silently remove such a package, which can break a long-running build or an analysis mid-session. This overrides the `uv run` preference in `skills/install/SKILL.md` for as long as the package is outside the lockfile.
 
 ## Data-offline mode
 At the start of a session, check whether `IBL_AGENT_DATA_OFFLINE` equals `1`. If so:
