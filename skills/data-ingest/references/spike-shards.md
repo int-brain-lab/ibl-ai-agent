@@ -29,8 +29,8 @@ installed outside the lockfile, a resolver that re-syncs the environment
   pinned commit directly, targeting the project environment explicitly so an
   active conda or system environment does not take the install:
   `uv pip install --python .venv/bin/python "spikepack @ git+https://github.com/int-brain-lab/spikepack@30ab06ff7794d89cab17cb54338db869ad90d036"`.
-  Ask first, and log it as a stand-in for the `ingest` extra. Any later sync
-  removes it.
+  Ask first, and log the install with its pin, noting that it stands outside the
+  lockfile. Any later sync removes it.
 - Record the interpreter version, the `spikepack` version (or its absence) and
   the install decision. The package directory doesn't exist yet, so carry this
   forward into `ingestion/ingestion-log.md`.

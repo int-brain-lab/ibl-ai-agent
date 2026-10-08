@@ -3,9 +3,6 @@
 Standardised on-disk structure written by the data-ingestion skill, so that an
 agent can analyse a dataset it has never seen without re-reading the raw source.
 
-Status: design, agreed. Implementation not started. Working decisions and their
-evidence are in `ingestion-notes.md`.
-
 ## What a package is
 
 A **dataset package** is one dataset, at one version, in one directory: its prose
@@ -16,33 +13,26 @@ It is not a "project" in this repo's existing sense. `projects/<project_slug>/`
 continues to mean an *analysis* project (`question.md`, `TODO.md`,
 `exploratory-analyses/`, …) as defined in `AGENTS.md`. Dataset packages are data,
 live outside the checkout, and are registered in `data_locations.local.yaml`
-alongside `bwm_ephys` and `bwm_behavior`.
+alongside whatever datasets are already configured there.
 
-Prose lives **inside the package**, not in this repo. BWM's prose is in
-`docs/bwm/` and `skills/` for historical reasons and stays there; an arbitrary
-lab's dataset has no repo to keep its documentation in, so the package must carry
-its own.
-
-**Proposed (aging pilot):** the repo also holds a text snapshot of each package
-(prose, `schema.yaml`, `provenance.yaml`, `SUMMARY.md` and `ingestion/`, but not
-`manifest.json` or data) in `dataset-packages/<dataset_name>/<version>/`, for review in
-git. The package on disk or S3 stays the source of truth; the snapshot is copied from
-it, never the reverse. See `ingestion-notes.md`, "Design question for the team".
+Prose lives **inside the package**, not in this repo: an arbitrary lab's dataset
+has no repo to keep its documentation in, so the package must carry its own.
+(BWM's prose sits in `docs/bwm/` and `skills/` for historical reasons and stays
+there.)
 
 ## Registration
+
+A package is registered by name, and resolved by
+`ibl_ai_agent.data_locations.resolve_dataset_dir()`. Illustrative entry; the name
+and path are the dataset's own:
 
 ```yaml
 # data_locations.local.yaml
 datasets:
-  ibl_aging:
-    root: /path/to/datasets/ibl_aging
+  example_dataset:
+    root: /path/to/datasets/example_dataset
     preferred_version: latest
 ```
-
-`ibl_ai_agent.data_locations.resolve_dataset_dir()` is already dataset-name
-generic and needs no change: the BWM download offer is only produced for names in
-`BWM_DATASET_DEFAULTS`, and any other unconfigured dataset gets a generic
-"not configured" error.
 
 ## Directory tree
 
@@ -66,8 +56,8 @@ generic and needs no change: the BWM download offer is only produced for names i
 │   ├── channels.parquet       # conditional: electrode-based recordings
 │   └── trials.parquet         # conditional: trial-based experiments
 ├── features/                  # optional derived summaries
-├── spikes/<shard_id>/         # store: discrete spike times, spikepack Blosc shards
-├── <timeseries stores>/       # store: continuous sampled signals
+├── spikes/<shard_id>/         # store, when present: discrete spike times, Blosc shards
+├── <timeseries stores>/       # store, when present: continuous sampled signals
 └── ingestion/
     ├── convert.py             # the conversion script(s)
     ├── ingestion-log.md       # what was done, what was inferred, what was asked
@@ -83,7 +73,7 @@ scientific aim. This is what the dataset-discovery step reads across all
 configured datasets to choose one, so it must be sufficient on its own.
 
 ### `experiment.md`
-A methods section. Portable and lab-neutral: it describes the experiment, not IBL's
+A methods section. Portable and lab-neutral: it describes the experiment, not lab's
 interpretation of it. Fixed headings:
 `Subjects` | `Surgery` | `Apparatus` | `Protocol` | `Design and factors` |
 `Trial structure` | `Session schedule` | `Training history`.
@@ -102,7 +92,7 @@ facts in `experiment.md` and `modalities.md`, so it does not depend on the user
 knowing the confounds. `Aim`, `Other known confounds` and `Papers` come from the
 user or the documentation and may say "not stated" or "none known". Kept separate
 from `experiment.md` so the methods stay reusable, and separate from `skills/` so
-IBL-wide scientific context is not duplicated per dataset.
+repo-wide scientific guidance is not duplicated per dataset.
 
 ### `modalities.md`
 One section per recording modality, fixed headings:
@@ -110,17 +100,28 @@ One section per recording modality, fixed headings:
 Prose counterpart to the `stores:` and `time_bases:` blocks in `schema.yaml`.
 
 ### `schema.yaml`
-The machine-readable contract. Extends the existing `bwm_ephys` schema shape with
-per-column units, explicit clocks, spatial frames, and experimental design.
+The machine-readable contract: tables, stores, clocks, frames and design. (It
+extends the shape of the existing `bwm_ephys` schema with per-column units,
+explicit clocks, spatial frames and experimental design — history, not something
+a reader needs.)
+
+The block below is **illustrative, not a template**. It is a deliberate
+composite, written to exercise most of the contract at once: an IBL task name, a
+second (imaging) clock, an arena reference frame, a fluorescence store and an
+age-by-genotype design. No real dataset need have that combination. The **keys**
+are the contract; every **value** is an example, the dataset name, the task and
+protocol strings and the design factors included. A block a dataset has no use
+for — `reference_frames`, `design`, any table or store it lacks — is simply
+absent; what cannot be omitted is in "Minimum viable package" below.
 
 ```yaml
-dataset_name: ibl_aging
+dataset_name: example_dataset
 dataset_version: 1.0.0
 contract_version: 1               # version of this generic package contract
 schema_version: 2                 # version of this dataset's own layout, as today
 dataset_kind: ingested            # `bwm` for the existing BWM datasets
-task: ibl_choice_world            # null when the experiment is not trial-based
-task_protocol: _iblrig_tasks_biasedChoiceWorld   # exact protocol, null if unrecorded
+task: ibl_choice_world            # example value; null when not trial-based
+task_protocol: _iblrig_tasks_biasedChoiceWorld   # example; exact protocol, null if unrecorded
 
 time_bases:                       # several allowed; each store and table names one
   session_clock:
@@ -140,7 +141,7 @@ reference_frames:                 # non-time coordinate systems
     units: cm
 
 design:                           # what the experiment manipulates or measures
-  factors:
+  factors:                        # example factors; declare the dataset's own
     age:      {grain: between_session, type: continuous,  units: days}
     genotype: {grain: between_subject, type: categorical, levels: [wt, ko]}
   intended_comparison: >
@@ -170,7 +171,7 @@ stores:
     shard_layout: <recording_id>/meta.json + <recording_id>/*.blosc
     arrays: [spike_times_delta_ticks, spike_clusters, cluster_ids, cluster_spike_counts]
     written_by: spikepack==<version>
-    quantization_us: 100
+    quantization_us: 100           # the writer's default; declare what was used
     time_base: session_clock
     units: seconds
   fluorescence:
@@ -187,7 +188,7 @@ stores:
     reader: spikeglx
     units: volts
     time_base: session_clock
-    resolve: {one_eid: ..., dataset: ..., collection: ..., revision: ...}
+    resolve: {one_eid: ..., dataset: ..., collection: ..., revision: ...}  # one scheme; see Stores
 ```
 
 ### `provenance.yaml`
@@ -212,27 +213,32 @@ ingested_by: ...
 ```
 
 `source_selection_rule` is also echoed into each spike shard's `meta.json`, so a
-shard is self-describing about whether it holds all sources or a QC subset. Not
-retrofitted to BWM shards.
+shard is self-describing about whether it holds all sources or a QC subset.
 
 ### `manifest.json`, `SUMMARY.md`
-As for `bwm_ephys`: file inventory with sizes and hashes; generated counts of
-subjects, sessions, recordings, sources and events.
+File inventory with sizes and hashes; generated counts of subjects, sessions,
+recordings, sources and events.
 
 ### `metadata/` — core tables
 
-| Table | Grain | Notes |
-| --- | --- | --- |
-| `subjects` | one row per subject | `subject_id`, `line`, `genotype`, `sex`, `dob`, `cohort` |
-| `sessions` | one row per session | `session_id`, `subject_id`, `date`, `age_at_session_days`, `protocol`, `lab`, `rig`, `duration` |
-| `recordings` | one row per recording device instance | `recording_id`, `session_id`, device, target, sync source |
-| `events` | one row per named instant | `session_id`, `event_id`, `event_name`, `event_time` (float64 s), nullable `trial_id`, nullable `event_value`, plus declared extra columns |
-| `epochs` | one row per labelled interval | `session_id`, `epoch_set`, `epoch_id`, `label`, `start_time`, `stop_time` |
+All five are required to exist. **Required columns** are the table's key and the
+columns that link it to the others; everything else is declared when the dataset
+has it.
 
-`events` and `epochs` are required to exist and may be empty.
+| Table | Grain | Required columns | Typical columns, declared when present |
+| --- | --- | --- | --- |
+| `subjects` | one row per subject | `subject_id` | `line`, `genotype`, `sex`, `dob`, `cohort` |
+| `sessions` | one row per session | `session_id`, `subject_id`, `date` | `protocol`, `lab`, `rig`, `duration`, `age_at_session_days` |
+| `recordings` | one row per recording device instance | `recording_id`, `session_id` | device, target, sync source |
+| `events` | one row per named instant | `session_id`, `event_id`, `event_name`, `event_time` (float64 s), nullable `trial_id`, nullable `event_value` | declared extra columns |
+| `epochs` | one row per labelled interval | `session_id`, `epoch_set`, `epoch_id`, `label`, `start_time`, `stop_time` | declared extra columns |
 
-`age_at_session_days` is on `sessions`, not `subjects`: age varies by session and
-is the primary scientific variable for an aging dataset.
+`events` and `epochs` may be empty. These are column lists, not a column order;
+where an emitted order matters it is fixed by the table's own contract, as
+`skills/data-ingest/references/ibl-trials.md` fixes it for the IBL task.
+
+Where age is a design factor, `age_at_session_days` goes on `sessions`, not
+`subjects`, because it varies by session.
 
 `epoch_set` is a labeling namespace, so independent and overlapping labelings of
 the same session — locomotion state, zone occupancy, sleep stage, drug on/off —
@@ -250,8 +256,8 @@ intervals within a namespace.
 - `trials` — trial-based experiments only.
 
 ### `features/`
-Optional derived summaries. Where a dataset wants BWM-compatible analysis
-patterns to transfer, these should use BWM's `unit_features` /
+Optional: a package may ship none. Where a dataset does want BWM-compatible
+analysis patterns to transfer, the recommended shape is BWM's `unit_features` /
 `event_response_features` schema.
 
 ### Stores
@@ -266,8 +272,18 @@ patterns to transfer, these should use BWM's `unit_features` /
 value per frame and belongs in a `timeseries` store; thresholding it into event
 times is an analysis step, never a conversion step.
 
-Ingestion writes **tick-aligned spike origins**, so the `time_origin_ticks` and
-`time_origin_seconds` decoders agree exactly. See `ingestion-notes.md`.
+`spikepack.write_blosc` and the shard format are fixed. `quantization_us` is not:
+it is the grid the times are snapped to, 100 is the writer's default, and the
+store declares whatever was used. Ingestion writes **tick-aligned spike origins**,
+so the `time_origin_ticks` and `time_origin_seconds` decoders agree exactly. See
+`ingestion-notes.md`.
+
+`referenced_in_place` records a **re-resolvable identifier scheme**, never a local
+path: whatever a reader needs to fetch the file again from the archive it came
+from. The `resolve:` block above is one such scheme, the ONE/Alyx form
+(`one_eid`, `dataset`, `collection`, `revision`). A DANDI source would key on
+dandiset id, version and asset path instead; no repo code resolves that form yet.
+Declare the keys the scheme needs, and say in `modalities.md` what resolves them.
 
 ### `ingestion/`
 `convert.py` makes the build reproducible. `ingestion-log.md` records what was
@@ -302,62 +318,3 @@ categorical, boolean and string columns (as for `session_id` above).
 
 A change of upstream `source.version` forces at least a minor bump.
 
-## Relationship to BWM
-
-BWM is unchanged. Specifically:
-
-- `bwm_ephys` and `bwm_behavior` data files and `schema.yaml` are untouched.
-- The BWM builder's **output is byte-identical**. `bwm_simple._build_trials` and
-  `bwm_ephys._build_events` gain keyword-only parameters whose defaults reproduce
-  current behaviour, so ingestion reuses them instead of duplicating them; a test
-  asserts the BWM `trials` and `events` output is unchanged. The constraint is on
-  output, not on which files are edited.
-- `skills/ibl-analyze/` is untouched. Aging and autism use the same IBL task and
-  route to the existing guardrails as they stand. `ingestion-notes.md` records the
-  audit of BWM-specific assumptions to watch during the pilot.
-- Reuse of `bwm_simple._build_trials` is gated on `task: ibl_choice_world`. A
-  package declaring any other task, or none, never reaches it. Within that gate the
-  required columns are `eid`, `intervals_0`, `intervals_1`, `stimOn_times`,
-  `contrastLeft`, `contrastRight`, `choice`, `feedbackType` — a missing one is an
-  error. Every other BWM trial column, `probabilityLeft` and `bwm_include`
-  included, is optional: absent means skipped and recorded in the package's
-  `ingestion/ingestion-log.md` and `ingestion/open-questions.md`.
-- BWM's `metadata/events.parquet` already matches the generic `events` contract
-  except for the session key (`eid`). The mapping is held **reader-side** — a
-  built-in column map for `dataset_kind: bwm` — so no BWM file is rewritten.
-- `load_spike_shard` moves from `bwm_ephys.py` to
-  `ibl_ai_agent/datasets/spike_store.py`, re-exported from `bwm_ephys` so existing
-  imports keep working. A move, not a behaviour change.
-- The new routing entry in `AGENTS.md` is additive. The "Brain Wide Map question"
-  load packet stays first and unchanged, and the dataset-discovery step must not
-  alter which files a BWM question loads. This is a test requirement, not an
-  assumption.
-
-Known precision ceiling, not retrofitted: BWM stores `events.event_time` as
-float32, whose spacing at t ~ 3000 s is ~0.24 ms — coarser than the 0.1 ms spike
-quantization those events are aligned to. Ingested datasets use float64.
-
-## Deferred and open
-
-Deferred by decision, recorded in `ingestion-notes.md`:
-- lifting the dataset-independent semantic core out of `skills/ibl-analyze/`
-- retiring the in-repo spike encoder in favour of `spikepack`
-- the implementation gaps: NWB/DANDI reader, per-lab readers, two-photon reader,
-  tracking reader, timeseries container format, generic feature builders, the
-  dataset validator, the `spikepack` read-side defect
-- reading NWB directly without conversion (e.g. `pynapple`) — a later, separate test
-
-Deferred by decision, recorded in `specs/data-ingestion.md`:
-- managing dataset versions on local disk: how many are kept, how superseded ones
-  are removed, whether a rebuild may overwrite
-- codec and chunking for the `timeseries` store kind
-
-Settled at ingestion time rather than here:
-- raw data size, measured on the server per session and from shards written for 2–3
-  sessions, with the full run estimated and approved before it starts
-- whether the protocol uses biased blocks, taken from the documentation supplied to
-  the agent; it decides whether
-  `skills/ibl-analyze/references/prior_and_block_semantics.md` applies and whether
-  `probabilityLeft` is written at all
-
-Open: none.

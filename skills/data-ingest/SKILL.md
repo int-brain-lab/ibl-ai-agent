@@ -82,10 +82,18 @@ anything the documentation does not state, and measure what neither states (see
   filter to apply; see below.
 - **Trials**: whether the experiment is trial-based at all (free exploration is
   not); what defines a trial's start and end; stimulus, response and outcome;
-  which task and protocol were run; whether there are blocks or priors.
-- **If the user confirms the IBL task** (`ibl_choice_world`): whether the
-  protocol uses biased blocks. Analysis will use `skills/ibl-analyze/`, whose
-  guidance comes from BWM, so the design caveats below matter most here.
+  which task and protocol were run; whether there are blocks or priors. If it is
+  trial-based, declare a `trials` table that settles: which columns define a
+  trial (required) and which are optional event times; how `trial_id` is
+  computed; which columns depend on a design fact and are written only once it is
+  confirmed; the package's own inclusion rule; and how `events` is derived from
+  `trials`, with float64 times and a deterministic order.
+  `references/ibl-trials.md` works through these choices for the IBL task and is
+  the example to follow. When the task is `ibl_choice_world` it binds: follow it
+  exactly, because the IBL analysis skills read those column names. That task
+  also needs one more fact — whether the protocol uses biased blocks — and its
+  analysis will use `skills/ibl-analyze/`, whose guidance comes from BWM, so the
+  design caveats below matter most there.
 - **Spikes / units**: sorter and version, per recording; which units were kept
   and why (the source-selection rule); what QC exists; whether recordings are
   assigned to anatomy, and whether alignment or histology QC is carried; and for
@@ -171,19 +179,17 @@ These hold whatever route you take.
    measure at the worker count you will use. Keep the sample build in a
    persistent location, never a scratch directory a restart can lose, and log its
    path in `ingestion-log.md`.
-3. **Use the repo's tools; don't rewrite them.** Spikes go through
-   `spikepack.write_blosc` only; see `references/spike-shards.md` (read it
-   before anything else if there are spikes to convert). IBL-task trials go
-   through the existing extraction, but only when the task is
-   `ibl_choice_world`; see `references/ibl-trials.md`.
-
-   If a helper you need does not exist, check `references/pending-interfaces.md`.
-   **If it is listed there**, tell the user, then write a minimal stand-in inside
-   `ingestion/convert.py`, mark it with a `# STAND-IN for <helper>` comment, and
-   list it in `ingestion/ingestion-log.md` with what it had to do, so the entry
-   becomes the specification for the real helper. **If it is not listed, stop and
-   say so.** A stand-in is never the final route and never lives outside
-   `convert.py`.
+3. **Write what the package needs in `ingestion/convert.py`; reuse the repo
+   only where it fits.** Readers, loaders and table builders specific to this
+   dataset live in `convert.py`. Do not edit repo modules to make them fit, and
+   leave BWM's untouched (rule 4). Two things are not optional: spikes go
+   through `spikepack.write_blosc` only (`references/spike-shards.md`, read it
+   before anything else if there are spikes to convert), and a `trials` table
+   settles the choices in the Trials checklist item above, with
+   `references/ibl-trials.md` binding when the task is `ibl_choice_world`.
+   List each piece of code written for the package in
+   `ingestion/ingestion-log.md` with what it does, so repeated patterns across
+   packages are visible and can be moved into the repo later.
 4. **Leave BWM untouched**: its data, schemas, builder output and analysis
    guidance.
 5. **Never overwrite or delete an existing package version** without asking.
@@ -259,7 +265,14 @@ shape you did not intend.
 - The full run was estimated from 2–3 sessions in the intended mode and approved
   before it started.
 - `ingestion/convert.py` reproduces the build, takes its locations as arguments,
-  and calls the repo's tools rather than restating them.
+  and writes spikes through `spikepack.write_blosc`. Every piece of code it
+  carries for this package is listed in `ingestion/ingestion-log.md`.
+- Any `trials` table settles every choice in the Trials checklist item, and
+  follows `references/ibl-trials.md` exactly when the task is
+  `ibl_choice_world`.
+- Every column spec in `schema.yaml` has only the keys `dtype`, `units` and
+  `description`. A stray key means unquoted prose in a flow mapping split into
+  extra keys, which a check on column names alone passes.
 - A rebuild is verified by decoded content, not by file hashes; compressed stores
   are not byte-reproducible.
 - The registered name resolves to the package.
