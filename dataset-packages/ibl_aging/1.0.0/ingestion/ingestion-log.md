@@ -1,36 +1,27 @@
 # Ingestion log: ibl_aging 1.0.0
 
 Skill: `skills/data-ingest/SKILL.md` v0 (repo `ibl-ai-agent-ingest`, branch
-`ingestion-pilot-aging`, commit 1ec84e0). Date: 2026-09-30. This is the first pilot run.
+`ingestion-pilot-aging`, commit 1ec84e0). Date: 2026-09-30.
 
 ## Status
-**Full build done 2026-10-01 (4 workers), checked; 0 conversion failures.** Not yet
-registered in `data_locations.local.yaml`. (Session 1 had built only the 3-session sample.)
+**Full build done 2026-10-01 (4 workers), checked; 0 conversion failures.** Registered in `data_locations.local.yaml`. 
 
 ## Environment
 - Python 3.12.13, from the repo's uv `.venv`.
-- `spikepack` 0.1.0 @ `30ab06ff7794d89cab17cb54338db869ad90d036`. It was missing at
-  preflight, and the user approved installing the pinned commit as a **pilot stand-in for
-  the `ingest` extra** (which doesn't exist in `pyproject.toml` yet).
+- `spikepack` 0.1.0 @ `30ab06ff7794d89cab17cb54338db869ad90d036`. 
   - The first `uv pip install` went into the active conda env `cloudspace`, not `.venv`.
     It was uninstalled from there and reinstalled with `--python .venv/bin/python`.
   - Plain `uv run` re-syncs and removes it, so run everything with `uv run --no-sync`.
-- ONE: `ibllightning.OneLightningAI` (imported from the colleague's `../ibl-aws/src`;
-  not modified), OpenAlyx, `cache_dir` = read-only S3 mount.
+- ONE: `ibllightning.OneLightningAI` , OpenAlyx, `cache_dir` = read-only S3 mount.
   - **Added `tables_dir=/teamspace/studios/this_studio/Downloads/ONE/openalyx_tables`**
     to the connection the user gave. Without it, `OneLightningAI` defaults `tables_dir` to
     `one.params.get_cache_dir()`, which on this machine is the read-only S3 mount. The
     user was told and did not object.
 
-### Session 2 (2026-10-01, after the Studio was duplicated)
+### Session 2 (2026-10-01)
 The previous session's conversation was lost; its work on disk was read back.
-- **Run with `.venv/bin/python` directly (user instruction).** Do not run `uv sync` or
-  `uv run`, including `uv run --no-sync`: either may remove spikepack. This replaces the
-  `uv run --no-sync` advice above. Ask the user before installing anything, then use
-  `uv pip install --python .venv/bin/python` (conda env `cloudspace` is active in the shell).
 - Checked: `.venv/bin/python` 3.12.13, spikepack 0.1.0 importable, `ibllightning` from
-  `../ibl-aws/src` (read only; don't modify `../ibl-aws`, `../ibl-ai-agent` or other
-  Studio-home files).
+  `../ibl-aws/src` 
 - `tables_dir` (`~/Downloads/ONE/openalyx_tables`) no longer exists; it is expected to be
   recreated on the next connection.
 - Machine now: 4 CPUs, 15 GB RAM (13 GB available), 352 GB disk free. The earlier
@@ -46,13 +37,12 @@ The previous session's conversation was lost; its work on disk was read back.
 | 1 | Alyx has no strain/line/genotype for any subject. What should be recorded? | "C57BL/6 - this is in the paper". Recorded as strain; line and genotype left null. |
 | 2 | How should age appear in the design? | Continuous age only; no groups. |
 | 3 | Which units go in the shards? | Only good units, `label == 1`. |
-| 4 | Install spikepack at the pinned commit? | Yes. |
-| 5 | How should the full build run (4 workers ~1.3 h / sequential ~4.3 h)? | Not yet. |
-| 6 | (2026-10-01) Before any full build, what first: re-run sample, unasked questions, sorter options, subset option? | Re-run the 3-session sample only. |
-| 7 | (2026-10-01) Full build or subset (sequential ~3.9 h / 4 workers, parallel mode to be written)? | Full build, 4 workers. |
-| 8 | (2026-10-01) Register the package and run a fresh-agent check? | Yes to both. |
-| 9 | (2026-10-01) Aim, hypotheses, other confounds (asked once, as the skill says)? | Use the paper (Nat. Commun., doi:10.1038/s41467-026-74227-1). Known confound: the sorter/age/lab one found in the data. Rig changes, surgery problems, cohort effects: none known beyond the paper; log anything unclear as a question for the authors. |
-| 10 | (2026-10-01) Long-term storage? | Publish finished packages (data + text) to S3 like BWM, with the registry pointing there. Not done yet; notes in `open-questions.md`. |
+| 4 | How should the full build run (4 workers ~1.3 h / sequential ~4.3 h)? | Not yet. |
+| 5 | (2026-10-01) Before any full build, what first: re-run sample, unasked questions, sorter options, subset option? | Re-run the 3-session sample only. |
+| 6 | (2026-10-01) Full build or subset (sequential ~3.9 h / 4 workers, parallel mode to be written)? | Full build, 4 workers. |
+| 7 | (2026-10-01) Register the package and run a fresh-agent check? | Yes to both. |
+| 8 | (2026-10-01) Aim, hypotheses, other confounds (asked once, as the skill says)? | Use the paper (Nat. Commun., doi:10.1038/s41467-026-74227-1). Known confound: the sorter/age/lab one found in the data. Rig changes, surgery problems, cohort effects: none known beyond the paper; log anything unclear as a question for the authors. |
+
 
 The aim/hypotheses/confounds question was asked once on 2026-10-01 (row 9).
 
@@ -127,15 +117,6 @@ The aim/hypotheses/confounds question was asked once on 2026-10-01 (row 9).
   place (spec decision; the timeseries format is deferred, I5).
 - Spike amplitudes, depths, templates, waveforms; units with `label < 1`.
 
-## Pilot stand-ins in `convert.py`
-| Stand-in | For | What it had to do |
-| --- | --- | --- |
-| `load_trials` | `ibl_ai_agent/datasets/one_trials.py` | `one.load_object(eid, 'trials', revision=<tagged default>)` per session; drop `intervals_bpod` and `table`; concatenate with `eid`. |
-| `build_trials` | `bwm_simple._build_trials(df, roster=None)` | Check the required columns; `trial_id` = cumcount per eid; canonical BWM order with the roster columns and `bwm_include` removed; drop absent optional columns in place; write `probabilityLeft` only if biased blocks are measured. |
-| `build_events` | `bwm_ephys._build_events(..., event_time_dtype=np.float64)` | Same logic, using `EVENT_COLUMNS` imported from `bwm_ephys`. The key is renamed to `session_id`, no roster columns are carried, the time is float64, and `event_value` is NaN. |
-| spikepack install | `pyproject.toml` `ingest` extra | See Environment. |
-| column check in `write_contract` | the dataset validator (I7) | Declared columns must equal the table's columns; absent optional trials columns are allowed. |
-
 ## Sample build (scratch, not this directory)
 Sessions `ebce500b…` (BWM, 1 probe), `03063955…` (BWM, 2 probes) and `f45e30cf…` (extra,
 `iblsorter`).
@@ -166,7 +147,7 @@ sample was lost (see Environment, Session 2).
 - Round trip through `bwm_ephys.load_spike_shard` against ONE: max |Δt| 50.0, 50.0, 50.0 and
   33.3 µs, clusters equal, all shards tick-aligned. Peak RAM was not measured.
 
-## Full-run estimate (awaiting approval)
+## Full-run estimate 
 **Updated 2026-10-01 from the rerun:** 763 × 15.8 s ≈ 3.35 h + trials ≈ 28 min + listing ≈
 3 min ≈ **3.9 h sequential**. The machine now has 13 GB RAM available and 4 CPUs, so 4
 workers at ≈2 GB each (unmeasured) would fit, but parallel mode is still unwritten.

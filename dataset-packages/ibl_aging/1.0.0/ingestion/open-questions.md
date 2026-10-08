@@ -47,23 +47,3 @@ in this Studio's `data_locations.local.yaml`.
 14. Units taken from ALF convention and not verified against a spec: `rewardVolume` (µL),
     wheel position (rad), pose (px).
 
-## Publishing to S3 (planned, not done)
-15. **Long-term plan (user, 2026-10-01):** publish finished packages (data plus text files) to
-    S3 like BWM, with the registry pointing there. Checked in this package:
-    - **Location-independent:** `schema.yaml` names tables and shards by relative paths
-      (`metadata/*.parquet`, `spikes`); no shard `meta.json` has an absolute path;
-      `manifest.json` paths are relative; referenced-in-place stores re-resolve through ONE
-      (`one_base_url` + session/probe id), not through a local path.
-    - **Not location-independent:** `ingestion/convert.py` hard-codes `REPO_DIR`,
-      `PACKAGE_DIR`, the ONE `cache_dir` and `tables_dir` for this Studio, and
-      `ingestion-log.md` records Studio paths as history. Neither is needed to read the
-      package; a rebuild elsewhere would need these as arguments.
-    - **Open:** where the registry points (an S3 URI or a mount), whether a reader downloads
-      or mounts, and who may upload. `data_locations.local.yaml` is gitignored and per Studio.
-    - **Checksums:** the manifest has sha256 per file, but shard bytes are not reproducible
-      across rebuilds (blosc block order), so a rebuild can't be checked against a published
-      manifest by hash; compare decoded arrays. After upload, check sizes and hashes against
-      the manifest.
-    - **Versioning:** a published version must be immutable; any later prose or metadata fix
-      is a new patch version (`project-structure.md`). 1.0.0 is not published, so its prose
-      is still being edited in place.

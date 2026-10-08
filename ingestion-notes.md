@@ -353,9 +353,16 @@ I6. **Generic feature builders.** `_build_event_response_features` and
     `_build_unit_features` live inside `bwm_ephys.py`. Aging and autism need
     BWM-schema features for `bwm_analysis_patterns.md` guidance to transfer; lift
     them out so any dataset can build them.
-I7. **Dataset validator** (`validate-dataset`): declared tables exist, primary keys
+I7. **Dataset validator** (`validate-dataset`): checks a built package against
+    `project-structure.md` — declared tables exist, primary keys
     unique, every column has units and a description, shard keys resolve, every
     table and store names a valid time base, referenced-in-place entries re-resolve.
+    Three further checks the pilot showed a build's own checks miss: a column spec
+    carrying keys other than `dtype`, `units` and `description` (item 17); the same
+    quantity named differently by `schema.yaml` and store metadata, such as
+    `quantization_us` vs spikepack's `time_quantization_us` (item 8); and rebuild
+    comparison by decoded content rather than file hash, since compressed stores are
+    not byte-reproducible (item 12).
 I8. **spikepack read-side defect** — either upstream fix or a repo-side wrapper, so
     reading existing BWM shards through spikepack does not silently drop labels.
 
@@ -505,8 +512,68 @@ is gitignored.
 29. **One session's trials disagree with the paper's:** KS046 `69c9a415` differs in every trial (up to 48 s) and
     in count, under the same trials revision label (2025-03-03). For the ingestion side to check.
 
+### 2026-10-02, decision: packages write their own conversion code
+30. **The stand-in allowlist is gone; `convert.py` carries whatever the package needs.**
+    `skills/data-ingest/` stood in for repo helpers only where a reference file listed
+    them (`references/pending-interfaces.md`, now deleted), and stopped otherwise. That
+    only works for datasets whose shape a repo helper already covers, which is BWM's
+    and almost nothing else. The agent now writes readers, loaders and table builders
+    for the package in `ingestion/convert.py`, without editing repo modules. Three
+    protections replace the allowlist: the spike shard format is fixed on
+    `spikepack.write_blosc`; an IBL-task `trials` table follows the written column
+    contract in `skills/data-ingest/references/ibl-trials.md`; and every piece of
+    package-specific code is listed in `ingestion-log.md`. Evidence that the cost is
+    affordable: `ibl_aging`'s `convert.py` wrote its trials loader and its trials and
+    events builders in about 40 lines (the "Pilot stand-ins" table in its
+    `ingestion-log.md` is the pattern the log entry now generalises).
+    **Trade-off accepted:** each IBL-task package carries its own copy of the trials
+    loader and builder, and copies can diverge — between packages, and from BWM. The
+    column contract and the per-package log make a divergence visible to anyone
+    comparing two packages; neither prevents one. The reason for accepting it is that
+    the alternative blocks ingestion of any dataset the repo has no helper for.
+    Recorded as a dated entry under Decisions in `specs/data-ingestion.md`, where it
+    reverses the two earlier decisions it contradicts.
+
+31. **The IBL trials reference is a worked example, plus a contract for one task.**
+    `references/ibl-trials.md` was the skill's one task-specific rule, which made a
+    general ingestion skill read as though IBL trials were part of the package
+    contract. It now sets out the choices any trial-based dataset has to settle —
+    required versus optional columns, how `trial_id` is computed, which columns
+    depend on a confirmed design fact, the package's own inclusion rule, the session
+    key, and how `events` is derived — and works them through for the IBL task.
+    `SKILL.md` carries the general checklist item; the file keeps one binding role,
+    `task: ibl_choice_world`, where it is followed exactly because
+    `skills/ibl-analyze/` and `skills/ibl-load/references/ibl_behavior_task.md` read
+    those column names. That is the shape for any later task-specific rule: a general
+    item in the skill, an optional worked example in `references/`, binding only
+    where a declared task makes it binding. Two fixes went in with it — the events
+    rules now state the row-ordering `bwm_ephys._build_events` uses (stable sort by
+    session, trial, time, name, with `event_id` assigned after sorting), while the
+    emitted columns stay in the generic `events` order of `project-structure.md`
+    (`session_id`, `event_id`, `event_name`, `event_time`, `trial_id`,
+    `event_value`), with float64 time and the `session_id` key — all three as the
+    built `ibl_aging` package has them; and the trials column lists are no longer
+    restated in `project-structure.md` or the spec. The written `trials` table
+    likewise keys on `session_id`, not the source's `eid` (corrected 2026-10-02
+    against the package's own `schema.yaml`).
+
+### Repo helpers not built, and no longer required for ingestion
+Kept as optional future work; the spec's change surface lists them with their
+acceptance criteria. Build one when enough packages have duplicated the same code to
+pay for it, not before.
+- `ibl_ai_agent/datasets/one_trials.py` — per-session ONE trials loader.
+- `bwm_simple._build_trials` generalised: a DataFrame or a path, `roster` optional,
+  required/optional column split.
+- `bwm_ephys._build_events` generalised: keyword-only `event_time_dtype` (ingestion
+  would pass `np.float64`) and control of the session key and carried columns.
+- `pyproject.toml` `ingest` extra pinning `spikepack` by SHA; until it exists the
+  pinned commit is installed directly (`skills/data-ingest/references/spike-shards.md`).
+- the dataset validator — I7 above.
+
 ## Design question for the team: committing package snapshots
-Proposed during the aging pilot (2026-10-01); not agreed yet.
+Proposed during the aging pilot (2026-10-01); not agreed yet. The proposal was
+written into `project-structure.md` at the time and was moved here on 2026-10-02,
+since an unagreed proposal does not belong in the package contract.
 `project-structure.md` says package prose lives in the package, outside the repo. For
 review, the pilot copied a text snapshot of `ibl_aging 1.0.0` into
 `dataset-packages/ibl_aging/1.0.0/` (11 files, 96.5 KB): `README.md`, `experiment.md`,

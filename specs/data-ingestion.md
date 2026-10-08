@@ -62,7 +62,7 @@ schemas and analysis guidance untouched and BWM's builder output byte-identical.
 - Source for the aging and autism `trials` tables: `trials` objects loaded per
   session through ONE. Neither dataset has the BWM release trials aggregate parquet
   that `bwm_simple._resolve_aggregate_table` fetches, nor a BWM-style roster.
-- Loaded by `ibl_ai_agent/datasets/one_trials.py` (Behavior → 2a).
+- Loaded by each package's own `ingestion/convert.py` (Behavior → 2a).
 
 ## Outputs
 
@@ -109,40 +109,47 @@ than inferring a blocking fact. The skill carries:
 - a checklist of what the package must contain, by what the experiment has
   (trials, spikes, two-photon, video, LFP);
 - hard rules: never invent units or time bases; measure 2–3 sessions and get
-  approval before a full run; use the repo's tools rather than rewriting them;
-  leave BWM untouched; never overwrite a package version without asking; log
-  every question, inference and skip in `ingestion/`;
+  approval before a full run; write what the package needs in
+  `ingestion/convert.py` rather than editing repo modules to fit; leave BWM
+  untouched; never overwrite a package version without asking; log every
+  question, inference and skip in `ingestion/`;
 - quality gates.
 
 Conditional detail lives in `skills/data-ingest/references/`:
 `spike-shards.md` (preflight and writing, Behavior → 4), `ibl-trials.md` (the
-trials gate and columns, Behavior → 2a), and `pending-interfaces.md` (the helpers
-below, until they exist).
+trials gate and column contract, Behavior → 2a), and `design-caveats.md` (the
+rubric for `scientific-context.md`, Behavior → 3).
 
-### 2a. Trials and events reuse
-For packages declaring `task: ibl_choice_world`, `trials` and its reshape into
-`events` reuse `bwm_simple._build_trials` (`bwm_simple.py:276`) and
-`bwm_ephys._build_events` (`bwm_ephys.py:907`), generalised rather than
-duplicated. No other task reaches them. A generic trials builder is out of scope.
+### 2a. Trials and events
+For packages declaring `task: ibl_choice_world`, `ingestion/convert.py` builds
+`trials` and its reshape into `events` itself, to the column contract in
+`skills/data-ingest/references/ibl-trials.md`. No other task reaches that
+contract. A generic trials builder is out of scope.
 
-- `ibl_ai_agent/datasets/one_trials.py` loads `trials` per session through ONE and
-  returns one frame with an `eid` column. Aging and autism have neither the BWM
-  aggregate parquet nor a roster. `convert.py` calls this loader and does not
-  reimplement it.
-- `_build_trials` accepts a path or a DataFrame, and `roster` becomes optional.
-  With `roster=None`, `subject`, `date`, `session_number` and `lab` are not
-  emitted. The column list splits into required and optional, as listed in
-  `project-structure.md` ("Relationship to BWM"). A missing required column raises.
-  A missing optional column is skipped and recorded. Emitted order stays canonical,
+- `skills/data-ingest/references/ibl-trials.md` holds the required and optional
+  column lists and the canonical emitted order; neither this spec nor
+  `project-structure.md` restates them. A missing required column is an error. A
+  missing optional column is skipped and recorded. Emitted order stays canonical,
   with absent columns dropped in place.
-- `_build_events` gains keyword-only `event_time_dtype` (default `np.float32`) and
-  control of the session key and carried columns. Ingested packages pass
-  `np.float64`. The cast is internal (`bwm_ephys.py:920`), so up-casting afterwards
-  would not recover the precision.
-- `probabilityLeft` is written only if the protocol uses biased blocks.
-  `bwm_include` has no analogue, so each package declares its own inclusion rule.
-- Both functions keep keying on `eid`, mapped to `session_id` at the call site
-  (Behavior → 7). BWM's call sites are unchanged.
+- Trials are loaded per session through ONE in `convert.py`. Aging and autism have
+  neither the BWM aggregate parquet nor a roster, so the BWM-derived columns
+  `subject`, `date`, `session_number` and `lab` are not emitted either.
+- `trial_id` is computed per session rather than read from the source. The source
+  keys on `eid`; the written table keys on `session_id` (Behavior → 7), mapped in
+  the builder.
+- `probabilityLeft` is written only if biased blocks are confirmed by the
+  documentation or measured in the data. `bwm_include` is never written; each
+  package declares its own inclusion rule.
+- `events` is built from `trials` with `EVENT_COLUMNS` imported from
+  `ibl_ai_agent/datasets/bwm_ephys.py`, not copied, and `event_time` is float64.
+  `bwm_ephys._build_events` is not called: it casts to float32 internally
+  (`bwm_ephys.py:920`), so up-casting its output afterwards would not recover the
+  precision.
+- `bwm_simple._build_trials` (`bwm_simple.py:276`) and `bwm_ephys._build_events`
+  (`bwm_ephys.py:907`) are **not required** by ingestion and are not generalised
+  by it. That generalisation, and the per-session ONE trials loader
+  `ibl_ai_agent/datasets/one_trials.py`, stay on the books as optional future repo
+  work (Decisions, 2026-10-02). BWM's call sites are unchanged either way.
 
 ### 3. Minimum viable package
 As in `project-structure.md` ("Minimum viable package").
@@ -151,8 +158,9 @@ This includes `scientific-context.md` for every package. Its `Caveats from the
 design` section is always filled. The skill does not ask the user for confounds,
 which they often won't know. It asks for design facts (groups compared, number of
 labs, session span, regions, trial structure, protocol) and writes the consequence
-of each from a table in `skills/data-ingest/SKILL.md`. The aim, papers and any other
-confounds come from the user and may be "not stated" or "none known".
+of each from the rubric in `skills/data-ingest/references/design-caveats.md`.
+The aim, papers and any other confounds come from the user and may be "not
+stated" or "none known".
 
 For packages declaring the IBL task, the table covers the audit in
 `ingestion-notes.md`: lab is degenerate with few labs (item 9); N is the number of
@@ -230,6 +238,26 @@ The audit of BWM-specific assumptions to watch during the pilot is recorded in
 `ingestion-notes.md`. The parts of it that must be written into each package's
 `scientific-context.md` are listed in 3.
 
+### 9. Relationship to BWM
+BWM is unchanged by this work, and the guarantee is on output, not on which files
+are edited. `project-structure.md` carries only a pointer here.
+
+- `bwm_ephys` and `bwm_behavior` data files and `schema.yaml` are untouched.
+- The BWM builder's **output is byte-identical** (criterion 6), and ingestion does
+  not depend on its internals: it calls neither `bwm_simple._build_trials` nor
+  `bwm_ephys._build_events` (Behavior → 2a), so neither has to change for a
+  package to be built.
+- `skills/ibl-analyze/` is untouched. The pilot packages route to it as it stands
+  (Behavior → 8), and `ingestion-notes.md` records the audit of BWM-specific
+  assumptions to watch during the pilot.
+- BWM's `metadata/events.parquet` is mapped reader-side rather than rewritten
+  (Behavior → 7); `load_spike_shard` moves without a behaviour change
+  (Behavior → 5); the `AGENTS.md` routing entry is additive (Behavior → 6).
+- Known precision ceiling, not retrofitted: BWM stores `events.event_time` as
+  float32, whose spacing at t ~ 3000 s is ~0.24 ms — coarser than the 0.1 ms
+  spike quantization those events are aligned to. Ingested packages write float64
+  (Outputs); BWM is not changed to match.
+
 ### Acceptance criteria
 1. The `load_spike_shard` move to `ibl_ai_agent/datasets/spike_store.py` is a pure
    move — import path preserved via re-export from `bwm_ephys`, diff shows no logic
@@ -277,41 +305,52 @@ Criteria 4 and 5 require `spikepack`, so their tests gate on
 `ingest` extra is not installed. They are exercised in CI by a second job on 3.12
 (Change surface). Criteria 6–9 need neither `spikepack` nor ONE and run everywhere.
 
+Criteria 7, 8 and 9 are **optional** as of 2026-10-02: ingestion no longer needs
+the `_build_trials` / `_build_events` generalisation or `one_trials.py`, so they
+test code that is not required (Decisions, 2026-10-02). They apply if and when
+that optional repo work is done. Criteria 1–6 are unchanged and still binding:
+they are what protects BWM's output and the spike reader.
+
 ### Change surface
 
 New:
 - `specs/data-ingestion.md` (this file)
 - `skills/data-ingest/SKILL.md` — v0, to be revised from the pilot's ingestion notes
 - `skills/data-ingest/references/` — `spike-shards.md`, `ibl-trials.md`,
-  `pending-interfaces.md`
+  `design-caveats.md`
 - `ibl_ai_agent/datasets/spike_store.py`
-- `ibl_ai_agent/datasets/one_trials.py` — per-session ONE trials loader
 - `tests/test_spike_store.py` — criteria 1 and 3
 - `tests/test_agents_routing.py` — criterion 2
 - `tests/test_ingest_package.py` — criteria 4 and 5, package contract validation
-- `tests/test_bwm_builder_identity.py` — criteria 6, 7 and 8
-- `tests/test_one_trials.py` — criterion 9
+- `tests/test_bwm_builder_identity.py` — criterion 6
 - `tests/fixtures/bwm_shard_decoded_hashes.json` — criterion 3 baseline
 
+Optional future repo work, no longer required for ingestion (Decisions,
+2026-10-02). Each package builds what it needs in its own `convert.py`; these
+would replace those copies if the duplication ever justifies the generalisation:
+- `ibl_ai_agent/datasets/one_trials.py` — per-session ONE trials loader
+  (criterion 9, `tests/test_one_trials.py`)
+- `bwm_simple._build_trials` taking a DataFrame or a path with `roster` optional,
+  and `bwm_ephys._build_events` taking keyword-only `event_time_dtype` and
+  session-key/carried-column control (criteria 7 and 8, in
+  `tests/test_bwm_builder_identity.py`)
+
 Modified:
-- `ibl_ai_agent/datasets/bwm_ephys.py` — two changes. Remove the
-  `load_spike_shard` body at L1586 and re-export from `spike_store`; internal
-  callers at L1173 and L2077 keep working via the re-export or a direct import. And
-  give `_build_events` (L907) keyword-only `event_time_dtype` and
-  session-key/carried-column control.
+- `ibl_ai_agent/datasets/bwm_ephys.py` — remove the `load_spike_shard` body at
+  L1586 and re-export from `spike_store`; internal callers at L1173 and L2077 keep
+  working via the re-export or a direct import. `_build_events` (L907) is not
+  changed; its generalisation moved to the optional list above.
 - `AGENTS.md` — additive discovery step and non-BWM load packet
 - `pyproject.toml` — `ingest` optional-dependency extra pinning `spikepack` by SHA
   and carrying the environment marker `python_version >= '3.11'`
 - `.github/workflows/ci.yaml` — second job on Python 3.12 running
   `uv sync --extra dev --extra ingest`, so the tests gated on `spikepack` are
   exercised somewhere. The existing 3.10 job is unchanged.
-- `ibl_ai_agent/datasets/bwm_simple.py` — `_build_trials` accepts a DataFrame or a
-  path, `roster` optional, required/optional column split
 - `project-structure.md` — `contract_version`, `task` and `task_protocol` in the
-  `schema.yaml` contract; the BWM constraint restated as byte-identical output and
-  extended with the `_build_trials` gate and column lists; its open list emptied,
-  with local dataset revisions and the timeseries container format moved to deferred
-  and the size and protocol questions moved to settled-at-ingestion
+  `schema.yaml` contract; its open list emptied, with local dataset revisions and
+  the timeseries container format moved to deferred and the size and protocol
+  questions moved to settled-at-ingestion; the BWM relationship moved here
+  (Behavior → 9), leaving a pointer
 - `ingestion-notes.md` — open questions closed
 - `docs/data_locations.md` — registering an ingested dataset
 - `docs/skills.md` — list `skills/data-ingest/`
@@ -334,6 +373,8 @@ Explicitly unchanged:
   target-version = "py310"` (L68); the existing CI job's `python-version: "3.10"`
   (`.github/workflows/ci.yaml:24`). The 3.11 floor applies to the `ingest` extra
   only.
+- `ibl_ai_agent/datasets/bwm_simple.py`. `_build_trials` stays as it is;
+  ingestion does not call it.
 - `ibl_ai_agent/data_locations.py`. `resolve_dataset_dir` only calls
   `_missing_bwm_dataset_message` when `name in BWM_DATASET_DEFAULTS`; an unconfigured
   non-BWM dataset already gets a generic "not configured" error, not a BWM download
@@ -432,7 +473,8 @@ Explicitly unchanged:
   and autism.
 - **The aging and autism `trials` tables reuse the `bwm_behavior` trials
   extraction, by generalising `_build_trials` and `_build_events` rather than
-  writing parallel functions.** User decision. Same IBL task and the same upstream
+  writing parallel functions.** *Reversed 2026-10-02, see below.* User decision.
+  Same IBL task and the same upstream
   trial columns, so a second extractor would be duplicated logic that can drift —
   and the thing most likely to drift, which columns a trials table has, is exactly
   what a parallel builder would duplicate. The alternative considered was sharing
@@ -474,7 +516,8 @@ Explicitly unchanged:
   contents matched.
 - **The per-session ONE trials loader lives in the repo, at
   `ibl_ai_agent/datasets/one_trials.py`, not in the generated
-  `ingestion/convert.py`.** User decision. Both pilot packages need identical
+  `ingestion/convert.py`.** *Reversed 2026-10-02, see below.* User decision. Both
+  pilot packages need identical
   behaviour from it and it needs a test, whereas `convert.py` is a per-package
   artifact that varies by dataset. `convert.py` calls it, which also keeps
   `convert.py` an honest record of the conversion.
@@ -506,6 +549,26 @@ Explicitly unchanged:
 - **`skills/data-ingest/SKILL.md` ships as v0.** User decision. It is written from
   this spec before the pilot has run, so the pilot's `ingestion-log.md` and
   `open-questions.md` are the evidence for its first revision.
+
+- **2026-10-02: the agent writes whatever a package needs in
+  `ingestion/convert.py`, and no repo helper is required for ingestion.** User
+  decision, reversing two decisions above: that the per-session ONE trials loader
+  lives in the repo, and that ingested `trials` tables reuse `_build_trials` and
+  `_build_events` by generalising them. Both were right for two pilot datasets
+  that share BWM's task and wrong in general: most target datasets have no repo
+  helper to generalise, so an ingestion route that depends on one stops at the
+  first dataset that is not IBL-shaped. The pilot showed the cost is affordable —
+  `ibl_aging`'s `convert.py` wrote its own trials loader and its trials and events
+  builders in about 40 lines. What the helpers were protecting is kept without
+  them: the spike shard format stays fixed on `spikepack.write_blosc`; an IBL-task
+  `trials` table follows a written column contract
+  (`skills/data-ingest/references/ibl-trials.md`) instead of shared code; and
+  every piece of package-specific code is listed in the package's
+  `ingestion-log.md`, so a pattern that repeats across packages is visible and can
+  be lifted into the repo then. Accepted trade-off: each IBL-task package carries
+  its own copy of the trials builder, and copies can drift. The contract and the
+  log make drift visible; they do not prevent it. The stand-in allowlist that the
+  skill used instead is deleted with this change.
 
 - **The skill describes the end point and lets the agent lead.** Decided at the
   LLM Agent Club meeting of 2026-09-25 and applied 2026-09-30. The skill defines
