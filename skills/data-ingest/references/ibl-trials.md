@@ -7,10 +7,8 @@ the IBL task. For a package declaring `task: ibl_choice_world` it is also the
 these column names. For any other task, read it as a model of the choices to
 settle, not as the columns to write.
 
-Build the table in `ingestion/convert.py`. The repo has no builder to call:
-`bwm_simple._build_trials` is BWM's own, reads a BWM trials aggregate and
-roster, and requires `probabilityLeft` and `bwm_include`. Leave it as it is
-(`skills/data-ingest/SKILL.md` rule 4) and log the builder you wrote (rule 3).
+Build the table in `ingestion/convert.py`. Do not reuse `bwm_simple._build_trials`:
+it requires BWM's roster, `probabilityLeft` and `bwm_include`.
 
 ## Which columns define a trial — required
 Its extent, stimulus, response and outcome, named as the loaded source names
@@ -45,8 +43,8 @@ source. The table's primary key is (`session_id`, `trial_id`).
 **Write `probabilityLeft` only if biased blocks are confirmed**, either by the
 documentation or by measuring the block structure in the data (log it as
 measured; see "Facts you may measure" in `skills/data-ingest/SKILL.md`).
-Otherwise write neither it nor any block-derived column, and say so in
-`scientific-context.md`.
+Otherwise write neither it nor any block-derived column, and say so in the
+package's scientific-context.md.
 
 ## Caveats to add for this task
 Add these to the package's `Caveats from the design`, alongside those from
@@ -62,10 +60,8 @@ Add these to the package's `Caveats from the design`, alongside those from
 another package. Declare the package's own inclusion rule in `schema.yaml`.
 
 ## The session key
-The loaded source names it `eid`, and it is required there — that is why `eid`,
-not `session_id`, is in the required list above. The written table keys on
-`session_id`, like every other table in the package. Rename it in the builder,
-and leave both conventions alone.
+Required as `eid` in the loaded source; written as `session_id`, like every
+other table. Rename it in the builder.
 
 ## How `events` is derived from `trials`
 `events` is derived from `trials`, never collected alongside it, and derived
@@ -86,14 +82,6 @@ owns. Then, matching `bwm_ephys._build_events`:
   `event_value` in that order, with `event_time` **float64** and `event_value`
   null for IBL-task events.
 
-Those are the generic `events` columns, in the order project-structure.md
-declares them. The result therefore differs from `bwm_ephys._build_events`'s
-own output in three ways, all deliberate: the session key is `session_id`, not
-`eid`; `event_time` is float64, not float32; and the column order is the generic
-one, where BWM puts `trial_id` before `event_id` and carries its roster columns,
-which an ingested package has no roster to supply, with no `event_value`.
-
-Do not call `bwm_ephys._build_events` to get there: it casts to float32
-internally, so up-casting its output afterwards does not recover the precision;
-at t ~ 3000 s, float32 spacing is ~0.24 ms, coarser than the 0.1 ms spike
-quantization the events are aligned to.
+Do not call `bwm_ephys._build_events` itself: it casts to float32 internally,
+and at t ~ 3000 s float32 spacing (~0.24 ms) is coarser than the 0.1 ms spike
+quantization.

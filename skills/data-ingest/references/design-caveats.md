@@ -1,9 +1,7 @@
 # Design caveats
 
-The rubric for the required `Caveats from the design` section of a package's
-`scientific-context.md`. Work down the table: for every fact that applies to the
-dataset, write the caveat into the package. These are derived from design facts,
-not asked of the user, because users rarely know the confounds of their own data.
+The rubric for the `Caveats from the design` section of a package's
+scientific-context.md: for every fact that applies, write its caveat.
 
 | Fact | Caveat to write |
 | --- | --- |
@@ -21,4 +19,4 @@ not asked of the user, because users rarely know the confounds of their own data
 | Not trial-based | Trial-aligned guidance does not apply. |
 
 Add a row when a dataset turns up a caveat this table does not cover, and put the
-evidence for it in `ingestion-notes.md`.
+evidence for it in the repository's ingestion notes.

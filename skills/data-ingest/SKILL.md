@@ -24,9 +24,6 @@ before the full run", or "checking the package is complete and readable by an
 agent that has never seen the source". After each check, say what it found and
 what you changed.
 
-Do not load this skill to analyse an existing package. Analysis reads the
-package's own prose files plus any repo analysis skill that applies.
-
 **Record what this skill does not cover.** When it fails you, or makes you do
 work it should have prescribed, ask: would this change what an agent does on a
 *different* dataset?
@@ -90,12 +87,7 @@ anything the documentation does not state, and measure what neither states (see
   `trials`, with float64 times and a deterministic order.
   `references/ibl-trials.md` works these choices through for one task; follow it
   as the model, and exactly when the task is `ibl_choice_world`.
-- **Spikes / units**: sorter and version, per recording; which units were kept
-  and why (the source-selection rule); what QC exists; whether recordings are
-  assigned to anatomy, and whether alignment or histology QC is carried; and for
-  every stored per-unit summary metric, the window it covers. Metrics computed
-  over the whole recording describe the whole recording. Where the experiment
-  has a task period, ship the task-window equivalents alongside them.
+- **Spikes / units**: see "What to establish" in `references/spike-shards.md`.
 - **Two-photon / calcium**: indicator; frame rate; whether traces are raw,
   ΔF/F or deconvolved, and with what; ROI selection.
 - **Video / pose**: camera frame times and clock; which tracking was run.
@@ -105,9 +97,8 @@ anything the documentation does not state, and measure what neither states (see
   its units, its sampling rate or timestamps, and its clock.
 
 ### Facts you may measure
-Documentation is routinely silent about a design fact the data can settle.
-Measuring such a fact is not guessing, and is better than another round-trip to a
-user who does not know either.
+When the documentation is silent and the data can settle a fact, measure it
+rather than ask a user who likely doesn't know either.
 
 - Measure it, record the check you ran, and log it as **measured**. Never let a
   measured fact appear as something the documentation states.
@@ -119,17 +110,13 @@ user who does not know either.
   its time base. Those stop and ask (hard rule 1).
 
 ### Check the documentation against the data
-Papers and release descriptions are wrong about processing often enough that
-every processing claim has to be checked against the data's own provenance:
-processing logs, release-tag descriptions, and version fields on the files
-themselves.
-
-- Check pipeline and version, selection rules, counts, subject attributes and
-  date ranges.
-- Where they disagree, record both readings in `scientific-context.md` and put
-  the question to the authors in `open-questions.md`. Never resolve a
-  disagreement silently, and never overwrite what the data says with what the
-  paper says.
+Papers and release notes can contain mistakes about processing, so check
+pipeline and version, selection rules, counts, subject attributes and date
+ranges against the data's own provenance: processing logs, release descriptions,
+version fields on the files. Where they disagree, record both readings in
+`scientific-context.md` and put the question to the authors in
+`open-questions.md`. Never resolve a disagreement silently, and never overwrite
+what the data says with what the paper says.
 
 ### Check every signal and table before writing the prose
 Run these checks on the full build and write what they find into
@@ -148,27 +135,21 @@ Leave the data as the source has it; document, don't correct.
 Cross-tabulate every session- and recording-level field — lab, rig, device model,
 year, pipeline, software version — against the design factors. Anything that
 co-varies with a factor is a confound and goes in `scientific-context.md`,
-whether or not anyone mentioned it. These are the confounds nobody thinks to tell
-you, and an analyst who finds one after you did not is finding it too late.
+whether or not anyone mentioned it; nobody thinks to tell you about these.
 
 ### Writing `scientific-context.md`
-Users often won't know the confounds or caveats of their own data, so don't ask
-for them. Derive them from design facts the user can answer or you can measure,
-which the checklist above already collects. The file has three kinds of content:
+Users rarely know the confounds of their own data, so derive them from the
+design facts collected above rather than asking. Three kinds of content:
 
 - **Caveats from the design (required).** Work through
   `references/design-caveats.md` and write the consequence for every fact that
   applies to this dataset. The table is the rubric; extend it there when a
   dataset turns up a caveat it does not cover.
-- **What a paper says about selection (required where a paper exists).** Record
-  its region or ROI definitions, selection criteria, QC steps, inclusion lists
-  and reported effect sizes — or where to find them, usually the authors' code
-  repository, linked under `Papers`. Where it is cheap to tell, say which
-  criteria can be computed from package fields and which cannot. **Never apply
-  them.** The package ships what the source release contains, not the paper's
-  analysis set; analysts choose their own criteria and need to see the paper's
-  to compare. Reproducing a published result is an analysis task, not an
-  ingestion gate.
+- **What a paper says about selection (required where a paper exists).** Its
+  region or ROI definitions, selection criteria, QC steps, inclusion lists and
+  effect sizes, or where to find them (usually the authors' code, linked under
+  `Papers`), noting which criteria package fields can compute. **Never apply
+  them**: the package ships the source release, not the paper's analysis set.
 - **What the user knows (optional).** The aim and hypotheses, the associated
   papers, and any confounds the rubric can't see (a rig change midway, a cohort
   with surgery problems). Ask once. "Not stated" and "none known" are valid
@@ -181,28 +162,25 @@ These hold whatever route you take.
    The minimum a package cannot ship without is listed in `project-structure.md`
    ("Minimum viable package"). Measuring a fact from the data is not inventing
    it; see "Facts you may measure".
-2. **Measure before converting in bulk** (the repo's "Start small" policy): take
-   the raw size per session, convert 2–3 sessions **in the mode you intend to
-   run**, record wall time and peak memory per worker, estimate the full run, and
-   get the user's approval before starting it. Parallel workers contend for the
-   source, so per-item time measured sequentially underestimates a parallel run;
-   measure at the worker count you will use. Estimate output size from source
-   metadata when it exists (a per-unit spike count, a file size listing) rather
-   than extrapolating from the sample, which can miss by a third. Estimate disk use
-   too, including any cache the source access fills locally. Keep the sample build
-   in a persistent location, never a scratch directory a restart can lose, and log
-   its path in `ingestion-log.md`. To change `convert.py` while a run is going,
-   write a copy, check it compiles, then move it over the original in one step;
-   later stages re-import the file and break on a half-written one.
+2. **Measure before converting in bulk**: convert 2–3 sessions, estimate the
+   full run's time, memory, output size and disk use, and get the user's
+   approval before starting it.
+   - Run the sample at the worker count you will use; workers contend for the
+     source, so sequential timings underestimate.
+   - Estimate output size from source metadata where it exists (a per-unit spike
+     count, a file listing); extrapolating from the sample can miss by a third.
+   - Count disk used by any local cache of the source, not only the output.
+   - Keep the sample build somewhere persistent, never scratch, and log its path.
+   - To change `convert.py` mid-run, write a copy, check it compiles, then move
+     it over the original; later stages re-import it.
 3. **Write what the package needs in `ingestion/convert.py`; reuse the repo
    only where it fits.** Readers, loaders and table builders specific to this
    dataset live in `convert.py`. Do not edit repo modules to make them fit, and
    leave BWM's untouched (rule 4). Two things are not optional: spikes go
    through `spikepack.write_blosc` only (read `references/spike-shards.md` before
    anything else if there are spikes), and any `trials` table follows the Trials
-   checklist item. List each piece of code written for the package in
-   `ingestion/ingestion-log.md` with what it does, so repeated patterns across
-   packages are visible and can be moved into the repo later.
+   checklist item. List each piece of code written for the package, with what
+   it does, in `ingestion/ingestion-log.md`.
 4. **Leave existing packages and the repo's shipped datasets (BWM included)
    untouched**: their data, schemas, builders and analysis guidance.
 5. **Never overwrite or delete an existing package version** without asking. A
@@ -210,11 +188,9 @@ These hold whatever route you take.
 6. **The package must be readable from anywhere.** Every path a reader needs is
    relative to the package root; anything not converted is referenced by an id
    that re-resolves, never by a local path; `convert.py` takes the output and
-   source-cache locations as arguments instead of hard-coding them. The source
-   may be a read-only mount, so point every tool's writable paths (caches, index
-   tables) at your own working location rather than letting them default into the
-   source. A package that only works on the machine that built it cannot be
-   published.
+   source-cache locations as arguments. Point every tool's writable paths
+   (caches, index tables) at your own working location, never the source, which
+   may be read-only.
 7. **Nothing in prose without a source.** Every number in a prose file comes from
    a value you computed, and every descriptive claim names where it came from:
    the data, the documentation, or the user. Do not describe hardware, protocols
@@ -248,10 +224,9 @@ These hold whatever route you take.
    problems, stop and ask the user. Rewrite `manifest.json` after the last fix.
 
 ## The fresh-agent check
-Required, and worth the time: a build verifies what you told it to verify, so the
-errors that survive are the ones you did not think of. Start again from the
-package alone, as an agent that has never seen the source. Read `README.md`
-first, then load a table and a store and take an analysis one step.
+Required: a build only verifies what you told it to, so the surviving errors are
+the ones you did not think of. The checker starts from the package alone: reads
+`README.md`, loads a table and a store, and takes an analysis one step.
 
 Run each check as a separate agent (for example a subagent) given only the
 package path, not this conversation. It cannot be you: you know what the package
