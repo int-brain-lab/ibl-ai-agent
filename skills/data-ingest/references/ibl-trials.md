@@ -48,6 +48,15 @@ measured; see "Facts you may measure" in `skills/data-ingest/SKILL.md`).
 Otherwise write neither it nor any block-derived column, and say so in
 `scientific-context.md`.
 
+## Caveats to add for this task
+Add these to the package's `Caveats from the design`, alongside those from
+`skills/data-ingest/references/design-caveats.md`:
+
+| Fact | Caveat to write |
+| --- | --- |
+| No biased blocks | `probabilityLeft` and `skills/ibl-analyze/references/prior_and_block_semantics.md` do not apply. |
+| Analysis will use `skills/ibl-analyze/` | Its QC and reproducibility guidance is BWM evidence (12 labs, one group of mice), not a general law. |
+
 ## The inclusion rule
 **Never write `bwm_include`.** It is BWM's trial mask and means nothing in
 another package. Declare the package's own inclusion rule in `schema.yaml`.

@@ -69,12 +69,12 @@ datasets:
 ### `README.md`
 Fixed headings: `Summary` | `Scope` | `When to use` | `When not to use`.
 `Summary` is one paragraph: species, subject and session counts, modalities,
-scientific aim. This is what the dataset-discovery step reads across all
-configured datasets to choose one, so it must be sufficient on its own.
+scientific aim, key paper, overlap with other packages. A reader decides from it
+alone whether it needs this dataset; the other files are read only if it does.
 
 ### `experiment.md`
-A methods section. Portable and lab-neutral: it describes the experiment, not lab's
-interpretation of it. Fixed headings:
+What was done, as in a paper's methods section. Portable and lab-neutral: it
+describes the experiment, not an interpretation of it. Fixed headings:
 `Subjects` | `Surgery` | `Apparatus` | `Protocol` | `Design and factors` |
 `Trial structure` | `Session schedule` | `Training history`.
 Headings that do not apply are kept and marked not applicable.
@@ -84,35 +84,25 @@ in `schema.yaml`: which factors the experiment manipulates or measures, at what
 grain, and what comparison it was built for.
 
 ### `scientific-context.md`
-Required. What the study was for and what could mislead an analysis of it. Fixed
-headings:
+Required. What the study was for and, above all, what could mislead an analysis
+of it. Fixed headings:
 `Aim` | `Caveats from the design` | `Other known confounds` | `Papers`.
-`Caveats from the design` is always filled. The ingestion skill derives it from
-facts in `experiment.md` and `modalities.md`, so it does not depend on the user
-knowing the confounds. `Aim`, `Other known confounds` and `Papers` come from the
-user or the documentation and may say "not stated" or "none known". Kept separate
-from `experiment.md` so the methods stay reusable, and separate from `skills/` so
-repo-wide scientific guidance is not duplicated per dataset.
+`Caveats from the design` is always filled; the other three may say "not stated"
+or "none known". How each is written: `skills/data-ingest/SKILL.md`.
 
 ### `modalities.md`
-One section per recording modality, fixed headings:
+What each recording modality is and how far to trust it. One section per
+modality, fixed headings:
 `Instrument` | `Sampling` | `Units` | `Preprocessing` | `Time base` | `Coverage` | `QC`.
 Prose counterpart to the `stores:` and `time_bases:` blocks in `schema.yaml`.
 
 ### `schema.yaml`
-The machine-readable contract: tables, stores, clocks, frames and design. (It
-extends the shape of the existing `bwm_ephys` schema with per-column units,
-explicit clocks, spatial frames and experimental design — history, not something
-a reader needs.)
+The machine-readable contract: tables, stores, clocks, frames and design, so a
+reader can load any table or signal with its units and clock known.
 
-The block below is **illustrative, not a template**. It is a deliberate
-composite, written to exercise most of the contract at once: an IBL task name, a
-second (imaging) clock, an arena reference frame, a fluorescence store and an
-age-by-genotype design. No real dataset need have that combination. The **keys**
-are the contract; every **value** is an example, the dataset name, the task and
-protocol strings and the design factors included. A block a dataset has no use
-for — `reference_frames`, `design`, any table or store it lacks — is simply
-absent; what cannot be omitted is in "Minimum viable package" below.
+The block below is an **illustrative composite, not a template**: the **keys**
+are the contract, every **value** is an example. A block a dataset has no use for
+is absent; what cannot be omitted is in "Minimum viable package" below.
 
 ```yaml
 dataset_name: example_dataset
@@ -278,15 +268,14 @@ store declares whatever was used. Ingestion writes **tick-aligned spike origins*
 
 `referenced_in_place` records a **re-resolvable identifier scheme**, never a local
 path: whatever a reader needs to fetch the file again from the archive it came
-from. The `resolve:` block above is one such scheme, the ONE/Alyx form
-(`one_eid`, `dataset`, `collection`, `revision`). A DANDI source would key on
-dandiset id, version and asset path instead; no repo code resolves that form yet.
-Declare the keys the scheme needs, and say in `modalities.md` what resolves them.
+from. The `resolve:` block above is one example. Declare the keys the scheme
+needs, and say in `modalities.md` what resolves them. Schemes for specific
+archives: `skills/data-ingest/references/archive-sources.md`.
 
 ### `ingestion/`
-`convert.py` makes the build reproducible. `ingestion-log.md` records what was
-done, what was inferred and what was asked. `open-questions.md` records unresolved
-items — an analysis agent reads it before using the package.
+`convert.py` rebuilds the package. `ingestion-log.md` records what was asked,
+measured and inferred. `open-questions.md` records unresolved items; an analysis
+agent reads it before using the package.
 
 ## Minimum viable package
 
@@ -300,9 +289,8 @@ Ingestion **may ship** without, recording an entry in `open-questions.md`:
 `features/`, per-column prose beyond units, exact conversion detail for
 upstream-derived fields, optional modalities.
 
-The skill never invents a unit or a time base to close a blocking gap. It stops
-and asks. `a.u.` and `dimensionless` are valid units for quantities. Every column
-still declares a `units` key; `units: null` is valid only for identifier,
+`a.u.` and `dimensionless` are valid units for quantities. Every column declares
+a `units` key; `units: null` is valid only for identifier,
 categorical, boolean and string columns (as for `session_id` above).
 
 ## Versioning
@@ -313,5 +301,8 @@ categorical, boolean and string columns (as for `session_id` above).
 - patch — prose or metadata fixes, no data change
 - minor — tables, columns or modalities added without breaking existing readers
 - major — schema-breaking change
+
+A **published version is immutable**: any later change, prose included, is a new
+patch version. An unpublished version may be edited in place.
 
 A change of upstream `source.version` forces at least a minor bump.

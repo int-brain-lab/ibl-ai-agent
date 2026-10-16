@@ -8,7 +8,7 @@ not asked of the user, because users rarely know the confounds of their own data
 | Fact | Caveat to write |
 | --- | --- |
 | Subjects compared in groups (age, genotype, line) | N is the number of subjects. Recording quality (yield, stability, drift, engagement) may differ by group, so compare it before claiming a neural difference. |
-| One lab or a few | Lab is not a meaningful source of variation. |
+| One lab or a few | Lab effects cannot be estimated; results may not generalise beyond this lab's methods and rigs. |
 | Many labs, unbalanced across groups | Model or stratify by lab; pooling does not separate the lab effect from the group effect. |
 | Groups differ in pipeline, sorter or software version | The group effect is confounded with processing. Compare within one pipeline before claiming a biological difference. |
 | A field co-varies with a design factor (device model, year, rig) | Name it as a confound and give the cross-tabulation. |
@@ -19,8 +19,6 @@ not asked of the user, because users rarely know the confounds of their own data
 | Recordings assigned to anatomy without alignment or histology QC | A localisation error cannot be told from biology. |
 | Calcium traces deconvolved | They are rate estimates, not spikes. |
 | Not trial-based | Trial-aligned guidance does not apply. |
-| IBL task without biased blocks | `probabilityLeft` and `prior_and_block_semantics.md` do not apply. |
-| Analysis will use `skills/ibl-analyze/` | Its QC and reproducibility guidance is BWM evidence (12 labs, one group of mice), not a general law. |
 
 Add a row when a dataset turns up a caveat this table does not cover, and put the
 evidence for it in `ingestion-notes.md`.

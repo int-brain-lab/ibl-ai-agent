@@ -57,10 +57,6 @@ already applies. Record it under `provenance.yaml` `conversion.lossy`.
 `shard_id`, `session_id`, `subject_id`, `source_selection_rule`, `time_base`,
 `n_spikes`, `n_units`, `cluster_encoding`, `time_encoding`, `compression`.
 
-A `spike_shards` store holds discrete event times only. A deconvolved calcium
-trace belongs in a `timeseries` store. Thresholding it into events is an
-analysis step, never a conversion step.
-
 ## Verifying and rerunning
 Shard bytes are **not reproducible across builds**: the compressor writes blocks
 in the order its threads finish them, so the same arrays give a different file of
