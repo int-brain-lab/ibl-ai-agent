@@ -118,6 +118,7 @@ def test_backup_like_version_directories_are_ignored(tmp_path: Path) -> None:
 
 
 def test_missing_bwm_dataset_error_instructs_stop_before_one_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
     root = tmp_path / "reports" / "datasets" / "bwm_ephys"
     monkeypatch.setitem(BWM_DATASET_DEFAULTS["bwm_ephys"], "root", root)
 

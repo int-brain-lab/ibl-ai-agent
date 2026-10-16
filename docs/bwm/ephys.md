@@ -31,7 +31,7 @@ located through `data_locations.local.yaml`, so this page should be read as a mi
 Reference local artifact snapshot:
 
 - config key: `datasets.bwm_ephys.root`
-- current dataset version: `1.2.1`
+- documented release target: `1.2.1` (inspect configured schema/provenance for the installed version)
 - public archive size: `6.04G`
 - previous `1.1.0` local-table/spike footprint: `5.3G`
 - build timestamp: `2026-04-22T18:14:47.760768+00:00`
