@@ -97,6 +97,11 @@ If no local config is present, use the repository-local `projects/` directory.
 All scientific project outputs belong under `<project_root>/<project_slug>/`, and
 nowhere else.
 
+For new projects, choose a URL-safe `<project_slug>` matching
+`[a-z0-9]+(?:-[a-z0-9]+)*` (e.g. `spike-width-cortical-depth`) at creation time,
+so report URLs can reuse it. Preserve existing project directories; the publisher
+normalizes their slugs for URLs.
+
 - `<project_root>/<project_slug>/question.md` a dynamic document containing the original question, current refined explication, definitions of terms, and definition of exploration and confirmation sets;
 - `<project_root>/<project_slug>/TODO.md` for a sequential list of steps performed and planned. Change [ ] to [X] on completion and list output files generated. You can change future plans in the list but do not change descriptions of steps already performed
 - `<project_root>/<project_slug>/change-log.md` a list of changes to `question.md` and `TODO.md`, with date-times
@@ -104,7 +109,7 @@ nowhere else.
 - `<project_root>/<project_slug>/exploratory-analyses` for Python files, validation diagnostics, risk notes, and outputs of exploratory analyses
 - `<project_root>/<project_slug>/confirmatory-analyses` for python files and outputs of confirmatory analyses
 - `<project_root>/<project_slug>/report.qmd` for Quarto source; optional `report.pdf` alongside it when requested
-- `<project_root>/<project_slug>/report/` for the rendered HTML report (`report.html`) and required web assets only; keep source documents and private notes outside this publishable directory
+- `<project_root>/<project_slug>/report/` for the rendered HTML report (`report.html`), public `manifest.json` metadata (see `skills/ibl-report/SKILL.md`), and required web assets only; keep source documents and private notes outside this publishable directory
 - `<project_root>/<project_slug>/instruction-suggestions.md` for proposed durable guidance changes, when useful
 
 ## File naming

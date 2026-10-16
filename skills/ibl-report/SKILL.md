@@ -10,7 +10,19 @@ description: Use this skill to write a final report for an IBL scientific analys
 
 ## Output format
 
-Prepare a scientific report using Quarto. Resolve the project directory using `AGENTS.md`; save source as `report.qmd` and render HTML to `report/report.html`, with only required web assets alongside the HTML. PDF is an optional additional output at `report.pdf`; for an explicit PDF-only request, omit HTML and the Pages publishing offer. Keep source, PDF, and private notes outside `report/`, because the publisher collects web files recursively from that directory.
+Prepare a scientific report using Quarto. Resolve the project directory and slug using `AGENTS.md`; save source as `report.qmd` and render HTML to `report/report.html`. PDF is an optional additional output at `report.pdf`; for an explicit PDF-only request, omit HTML, the manifest, and the Pages publishing offer.
+
+For HTML reports, render a single self-contained HTML file (`embed-resources: true` in the YAML header) so reports can be hosted, versioned, and ingested as one file. Also write `report/manifest.json` as a JSON object with all fields below, so a future report index can list the report without parsing HTML. The manifest is public; the privacy rules below apply to every value.
+
+| Field | Type and meaning |
+| --- | --- |
+| `title` | Nonempty string matching the report title. |
+| `abstract` | Nonempty plain-text string summarizing the question and main findings. |
+| `date` | String in `YYYY-MM-DD` format: the report's last substantive revision date. |
+| `tags` | Array of unique, nonempty topic keywords (3-6 recommended), shown on the report index; also set `keywords:` in the YAML header. Use `[]` if none apply. |
+| `data_version` | Object mapping dataset names to version strings (e.g. `{"bwm_ephys": "1.2.0", "bwm_behavior": "1.0.0"}`). Include every dataset used; use `null` for an unknown version and explain it in the report's methods. Use `{}` if no dataset was used. Never put local paths or credentials here. |
+
+Keep only the rendered HTML, public manifest, and required web assets in `report/`. Keep source, PDF, and private notes outside it, because the publisher collects web files recursively from that directory.
 
 The report should have the following sections:
 
