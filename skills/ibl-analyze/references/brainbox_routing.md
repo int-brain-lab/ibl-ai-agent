@@ -14,6 +14,7 @@ Confirm exact signatures from installed `brainbox` or official docs when needed.
 | wheel movement, quiescence, velocity | `brainbox.behavior.wheel.interpolate_position`, `velocity_filtered`, `movements`, `get_movement_onset`, `traces_by_trial` |
 | behavioral performance, psychometrics, reaction time | `brainbox.behavior.training.compute_performance`, `compute_psychometric`, `compute_reaction_time` |
 | licks, pupil, paw speed, pose-feature motion | `brainbox.behavior.dlc.get_licks`, `get_pupil_diameter`, `get_speed`, `get_speed_for_features` |
+| behavioral labels or unfamiliar data products | `../../ibl-load/SKILL.md` for fresh metadata and installed-loader discovery before selecting a metric; distinguish predictions from measurements and unresolved user terminology |
 | unit QC, contamination, presence ratio, drift | `brainbox.metrics.single_units.*`, `brainbox.metrics.electrode_drift.estimate_drift` |
 | ISI, synchrony, spike-train rates | `brainbox.spiking.isi.*`, `brainbox.spiking.rate.bin_spikes`, `brainbox.spiking.synchrony.*` |
 | cluster/unit preparation | `brainbox.processing.get_units_bunch`, `compute_cluster_average`, `filter_units`, `bin_spikes` |
