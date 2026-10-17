@@ -182,6 +182,47 @@ def test_shard_sampling_can_be_disabled(dataset: DataLocations, software: Path) 
     assert report["datasets"][0]["stores"][0]["sampled_shards"] == []
 
 
+@pytest.mark.parametrize("kind", ["table", "shard", "array"])
+@pytest.mark.parametrize("query", [
+    pytest.param("", id="unfiltered"),
+    pytest.param("paw", id="matching"),
+    pytest.param("xyzunmatched", id="fallback"),
+])
+def test_dataset_errors_survive_queries(
+    dataset: DataLocations, software: Path, kind: str, query: str,
+) -> None:
+    root = dataset.datasets["example"].root
+    paths = {
+        "table": root / "measurements.pqt",
+        "shard": root / "sessions" / "001.zip",
+        "array": root / "broken.npy",
+    }
+    path = paths[kind]
+    path.write_bytes(b"corrupt file")
+    unfiltered = data_discovery.describe_data(dataset, software_root=software)
+    expected = unfiltered["datasets"][0]["inspection_errors"]
+    assert len(expected) == 1
+    assert expected[0]["path"] == str(path)
+    assert expected[0]["error"]
+
+    report = data_discovery.describe_data(dataset, software_root=software, query=query)
+    assert report["datasets"][0]["inspection_errors"] == expected
+    rendered = data_discovery.format_description(report)
+    assert str(path) in rendered
+    assert rendered.count(expected[0]["error"]) == 1
+    if query == "paw":
+        # Two software matches, plus the intact camera manifest when applicable.
+        assert report["query_match_count"] == (2 if kind == "shard" else 3)
+        assert report["query_fallback"] is False
+        assert not report["datasets"][0]["tables"]
+        assert not report["datasets"][0]["array_files"]
+        if kind == "shard":
+            assert not report["datasets"][0]["stores"]
+    elif query:
+        assert report["query_match_count"] == 0
+        assert report["query_fallback"] is True
+
+
 @pytest.mark.parametrize("source_path", ["brainbox/io/one.py", "brainbox/behavior/pawstates.py"])
 @pytest.mark.parametrize("query", ["new_measurement", "grooming"])
 def test_source_parse_errors_remain_visible_in_filtered_and_fallback_output(

@@ -91,7 +91,9 @@ def _dataset_metadata(
     name: str, locations: DataLocations, *, sample_shards: int
 ) -> dict[str, Any]:
     root = locations.datasets[name].root
-    result: dict[str, Any] = {"name": name, "root": str(root) if root else None}
+    result: dict[str, Any] = {
+        "name": name, "root": str(root) if root else None, "inspection_errors": [],
+    }
     if root is None:
         return {**result, "status": "unconfigured"}
     try:
@@ -120,6 +122,7 @@ def _dataset_metadata(
                     table.update(_table_metadata(path))
                 except (OSError, ValueError, ImportError) as exc:
                     table["inspection_error"] = str(exc)
+                    result["inspection_errors"].append({"path": str(path), "error": str(exc)})
             tables.append(table)
         result["tables"] = tables
         result["stores"] = []
@@ -127,6 +130,10 @@ def _dataset_metadata(
             path = directory / spec.get("path", ".")
             store = {"name": store_name, **spec, "present_locally": path.exists()}
             store.update(_shard_metadata(path, sample_shards))
+            result["inspection_errors"].extend(
+                {"path": sample["path"], "error": sample["error"]}
+                for sample in store["sampled_shards"] if "error" in sample
+            )
             result["stores"].append(store)
         result["array_files"] = []
         for path in sorted(directory.glob("*.npy")):
@@ -136,6 +143,7 @@ def _dataset_metadata(
                 result["array_files"].append(_array_metadata(path))
             except (OSError, ValueError, ImportError) as exc:
                 result["array_files"].append({"path": str(path), "inspection_error": str(exc)})
+                result["inspection_errors"].append({"path": str(path), "error": str(exc)})
     except (OSError, ValueError, TypeError, KeyError, yaml.YAMLError) as exc:
         result["inspection_error"] = str(exc)
     return result
@@ -306,24 +314,20 @@ def format_description(report: dict[str, Any]) -> str:
         )
         if dataset.get("error") or dataset.get("inspection_error"):
             lines.append(f"  {dataset.get('error') or dataset['inspection_error']}")
+        for error in dataset.get("inspection_errors", []):
+            lines.append(f"  Inspection failed at {error['path']}: {error['error']}")
         for table in dataset.get("tables", []):
             columns = ", ".join(field["name"] for field in table.get("columns", []))
             status = "present locally" if table["present_locally"] else "missing locally"
             lines.append(f"  {table['name']} ({status}): {table.get('rows', '?')} rows; {columns}")
-            if table.get("inspection_error"):
-                lines.append(f"    Inspection error: {table['inspection_error']}")
         for store in dataset.get("stores", []):
             lines.append(f"  store {store['name']}: {store.get('path', '.')}")
             for sample in store["sampled_shards"]:
-                if sample.get("error"):
-                    lines.append(f"  Manifest inspection failed at {sample['path']}: {sample['error']}")
                 for name, array in sample.get("arrays", {}).items():
                     lines.append(f"  sampled {name}: {', '.join(array['columns'])}")
             lines.append(f"  {store['scope']}")
         for array in dataset.get("array_files", []):
             lines.append(f"  array {Path(array['path']).name}: {array.get('shape', '?')} {array.get('dtype', '')}")
-            if array.get("inspection_error"):
-                lines.append(f"    Inspection error: {array['inspection_error']}")
     for found in report["detected_unregistered"]:
         lines.append(f"- Detected but unregistered: {found['name']} at {found['root']}")
     lines.append("Software-supported products (local data availability not established)")
