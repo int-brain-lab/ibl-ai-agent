@@ -155,26 +155,32 @@ def _source_metadata(root: Path) -> list[dict[str, Any]]:
             entries.append({"source": str(path), "inspection_error": str(exc)})
             continue
         if path == loader:
+            loaders = []
             for node in tree.body:
-                if not isinstance(node, ast.ClassDef):
+                if isinstance(node, ast.FunctionDef):
+                    loaders.append((f"brainbox.io.one.{node.name}", node))
+                elif isinstance(node, ast.ClassDef):
+                    loaders.extend(
+                        (f"{node.name}.{method.name}", method)
+                        for method in node.body if isinstance(method, ast.FunctionDef)
+                    )
+            for api, method in loaders:
+                if not method.name.startswith("load_"):
                     continue
-                for method in node.body:
-                    if not isinstance(method, ast.FunctionDef) or not method.name.startswith("load_"):
-                        continue
-                    entry = {
-                        "api": f"{node.name}.{method.name}",
-                        "documentation": ast.get_docstring(method) or "",
-                        "source": str(path),
-                        "line": method.lineno,
-                        "dataset_arguments": [
-                            ast.unparse(call)
-                            for call in ast.walk(method)
-                            if isinstance(call, ast.Call)
-                            and isinstance(call.func, ast.Attribute)
-                            and call.func.attr == "load_object"
-                        ],
-                    }
-                    entries.append(entry)
+                entry = {
+                    "api": api,
+                    "documentation": ast.get_docstring(method) or "",
+                    "source": str(path),
+                    "line": method.lineno,
+                    "dataset_arguments": [
+                        ast.unparse(call)
+                        for call in ast.walk(method)
+                        if isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and call.func.attr == "load_object"
+                    ],
+                }
+                entries.append(entry)
         else:
             constants = {}
             for node in tree.body:

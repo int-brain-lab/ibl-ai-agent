@@ -110,6 +110,33 @@ def test_new_configured_datasets_and_loader_methods_appear_without_catalog(
     assert any(entry.get("api") == "SessionLoader.load_new_product" for entry in report["software_capabilities"])
 
 
+@pytest.mark.parametrize("query", ["lfp", "passive_rfmap"])
+def test_discovers_module_loaders_without_importing_them(
+    dataset: DataLocations, software: Path, query: str,
+) -> None:
+    source = software / "brainbox" / "io" / "one.py"
+    source.write_text(source.read_text() + '''
+def load_lfp(one, eid):
+    """Load LFP recordings."""
+    return one.load_object(eid, "lfp")
+def load_passive_rfmap(one, eid):
+    """Load passive_rfmap stimuli."""
+    return one.load_object(eid, "passiveRFM")
+def _load_private():
+    """Internal LFP helper."""
+''')
+    report = data_discovery.describe_data(dataset, query=query, software_root=software)
+    assert report["query_fallback"] is False
+    assert report["query_match_count"] == 1
+    entry, = report["software_capabilities"]
+    assert entry["api"] == f"brainbox.io.one.load_{query}"
+    assert entry["documentation"]
+    assert entry["source"] == str(source)
+    assert source.read_text().splitlines()[entry["line"] - 1].startswith(f"def load_{query}(")
+    assert entry["dataset_arguments"][0].startswith("one.load_object(")
+    assert entry["api"] in data_discovery.format_description(report)
+
+
 def test_missing_table_and_unresolved_root_are_reported_without_hiding_other_data(
     dataset: DataLocations, software: Path, tmp_path: Path,
 ) -> None:
