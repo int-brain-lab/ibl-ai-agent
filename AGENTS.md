@@ -84,7 +84,7 @@ Skill maintenance:
 - `skills/skill-maintenance/SKILL.md`
 
 Dataset ingestion:
-- `skills/data-ingest/SKILL.md`
+- `skills/data-ingest/SKILL.md` when the user points at data they want to analyze that is not a dataset registered in `data_locations.local.yaml`
 
 ## Project directory
 
