@@ -50,7 +50,9 @@ applies. Record it under `provenance.yaml` `conversion.lossy`.
 ## Verifying and rerunning
 Shard bytes differ between builds of the same arrays (the compressor's thread
 order varies). Verify a rebuild by decoding and comparing arrays, never by file
-hashes; hashes are right only for checking a copy or upload.
+hashes; hashes are right only for checking a copy or upload. Compare decoded
+times with the source within `quantization_us / 2`, and expect the maximum
+difference to equal it.
 
 ## Memory and workers
 All of a recording's spikes are read before units are selected, so peak memory

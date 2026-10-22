@@ -13,6 +13,7 @@ scientific-context.md: for every fact that applies, write its caveat.
 | The dataset overlaps another configured package | Replications across the two are not independent. State which sessions overlap. |
 | Sessions span learning or a long period | Neural and behavioural drift across sessions; don't pool naively. |
 | Groups recorded in different regions or depths | Region differences can look like group differences. |
+| A link between tables is missing for some rows (which device recorded a unit, which plane an ROI is in, which session segment a trial belongs to) | Anything that depends on the link (region, target, device) is unknown for those rows, and comparisons across it are impossible, not merely noisy. State how many rows are affected and the candidate values. |
 | Per-source summary metrics computed over the whole recording | They do not describe the task period. Recompute in-window before using them for selection or QC. |
 | Recordings assigned to anatomy without alignment or histology QC | A localisation error cannot be told from biology. |
 | Calcium traces deconvolved | They are rate estimates, not spikes. |

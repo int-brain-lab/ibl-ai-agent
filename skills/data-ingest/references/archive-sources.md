@@ -20,9 +20,8 @@ ingestion has used; add a section when a new archive needs one.
 - **Re-processed versions of a derived field** (an alignment redone, a re-sort):
   ask the user which version defines the package, then ship a flag or difference
   column comparing it with the current one.
-- **Groups that differ only in the version of one pipeline**: show the user the
-  cross-tabulation and ask whether it is a confound; record the answer and its
-  source in scientific-context.md.
+- **Groups that differ only in the version of one pipeline** are a confound:
+  raise it with the others in route step 3 of `skills/data-ingest/SKILL.md`.
 
 ## ONE/Alyx (IBL)
 - **Tag, collection, revision.** A dataset is identified by session, collection
@@ -42,6 +41,13 @@ ingestion has used; add a section when a new archive needs one.
 - **Referenced in place**: `resolve: {one_eid, dataset, collection, revision}`.
 
 ## DANDI
-Not yet used by an ingestion. Pin the published dandiset version (not `draft`)
-and each asset id. Referenced in place: `resolve: {dandiset_id, version,
-asset_path}`; no repo code resolves this form yet.
+- **Pin the published version**, never `draft`, and each asset id.
+- **List assets from the API**:
+  `https://api.dandiarchive.org/api/dandisets/<id>/versions/<version>/assets/?page_size=500`
+  returns `asset_id`, `blob`, `path` and `size` per asset. Save that listing as
+  `ingestion/source-inventory.csv` so a rebuild reads the same bytes.
+- **Check coverage in one step**: the version's dandiset.yaml gives
+  `assetsSummary.numberOfFiles` and `numberOfBytes`; compare them with the
+  local copy.
+- **Referenced in place**: `resolve: {dandiset_id, version, asset_path}`; no
+  repo code resolves this form yet, so also store the asset ids.

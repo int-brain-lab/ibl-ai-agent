@@ -75,8 +75,10 @@ anything the documentation does not state, and measure what neither states (see
 - **If a paper, preprint or thesis describes these data**: its region or ROI
   definitions, selection criteria, QC steps, inclusion lists and reported effect
   sizes, and its code and data repositories. What is missing from the text is
-  usually in the code repository. This is information for the analyst, not a
-  filter to apply; see below.
+  usually in the code repository, and the code that produced the source files
+  can settle what the text and file metadata get wrong; it may not be the
+  version that ran, so take it as evidence of intent, not of the files. This is
+  information for the analyst, not a filter to apply; see below.
 - **Trials**: whether the experiment is trial-based at all (free exploration is
   not); what defines a trial's start and end; stimulus, response and outcome;
   which task and protocol were run; whether there are blocks or priors. If it is
@@ -107,14 +109,18 @@ rather than ask a user who likely doesn't know either.
   contains another, whether a protocol really has the block structure its name
   implies.
 - Blocking facts cannot be measured this way: what a quantity means, its units,
-  its time base. Those stop and ask (hard rule 1).
+  its time base. Those stop and ask (hard rule 1), unless the code that produced
+  the source files settles them unambiguously. Then log the fact as **read from
+  code**, with the line that settles it. Where it contradicts the file metadata
+  or the documentation, record both in `modalities.md` and put the question to
+  the authors in `open-questions.md`.
 
 ### Check the documentation against the data
-Papers and release notes can contain mistakes about processing, so check
-pipeline and version, selection rules, counts, subject attributes and date
-ranges against the data's own provenance: processing logs, release descriptions,
-version fields on the files. Where they disagree, record both readings in
-`scientific-context.md` and put the question to the authors in
+Papers, release notes and file metadata can be wrong, so check pipeline and
+version, selection rules, stated preprocessing rules, counts, subject attributes
+and date ranges against the data and its provenance, and check that everything
+the documentation promises is present. Where they disagree, record both readings
+in `scientific-context.md` and put the question to the authors in
 `open-questions.md`. Never resolve a disagreement silently, and never overwrite
 what the data says with what the paper says.
 
@@ -128,10 +134,17 @@ Leave the data as the source has it; document, don't correct.
   the task or recording period, and by how much it falls short.
 - **Each event or trial table**: events out of their expected order (a response
   before its stimulus); the count of missing values in every column.
+- **Each categorical or label column**: its full value set, including values
+  that are not members of the category (a placeholder such as `unknown` or
+  `none`, an "outside the brain" label); whether it mixes vocabularies or
+  granularities (abbreviations alongside full names); and whether a nominal
+  label (a target region, a behavioural state, a cell type) agrees with what
+  the data measures.
 - **Each column**: columns null for every row; dtypes widened from the source by
-  missing values (an integer count stored as float).
+  missing values (an integer count stored as float); identifier columns that
+  happen to be equal in this release.
 
-### Cross-tabulate the design before writing the caveats
+### Cross-tabulate the design before asking the user
 Cross-tabulate every session- and recording-level field — lab, rig, device model,
 year, pipeline, software version — against the design factors. Anything that
 co-varies with a factor is a confound and goes in `scientific-context.md`,
@@ -152,7 +165,8 @@ design facts collected above rather than asking. Three kinds of content:
   them**: the package ships the source release, not the paper's analysis set.
 - **What the user knows (optional).** The aim and hypotheses, the associated
   papers, and any confounds the rubric can't see (a rig change midway, a cohort
-  with surgery problems). Ask once. "Not stated" and "none known" are valid
+  with surgery problems). Ask in the same question as the confounds (route
+  step 3). "Not stated" and "none known" are valid
   answers. Never fill them in yourself.
 
 ## Hard rules
@@ -175,12 +189,15 @@ These hold whatever route you take.
      it over the original; later stages re-import it.
 3. **Write what the package needs in `ingestion/convert.py`; reuse the repo
    only where it fits.** Readers, loaders and table builders specific to this
-   dataset live in `convert.py`. Do not edit repo modules to make them fit, and
+   dataset live in `convert.py`. Assert there every assumption about the
+   source's layout, so a file that breaks one fails instead of converting
+   wrongly. Do not edit repo modules to make them fit, and
    leave BWM's untouched (rule 4). Two things are not optional: spikes go
    through `spikepack.write_blosc` only (read `references/spike-shards.md` before
    anything else if there are spikes), and any `trials` table follows the Trials
    checklist item. List each piece of code written for the package, with what
-   it does, in `ingestion/ingestion-log.md`.
+   it does, in `ingestion/ingestion-log.md`. Describe each check by what it
+   actually tests and what it leaves out, not by what it is for.
 4. **Leave existing packages and the repo's shipped datasets (BWM included)
    untouched**: their data, schemas, builders and analysis guidance.
 5. **Never overwrite or delete an existing package version** without asking. A
@@ -198,30 +215,39 @@ These hold whatever route you take.
 8. **Log everything.** Every question and its answer, every decision, and
    everything measured, inferred and skipped goes in
    `ingestion/ingestion-log.md`, tagged as such. Anything unresolved
-   also goes in `ingestion/open-questions.md`.
+   also goes in `ingestion/open-questions.md`. Log a fix only after re-reading
+   each file it claims to touch; grep the package for the old wording first.
 
 ## Suggested route
 1. Read the source and its documentation. Draft `README.md`, `experiment.md`
    and `modalities.md` from what the documentation states.
 2. Establish coverage: what the source release contains per modality, and the
    overlap with datasets already configured.
-3. Work through the checklist, ask the user about the gaps, and measure what
-   neither the user nor the documentation can state.
+3. Cross-tabulate the design from the source metadata. Group fields that
+   co-vary together into one confound, and in one question show the user every
+   confound with its table and ask why each happens, whether it matters for the
+   intended comparison, and what other confounds they know of. Write every
+   caveat whatever the answer, with the answer attributed to them. Then work
+   through the checklist, ask about the gaps, and measure what neither the user
+   nor the documentation can state.
 4. Measure, convert 2–3 sessions in the intended run mode, estimate, get
    approval.
 5. Write `schema.yaml`, the metadata tables and the stores. Reference in place
    whatever is not converted. Quote every YAML value containing prose: an
    unquoted comma or colon inside a flow mapping silently becomes extra keys.
-6. Run the signal and table checks, then cross-tabulate the design and write
+6. Run the signal and table checks, re-run the cross-tabulation on the built
+   tables (ask only about confounds not already raised), and write
    `scientific-context.md`.
-7. Write `provenance.yaml`, `SUMMARY.md` and the `ingestion/` files. Write
-   `manifest.json` **last**, after the final prose edit, excluding build
-   by-products such as caches and logs.
-8. Register the package, creating `data_locations.local.yaml` if it does not
+7. Write `provenance.yaml`, `SUMMARY.md` and the `ingestion/` files.
+8. Check every number in the prose against the tables with
+   `ingestion/check_package.py`. Compute bounds, maxima, ranges and counts over all files, never
+   a sample. Then write `manifest.json` **last**, after the final prose edit,
+   excluding build by-products such as caches and logs.
+9. Register the package, creating `data_locations.local.yaml` if it does not
    exist, and verify it by resolving its name the way an analysis would.
-9. Run the fresh-agent check, fix what it finds, then run it again with a new
-   agent. Repeat until a check finds nothing new. If a third check still finds
-   problems, stop and ask the user. Rewrite `manifest.json` after the last fix.
+10. Run the fresh-agent check, fix what it finds, then run it again with a new
+    agent. Repeat until a check finds nothing new. If a third check still finds
+    problems, stop and ask the user. Rewrite `manifest.json` after the last fix.
 
 ## The fresh-agent check
 Required: a build only verifies what you told it to, so the surviving errors are
@@ -237,7 +263,9 @@ Look for: prose that disagrees with the tables; counts that no longer match; a
 status line left stale; the dataset's main caveat missing from `README.md`; a
 store whose indexing convention is undocumented or differs from the convention a
 reader would assume from elsewhere in the repo; schema entries that parsed into a
-shape you did not intend.
+shape you did not intend; files in `manifest.json` that are not part of the
+package (caches, build by-products); log entries claiming a change that the
+files do not show.
 
 ## Quality gates
 - `README.md` alone lets a fresh agent judge whether the dataset is relevant.
@@ -245,7 +273,8 @@ shape you did not intend.
   last fresh-agent check, run after the final fix, found nothing new.
 - No blocking gap was closed by inference; every question, answer and
   measurement is in `ingestion/ingestion-log.md`.
-- Every number in the prose files traces to a computed value.
+- Every number in the prose files is checked by a script in `ingestion/` that
+  passes.
 - The full run was estimated from 2–3 sessions in the intended mode and approved
   before it started.
 - `scientific-context.md` has a caveat for every design fact that applies, names
@@ -254,8 +283,9 @@ shape you did not intend.
 - `provenance.yaml` records each modality's source release; `README.md` and
   `scientific-context.md` state the overlap with configured datasets.
 - `schema.yaml`: every table and store names a declared `time_base`, and every
-  column spec has exactly the keys `dtype`, `units` and `description`. Check the
-  keys of each spec, not only the column names.
+  column spec has the keys `dtype`, `units` and `description`, plus `nullable`
+  where the column may hold nulls, and no others. Check the keys of each spec,
+  not only the column names.
 - `ingestion/convert.py` reproduces the build, verified by decoded content, not
   file hashes; it takes its locations as arguments, and its code is listed in the
   log.

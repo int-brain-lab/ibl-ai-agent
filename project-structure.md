@@ -60,6 +60,8 @@ datasets:
 ├── <timeseries stores>/       # store, when present: continuous sampled signals
 └── ingestion/
     ├── convert.py             # the conversion script(s)
+    ├── check_package.py       # asserts every number in the prose against the tables
+    ├── source-inventory.csv   # every source file with its archive id and size, when there is one
     ├── ingestion-log.md       # what was done, what was inferred, what was asked
     └── open-questions.md      # unresolved items an analysis agent must know about
 ```
@@ -156,7 +158,7 @@ stores:
   spikes:
     kind: spike_shards
     path: spikes
-    shard_key: recording_id
+    shard_key: recording_id        # finest grain the data supports; see Stores
     container_format: blosc_file_shards
     shard_layout: <recording_id>/meta.json + <recording_id>/*.blosc
     arrays: [spike_times_delta_ticks, spike_clusters, cluster_ids, cluster_spike_counts]
@@ -215,6 +217,11 @@ All five are required to exist. **Required columns** are the table's key and the
 columns that link it to the others; everything else is declared when the dataset
 has it.
 
+When a link column (a unit's `recording_id`, an ROI's plane) cannot be known for
+some rows, leave it null, never drop the rows or guess. Declare it
+`nullable: true`, add a boolean `<column>_known` and a column listing the
+candidate values, and declare both in `schema.yaml`.
+
 | Table | Grain | Required columns | Typical columns, declared when present |
 | --- | --- | --- | --- |
 | `subjects` | one row per subject | `subject_id` | `line`, `genotype`, `sex`, `dob`, `cohort` |
@@ -223,7 +230,9 @@ has it.
 | `events` | one row per named instant | `session_id`, `event_id`, `event_name`, `event_time` (float64 s), nullable `trial_id`, nullable `event_value` | declared extra columns |
 | `epochs` | one row per labelled interval | `session_id`, `epoch_set`, `epoch_id`, `label`, `start_time`, `stop_time` | declared extra columns |
 
-`events` and `epochs` may be empty. These are column lists, not a column order;
+`events` and `epochs` may be empty. An empty table is written with its declared
+dtypes, and its `schema.yaml` entry carries `empty_reason`: whether the source had
+none, or they exist upstream but are not in the source. These are column lists, not a column order;
 where an emitted order matters it is fixed by the table's own contract, as
 `skills/data-ingest/references/ibl-trials.md` fixes it for the IBL task.
 
@@ -245,6 +254,13 @@ intervals within a namespace.
 - `channels` — electrode-based recordings only.
 - `trials` — trial-based experiments only.
 
+Any table is written only from what the source holds, directly or by a rule the
+documentation, the authors' code or the user fixes; record that rule in
+`provenance.yaml`. A table that would need tunable choices to build is analysis,
+not conversion. When an experiment has something the package cannot hold (a
+trial-based task with no trials), leave the table out and say so in
+`experiment.md`.
+
 ### `features/`
 Optional: a package may ship none. Where a dataset does want BWM-compatible
 analysis patterns to transfer, the recommended shape is BWM's `unit_features` /
@@ -261,6 +277,10 @@ analysis patterns to transfer, the recommended shape is BWM's `unit_features` /
 `spike_shards` holds discrete event times only. A deconvolved calcium trace is a
 value per frame and belongs in a `timeseries` store; thresholding it into event
 times is an analysis step, never a conversion step.
+
+A store's `shard_key` is the finest grain the data actually supports, usually
+`recording_id`. Where the source cannot attribute sources to a recording, use a
+coarser key such as `session_id`, and say why in `modalities.md`.
 
 `spikepack.write_blosc` and the shard format are fixed. `quantization_us` is not:
 it is the grid the times are snapped to, 100 is the writer's default, and the
@@ -292,6 +312,8 @@ upstream-derived fields, optional modalities.
 `a.u.` and `dimensionless` are valid units for quantities. Every column declares
 a `units` key; `units: null` is valid only for identifier,
 categorical, boolean and string columns (as for `session_id` above).
+A column that may hold nulls declares `nullable: true`; a column without it
+holds no nulls.
 
 ## Versioning
 
