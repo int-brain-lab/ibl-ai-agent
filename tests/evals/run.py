@@ -33,9 +33,11 @@ def main(argv: list[str] | None = None) -> int:
 
     from inspect_ai import eval as inspect_eval  # heavy import, not needed to load models
 
-    tasks = [f"{HERE.joinpath('tasks.py')}@{name}" for name in args.task or []]
+    task_file = "tests/evals/tasks.py"
+    tasks = [f"{task_file}@{name}" for name in args.task or []]
+
     logs = inspect_eval(
-        tasks or str(HERE.joinpath("tasks.py")),
+        tasks or task_file,
         model=load_models(args.models, args.models_file),
         log_dir=str(args.log_dir),
         max_connections=args.max_connections,
