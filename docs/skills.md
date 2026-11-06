@@ -19,6 +19,7 @@ scientist-facing workflow.
   patterns.
 - `skills/ibl-neuropixel/`: raw Neuropixels and SpikeGLX preprocessing guidance.
 - `skills/ibl-report/`: report-writing conventions.
+- `skills/ibl-submit/`: submitting a report, feedback, or chat history to the IBL AI Agent server.
 - `skills/skill-maintenance/`: maintenance workflow for skill files.
 
 Illustrative empirical-analysis flow (conditional routing and required reads are

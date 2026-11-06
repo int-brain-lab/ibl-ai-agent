@@ -56,7 +56,7 @@ IBL AI Agent is designed for interactive scientific work. Its design philosophy 
 - **Analysis plan locking:** once the user is satisfied with a statistical approach, a statistical test is locked for confirmatory analysis. To avoid p-hacking this can only be done once, so be sure you have chosen all details carefully, for example by running power analyses or testing the approach on the exploratory dataset.
 - **Confirmatory analysis:** the agent runs the locked analysis on held out data.
 - **Report writing:** the agent writes a report of the analysis using Quarto 
-- **Optional publication:** if the user desires, the report is uploaded to Github Pages. *The user is responsible for all published content, and must check carefully the report prior to upload to ensure no security-sensitive or inappropriate content is included*.
+- **Optional publication:** if the user desires, the report is uploaded to Github Pages, or submitted to the IBL maintainers with `/ibl-submit`. *The user is responsible for all published content, and must check carefully the report prior to upload to ensure no security-sensitive or inappropriate content is included*.
 
 See [docs/workflow.md](docs/workflow.md) for the detailed scientific workflow,
 project directory layout, and agent interaction pattern.
@@ -80,6 +80,12 @@ be published to your own repository, not the `ibl-ai-agent` repository.
 The default public report repository is  `https://<github_owner>.github.io/ibl-ai-agent-reports/<project_slug>/`. 
 
 **You are responsible** for checking that the report does not reveal identifying, sensitive, unpublished, or confidential information before making it public. To check, open the rendered HTML report in a browser, review the visible text, figures, captions, tables, links, hover text, and appendices, search for names, usernames, computer names, institutions, email addresses, local paths such as `C:\Users` or `/home`, passwords, tokens, subject identifiers, and unpublished or private data, and review the `files_to_publish` manifest printed by the publishing command.
+
+You can also type `/ibl-submit` to send the report, together with the session's chat and a
+message, to the IBL maintainers. The agent saves a local copy first and sends only after you
+confirm. Secrets are redacted from the chat; nothing else is. The report stays private until the
+maintainers review it and publish it on https://iblagent.iblcore.org. See
+`skills/ibl-submit/SKILL.md`.
 
 ## Example Reports
 
