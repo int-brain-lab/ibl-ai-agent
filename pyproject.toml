@@ -20,6 +20,7 @@ dependencies = [
   "matplotlib>=3.10.8",
   "zarr>=2.18",
   "brainwidemap",
+  "ibllib>=4.1.1",
   "boto3>=1.34",
 ]
 

@@ -38,6 +38,12 @@ See `CHANGELOG_DATA.md` for further details.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
 
+### Fixed
+- Require `ibllib>=4.1.1`. `ibl-neuropixel` 1.15.0 removed `ibldsp.utils.sync_timestamps`,
+  which older `ibllib` still imports, so `uv sync` (which picked `ibllib` 4.0.1) gave an
+  install where importing `brainwidemap` failed and the dataset tests could not run. `ibllib`
+  4.1.1 requires `pandas<3`, so pandas 2.x is now used on every Python version.
+
 ---
 
 ## [0.2.0] - 2026-06-08
