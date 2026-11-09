@@ -56,7 +56,8 @@ def test_stage_report_site_detects_risky_files_and_paths(tmp_path: Path) -> None
     report_dir = _write_report(tmp_path)
     (report_dir / "secrets.yaml").write_text("password: abcdefghijk", encoding="utf-8")
     (report_dir / "report.html").write_text(
-        r"<html><body>C:\Users\Kenneth\private\file.txt</body></html>",
+        r"<html><body>C:\Users\Kenneth\private\file.txt"
+        "<pre>-----BEGIN RSA PRIVATE KEY-----</pre></body></html>",
         encoding="utf-8",
     )
 
@@ -66,6 +67,7 @@ def test_stage_report_site_detects_risky_files_and_paths(tmp_path: Path) -> None
     assert staged.has_blockers
     assert "risky file type is not safe for public upload" in messages
     assert "absolute local path detected" in messages
+    assert "credential-like text detected" in messages
 
 
 def test_stage_report_site_skips_non_web_auxiliary_files(tmp_path: Path) -> None:

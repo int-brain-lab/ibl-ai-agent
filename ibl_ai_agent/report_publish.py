@@ -74,8 +74,15 @@ SECRET_PATTERNS = [
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
-    re.compile(r"(?i)(password|passwd|token|api[_-]?key|secret)\s*[:=]\s*['\"]?[^'\"\s<]{8,}"),
-    re.compile(r"-----BEGIN (?:OPENSSH|RSA|DSA|EC|PRIVATE) KEY-----"),
+    # Also quoted as JSON ("api_key": "...") or escaped JSON inside a string (\"api_key\": \"...\").
+    re.compile(r"(?i)(password|passwd|token|api[_-]?key|secret)\\?['\"]?\s*[:=]\s*\\?['\"]?[^'\"\s<]{8,}"),
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}"),
+    # The whole key; to the end of the text when the END line is cut off.
+    re.compile(
+        r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----"
+        r"(?:.*?-----END [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----|.*)",
+        re.S,
+    ),
 ]
 
 WINDOWS_PATH_RE = re.compile(r"[A-Za-z]:\\(?:Users|Neuropixels Dropbox|Documents and Settings)\\[^<>'\"\s]+")

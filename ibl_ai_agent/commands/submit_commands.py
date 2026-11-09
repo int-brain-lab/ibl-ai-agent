@@ -45,37 +45,54 @@ def register(app: typer.Typer) -> None:
             "--transcript/--no-transcript",
             help="--no-transcript sends the report without any chat (needs --report).",
         ),
+        saved: Path | None = typer.Option(
+            None,
+            exists=True,
+            dir_okay=False,
+            help="Send this saved copy (submissions/<id>.json) as it is; needs --yes.",
+        ),
     ) -> None:
         """Submit this session's chat (secrets redacted) plus a message and/or a report."""
-        if not message and report is None:
-            fail("Nothing to submit: pass --message, --report, or both.")
-        if not transcript and report is None:
-            fail("--no-transcript sends a report alone: pass --report too.")
-        typer.echo(PRIVACY_NOTICE)
-
-        metadata, bundle, warnings, saved = run_or_fail(
-            lambda: collect_submission(
-                message, report_path=report, transcript_file=transcript_file, transcript=transcript
-            ),
-            error_type=IblAgentError,
-        )
-        if metadata["host"]:
-            typer.echo(f"host={metadata['host']}")
-            typer.echo(f"session_id={metadata['session_id']}")
-            typer.echo(f"messages={len(metadata['transcript'])}")
+        if saved is not None:
+            # Send the files the user checked, with the report zip saved next to the JSON.
+            if not send or message or report or transcript_file or not transcript:
+                fail("--saved sends a saved copy as it is: pass only --saved and --yes.")
+            metadata = json.loads(saved.read_text(encoding="utf-8"))
+            bundle_file = saved.with_suffix(".zip")
+            bundle = bundle_file.read_bytes() if bundle_file.is_file() else None
         else:
-            typer.echo("transcript=none (--no-transcript)")
-        typer.echo(f"secrets_redacted={metadata['redaction']['counts']['secrets']}")
-        if bundle is not None:
-            typer.echo(f"report_title={metadata['title']}")
-        for warning in warnings:
-            typer.echo(f"warning: {warning}")
-        typer.echo(f"saved_local_copy={saved}")
+            if not message and report is None:
+                fail("Nothing to submit: pass --message, --report, or both.")
+            if not transcript and report is None:
+                fail("--no-transcript sends a report alone: pass --report too.")
+            typer.echo(PRIVACY_NOTICE)
 
-        # Only --yes sends; the agent asks the user in the chat before passing it.
-        if not send:
-            typer.echo("mode=local_only (pass --yes to send)")
-            return
+            metadata, bundle, warnings, saved = run_or_fail(
+                lambda: collect_submission(
+                    message,
+                    report_path=report,
+                    transcript_file=transcript_file,
+                    transcript=transcript,
+                ),
+                error_type=IblAgentError,
+            )
+            if metadata["host"]:
+                typer.echo(f"host={metadata['host']}")
+                typer.echo(f"session_id={metadata['session_id']}")
+                typer.echo(f"messages={len(metadata['transcript'])}")
+            else:
+                typer.echo("transcript=none (--no-transcript)")
+            typer.echo(f"secrets_redacted={metadata['redaction']['counts']['secrets']}")
+            if bundle is not None:
+                typer.echo(f"report_title={metadata['title']}")
+            for warning in warnings:
+                typer.echo(f"warning: {warning}")
+            typer.echo(f"saved_local_copy={saved}")
+
+            # Only --yes sends; the agent asks the user in the chat before passing it.
+            if not send:
+                typer.echo("mode=local_only (pass --yes to send)")
+                return
         try:
             response = post_submission(metadata, bundle)
         except IblAgentError as exc:

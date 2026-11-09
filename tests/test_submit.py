@@ -42,6 +42,8 @@ def fake_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     for variable in (
         "CLAUDE_CODE_SESSION_ID",
         "CODEX_SESSION_ID",
+        "CLAUDE_CONFIG_DIR",
+        "CODEX_HOME",
         "IBL_AGENT_SUBMIT_URL",
         "IBL_AGENT_SUBMIT_TOKEN",
     ):
@@ -112,6 +114,30 @@ def test_locate_transcript_by_session_id(
 
 
 @pytest.mark.parametrize(
+    ("host", "variable", "session_id", "folder_variable", "pattern"),
+    [
+        ("claude-code", "CLAUDE_CODE_SESSION_ID", CLAUDE_ID, "CLAUDE_CONFIG_DIR", "projects/-Users-me-proj/{}.jsonl"),
+        ("codex", "CODEX_SESSION_ID", CODEX_ID, "CODEX_HOME", "sessions/2026/11/07/rollout-x-{}.jsonl"),
+    ],
+)  # fmt: skip
+def test_locate_transcript_in_a_custom_agent_folder(
+    host: str,
+    variable: str,
+    session_id: str,
+    folder_variable: str,
+    pattern: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log = tmp_path / "custom" / pattern.format(session_id)
+    _write_jsonl(log, [{}])
+    monkeypatch.setenv(folder_variable, str(tmp_path / "custom"))
+    monkeypatch.setenv(variable, session_id)
+
+    assert locate_transcript() == (host, log, session_id)
+
+
+@pytest.mark.parametrize(
     ("host", "records", "session_id"),
     [
         # Claude Code: the first records may lack sessionId (e.g. a summary).
@@ -163,9 +189,19 @@ def test_locate_transcript_errors(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
                     {"type": "text", "text": "hi"},
                     {"type": "tool_use", "name": "Bash", "input": {"command": "ls"}},
                 ]}},
+                # A message the user typed while the agent was busy; task notifications are skipped.
+                {"type": "attachment", "attachment": {"type": "queued_command",
+                                                      "commandMode": "prompt", "prompt": "and x"}},
+                {"type": "attachment", "attachment": {"type": "queued_command",
+                                                      "commandMode": "task-notification",
+                                                      "prompt": "<task-notification>"}},
                 {"type": "summary", "summary": "skip me"},
             ],
-            ["hello", '[thinking] list the files first\nhi\n[tool call: Bash] {"command": "ls"}'],
+            [
+                "hello",
+                '[thinking] list the files first\nhi\n[tool call: Bash] {"command": "ls"}',
+                "and x",
+            ],
         ),
         (
             "codex",
@@ -179,13 +215,50 @@ def test_locate_transcript_errors(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
                 {"payload": {"type": "reasoning", "summary": [], "encrypted_content": "x"}},
                 {"payload": {"type": "function_call", "name": "shell", "arguments": "{}"}},
                 {"payload": {"type": "function_call_output", "output": "file1"}},
+                {"payload": {"type": "custom_tool_call", "name": "exec", "input": "ls"}},
+                {"payload": {"type": "custom_tool_call_output",
+                             "output": [{"type": "input_text", "text": "file2"}]}},
+                # Messages between the main agent and its subagents; encrypted ones are skipped.
+                {"payload": {"type": "agent_message", "author": "/root", "recipient": "/root/a",
+                             "content": [{"type": "input_text", "text": "check it"}]}},
+                {"payload": {"type": "agent_message", "author": "/root/a", "recipient": "/root",
+                             "content": [{"type": "encrypted_content", "text": "",
+                                          "encrypted_content": "x"}]}},
             ],
-            ["hello", "[thinking] Checking files", "[tool call: shell] {}", "file1"],
+            [
+                "hello",
+                "[thinking] Checking files",
+                "[tool call: shell] {}",
+                "file1",
+                "[tool call: exec] ls",
+                "file2",
+                "[agent message /root -> /root/a] check it",
+            ],
         ),
     ],
 )  # fmt: skip
 def test_normalize_records(host: str, records: list[dict], texts: list[str]) -> None:
     assert [message["text"] for message in normalize_records(records, host)] == texts
+
+
+@pytest.mark.parametrize(
+    ("text", "secret"),
+    [
+        ('{"api_key": "abcd1234efgh5678"}', "abcd1234efgh5678"),
+        # JSON inside a tool call's arguments has its quotes escaped.
+        (json.dumps({"command": "curl -d '{\"password\": \"hunter2hunter2\"}'"}), "hunter2hunter2"),
+        ("curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.abcdefgh'", "eyJhbGciOiJIUzI1NiJ9"),
+        ("-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq\n-----END PRIVATE KEY-----", "MIIEvQIBADANBgkq"),
+        ("-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----", "MIIEowIBAAKCAQEA"),
+        ("-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXkt\n-----END OPENSSH PRIVATE KEY-----", "b3BlbnNzaC1rZXkt"),
+        ("cat key.pem\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq", "MIIEvQIBADANBgkq"),  # cut off
+    ],
+)  # fmt: skip
+def test_redact_removes_whole_secrets(text: str, secret: str) -> None:
+    redacted, count = submit._redact(text)
+
+    assert secret not in redacted and "PRIVATE KEY" not in redacted
+    assert count == 1
 
 
 def test_collect_submission_redacts_only_secrets_and_saves(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -389,6 +462,25 @@ def test_submit_cli_sends_with_yes(
     assert set(call["files"]) == ({"metadata", "bundle"} if with_report else {"metadata"})
 
 
+def test_submit_cli_sends_a_saved_copy_as_it_is(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # --saved sends the files the user checked; nothing is rebuilt or saved again.
+    sent = _capture_post(monkeypatch)
+    _codex_session(monkeypatch)
+    _run_cli("-m", "hi", "--report", str(_make_project(tmp_path)), "--no-send")
+    (saved_json,) = _saved(tmp_path)
+
+    result = _run_cli("--saved", str(saved_json), "--yes")
+
+    assert result.exit_code == 0, result.output
+    assert "mode=sent" in result.output
+    (call,) = sent
+    assert json.loads(call["files"]["metadata"][1]) == json.loads(saved_json.read_text("utf-8"))
+    assert call["files"]["bundle"][1] == saved_json.with_suffix(".zip").read_bytes()
+    assert _saved(tmp_path) == [saved_json]
+
+
 def _connection_refused(url, **kwargs):
     raise requests.ConnectionError("connection refused")
 
@@ -419,12 +511,18 @@ def test_submit_cli_reports_server_errors_and_keeps_the_local_copy(
 
 @pytest.mark.parametrize(
     ("args", "expected"),
-    [(["--no-send"], "Nothing to submit"), (["-m", "hello", "--no-transcript"], "--no-transcript")],
+    [
+        (["--no-send"], "Nothing to submit"),
+        (["-m", "hello", "--no-transcript"], "--no-transcript"),
+        (["--saved", "saved.json"], "only --saved and --yes"),
+        (["--saved", "saved.json", "--yes", "-m", "hello"], "only --saved and --yes"),
+    ],
 )
 def test_submit_cli_rejects_incomplete_arguments(
     args: list[str], expected: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _codex_session(monkeypatch)
+    Path("saved.json").write_text("{}", encoding="utf-8")  # the tests run in tmp_path
 
     result = _run_cli(*args)
 

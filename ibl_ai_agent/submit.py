@@ -62,7 +62,9 @@ def locate_transcript(transcript_file: Path | None = None) -> tuple[str, Path, s
 
     A given file can come from anywhere: a Codex log starts with a ``session_meta`` record,
     Claude Code records carry ``sessionId``. The running session's log is named after the id
-    its agent puts in the environment (``CODEX_SESSION_ID``, ``CLAUDE_CODE_SESSION_ID``).
+    its agent puts in the environment (``CODEX_SESSION_ID``, ``CLAUDE_CODE_SESSION_ID``) and
+    lives in the agent's folder (``CODEX_HOME``, ``CLAUDE_CONFIG_DIR``; ``~/.codex``,
+    ``~/.claude`` by default).
     """
     if transcript_file is not None:
         for record in read_jsonl(transcript_file):
@@ -77,12 +79,14 @@ def locate_transcript(transcript_file: Path | None = None) -> tuple[str, Path, s
                 return "claude-code", transcript_file, str(record["sessionId"])
         raise SubmitError(f"{transcript_file} is not a Claude Code or Codex transcript.")
 
-    for host, variable, pattern in (
-        ("codex", "CODEX_SESSION_ID", ".codex/sessions/**/rollout-*-{}.jsonl"),
-        ("claude-code", "CLAUDE_CODE_SESSION_ID", ".claude/projects/*/{}.jsonl"),
+    codex_home = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+    claude_home = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
+    for host, variable, folder, pattern in (
+        ("codex", "CODEX_SESSION_ID", codex_home, "sessions/**/rollout-*-{}.jsonl"),
+        ("claude-code", "CLAUDE_CODE_SESSION_ID", claude_home, "projects/*/{}.jsonl"),
     ):
         session_id = os.environ.get(variable)
-        path = next(Path.home().glob(pattern.format(session_id)), None) if session_id else None
+        path = next(folder.glob(pattern.format(session_id)), None) if session_id else None
         if path is not None:
             return host, path, session_id
     raise SubmitError(
@@ -133,6 +137,11 @@ def _text(content: Any) -> str:
 def _message(record: dict[str, Any], host: str) -> dict[str, str] | None:
     """Turn one log record into ``{role, text, kind}``, or None for records that are not chat."""
     if host == "claude-code":
+        queued = record.get("attachment") or {}
+        # A message the user typed while the agent was busy. Task notifications have another
+        # commandMode; messages from other sessions are marked isMeta.
+        if queued.get("commandMode") == "prompt" and not queued.get("isMeta"):
+            return {"role": "user", "text": _text(queued.get("prompt")), "kind": "message"}
         message = record.get("message")
         if not isinstance(message, dict):
             return None
@@ -147,11 +156,20 @@ def _message(record: dict[str, Any], host: str) -> dict[str, str] | None:
             "text": _text(payload.get("content")),
             "kind": "message",
         }
-    if kind == "function_call":
-        text = f"[tool call: {payload.get('name', '?')}] {payload.get('arguments', '')}"
+    if kind in ("function_call", "custom_tool_call"):
+        # Custom tools (such as exec) pass their input as one string instead of arguments.
+        arguments = payload.get("arguments", payload.get("input", ""))
+        text = f"[tool call: {payload.get('name', '?')}] {arguments}"
         return {"role": "assistant", "text": text, "kind": "tool"}
-    if kind == "function_call_output":
+    if kind in ("function_call_output", "custom_tool_call_output"):
         return {"role": "tool", "text": _text(payload.get("output")), "kind": "tool"}
+    if kind == "agent_message":
+        # Between the main agent and a subagent; encrypted ones have no readable text.
+        text = _text(payload.get("content"))
+        header = f"[agent message {payload.get('author')} -> {payload.get('recipient')}]"
+        return (
+            {"role": "assistant", "text": f"{header} {text}", "kind": "message"} if text else None
+        )
     if kind == "reasoning":
         # Codex encrypts its reasoning; only the summary, when there is one, is readable.
         summary = _text(payload.get("summary"))
@@ -160,7 +178,7 @@ def _message(record: dict[str, Any], host: str) -> dict[str, str] | None:
             if summary
             else None
         )
-    return None  # session_meta, event_msg, turn_context
+    return None  # session_meta, event_msg, turn_context and other bookkeeping
 
 
 def normalize_records(records: list[dict[str, Any]], host: str) -> list[dict[str, str]]:

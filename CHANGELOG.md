@@ -24,10 +24,12 @@ See `CHANGELOG_DATA.md` for further details.
 - Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
 - `/ibl-submit` skill and `ibl-ai-agent submit` command: send this session's chat, a message
   and, optionally, the project's rendered report to the IBL AI Agent server for the IBL
-  maintainers. The chat is found from the session id Claude Code or Codex sets
-  (`--transcript-file` sends another log, `--no-transcript` sends a report alone), cleaned up
-  and redacted of secrets. A report gets the same checks as GitHub Pages publishing, plus its
-  `report.qmd`. Every run saves a local copy in `submissions/`; only `--yes` sends. Reports stay
+  maintainers. The chat is found from the session id Claude Code or Codex sets, in
+  `CLAUDE_CONFIG_DIR` / `CODEX_HOME` when set (`--transcript-file` sends another log,
+  `--no-transcript` sends a report alone), cleaned up and redacted of secrets. A report gets
+  the same checks as GitHub Pages publishing, plus its `report.qmd`. Every run saves a local
+  copy in `submissions/`; only `--yes` sends, and `--saved <copy> --yes` sends a saved copy
+  unchanged. Reports stay
   private until the maintainers publish them on https://iblagent.iblcore.org. The `ibl-report`
   skill now offers `/ibl-submit` next to GitHub Pages. New dependency: `requests`.
 
@@ -45,6 +47,9 @@ See `CHANGELOG_DATA.md` for further details.
   remote absence separately from query or download failures.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
+- The secret check shared by GitHub Pages publishing and `/ibl-submit` now also finds quoted
+  (JSON) credentials, bearer tokens and every private-key type, and redaction removes the
+  whole key.
 
 ### Fixed
 - Require `ibllib>=4.1.1`. `ibl-neuropixel` 1.15.0 removed `ibldsp.utils.sync_timestamps`,

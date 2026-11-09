@@ -35,10 +35,13 @@ requests). Those are not this skill.
 3. **Show the user the result.** Report the saved path, the message count, `secrets_redacted`, and
    any `warning:` lines. Remind them they can open the saved files to see exactly what will be sent.
 4. **Confirm, then send.** When a report is included, tell the user it may be published on
-   https://iblagent.iblcore.org after review. Only after the user agrees, run the same command with
-   `--yes` in place of `--no-send`. It re-reads the live transcript so the latest exchange is
-   included. Report the server response, and the `report_url` if the report was published straight
-   away.
+   https://iblagent.iblcore.org after review. Only after the user agrees, send the saved copy:
+   ```bash
+   UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent submit --saved submissions/<id>.json --yes
+   ```
+   This sends the saved files exactly as they are, including any edits the user made, so the chat
+   after step 2 is not included; to include it, repeat step 2 first. Report the server response,
+   and the `report_url` if the report was published straight away.
 
 ## Rules
 
@@ -51,4 +54,5 @@ requests). Those are not this skill.
   token, so sending works with no setup. The environment variables `IBL_AGENT_SUBMIT_URL` /
   `IBL_AGENT_SUBMIT_TOKEN` override them.
 - **The transcript is found automatically** from the session id that Claude Code or Codex sets in
-  the environment. To send a different session's log, pass `--transcript-file <path>`.
+  the environment, in the agent's folder (`CLAUDE_CONFIG_DIR` / `CODEX_HOME` when set, otherwise
+  `~/.claude` / `~/.codex`). To send a different session's log, pass `--transcript-file <path>`.
