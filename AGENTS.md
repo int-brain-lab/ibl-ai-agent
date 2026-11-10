@@ -49,6 +49,9 @@ Only mention reading a skill or reference file when it materially changes what t
 
 ## Required Load Packets
 
+Data capability or availability question:
+- `skills/ibl-load/SKILL.md` for metadata-driven discovery and a prompt user-facing explanation
+
 Empirical IBL analysis project:
 - `skills/exploration-confirmation/SKILL.md`
 - `skills/ibl-analyze/SKILL.md`

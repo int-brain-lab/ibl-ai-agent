@@ -1,0 +1,1680 @@
+{
+  "date": "2026-10-15",
+  "scope": "Local metadata and installed sources; no remote queries or signal analyses.",
+  "packages": {
+    "ibllib": "4.0.1",
+    "ONE-api": "3.4.1",
+    "brainwidemap": "0.1.0"
+  },
+  "datasets": {
+    "bwm_behavior": {
+      "path": "reports/datasets/bwm_behavior/2.0.0",
+      "version": "2.0.0",
+      "tables": {
+        "sessions": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/metadata/sessions.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "subject",
+              "dtype": "large_string"
+            },
+            {
+              "name": "date",
+              "dtype": "large_string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "large_string"
+            },
+            {
+              "name": "n_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_included_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "wheel_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "pose_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "present_cameras",
+              "dtype": "list<element: string>"
+            }
+          ]
+        },
+        "trials": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/metadata/trials.parquet",
+          "rows": 295920,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "large_string"
+            },
+            {
+              "name": "date",
+              "dtype": "large_string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "large_string"
+            },
+            {
+              "name": "choice",
+              "dtype": "double"
+            },
+            {
+              "name": "feedbackType",
+              "dtype": "double"
+            },
+            {
+              "name": "probabilityLeft",
+              "dtype": "double"
+            },
+            {
+              "name": "contrastLeft",
+              "dtype": "double"
+            },
+            {
+              "name": "contrastRight",
+              "dtype": "double"
+            },
+            {
+              "name": "intervals_0",
+              "dtype": "double"
+            },
+            {
+              "name": "stimOn_times",
+              "dtype": "double"
+            },
+            {
+              "name": "goCue_times",
+              "dtype": "double"
+            },
+            {
+              "name": "firstMovement_times",
+              "dtype": "double"
+            },
+            {
+              "name": "response_times",
+              "dtype": "double"
+            },
+            {
+              "name": "feedback_times",
+              "dtype": "double"
+            },
+            {
+              "name": "intervals_1",
+              "dtype": "double"
+            },
+            {
+              "name": "bwm_include",
+              "dtype": "bool"
+            },
+            {
+              "name": "goCueTrigger_times",
+              "dtype": "double"
+            },
+            {
+              "name": "stimOff_times",
+              "dtype": "double"
+            },
+            {
+              "name": "rewardVolume",
+              "dtype": "double"
+            }
+          ]
+        },
+        "events": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/metadata/events.parquet",
+          "rows": 2066041,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "event_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "large_string"
+            },
+            {
+              "name": "date",
+              "dtype": "large_string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "large_string"
+            },
+            {
+              "name": "event_name",
+              "dtype": "large_string"
+            },
+            {
+              "name": "event_time",
+              "dtype": "float"
+            }
+          ]
+        },
+        "wheel_availability": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/metadata/wheel_availability.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "n_samples",
+              "dtype": "int32"
+            },
+            {
+              "name": "t_end",
+              "dtype": "float"
+            },
+            {
+              "name": "t_start",
+              "dtype": "float"
+            },
+            {
+              "name": "wheel_present",
+              "dtype": "bool"
+            }
+          ]
+        },
+        "pose_availability": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/metadata/pose_availability.parquet",
+          "rows": 1144,
+          "columns": [
+            {
+              "name": "camera",
+              "dtype": "large_string"
+            },
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "n_frames",
+              "dtype": "int32"
+            },
+            {
+              "name": "pose_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "t_end",
+              "dtype": "float"
+            },
+            {
+              "name": "t_start",
+              "dtype": "float"
+            },
+            {
+              "name": "tracker",
+              "dtype": "string"
+            }
+          ]
+        },
+        "trial_behavior_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/trial_behavior_features.parquet",
+          "rows": 295920,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "signed_contrast",
+              "dtype": "float"
+            },
+            {
+              "name": "choice_label",
+              "dtype": "large_string"
+            },
+            {
+              "name": "correct",
+              "dtype": "bool"
+            },
+            {
+              "name": "reaction_time",
+              "dtype": "float"
+            },
+            {
+              "name": "movement_time",
+              "dtype": "float"
+            },
+            {
+              "name": "stim_to_feedback_time",
+              "dtype": "float"
+            }
+          ]
+        },
+        "wheel_trial_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/wheel_trial_features.parquet",
+          "rows": 295920,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "max_velocity",
+              "dtype": "float"
+            },
+            {
+              "name": "mean_velocity",
+              "dtype": "float"
+            },
+            {
+              "name": "movement_amplitude",
+              "dtype": "float"
+            },
+            {
+              "name": "movement_direction",
+              "dtype": "large_string"
+            },
+            {
+              "name": "movement_onset_time",
+              "dtype": "float"
+            },
+            {
+              "name": "movement_peak_time",
+              "dtype": "float"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "wheel_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "window_spec",
+              "dtype": "large_string"
+            }
+          ]
+        },
+        "pose_trial_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/pose_trial_features.parquet",
+          "rows": 720007,
+          "columns": [
+            {
+              "name": "camera",
+              "dtype": "large_string"
+            },
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "feature_mean",
+              "dtype": "float"
+            },
+            {
+              "name": "feature_peak",
+              "dtype": "float"
+            },
+            {
+              "name": "pose_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "window_spec",
+              "dtype": "large_string"
+            }
+          ]
+        },
+        "event_aligned_behavior_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/event_aligned_behavior_features.parquet",
+          "rows": 5062275,
+          "columns": [
+            {
+              "name": "baseline",
+              "dtype": "float"
+            },
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "event_name",
+              "dtype": "large_string"
+            },
+            {
+              "name": "mean_response",
+              "dtype": "float"
+            },
+            {
+              "name": "modulation_index",
+              "dtype": "float"
+            },
+            {
+              "name": "peak",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_latency_ms",
+              "dtype": "float"
+            },
+            {
+              "name": "signal_name",
+              "dtype": "large_string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "window_spec",
+              "dtype": "large_string"
+            }
+          ]
+        },
+        "behavior_session_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/behavior_session_features.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "n_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_included_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "performance",
+              "dtype": "float"
+            },
+            {
+              "name": "median_reaction_time",
+              "dtype": "float"
+            },
+            {
+              "name": "median_movement_time",
+              "dtype": "float"
+            },
+            {
+              "name": "wheel_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "pose_present",
+              "dtype": "bool"
+            }
+          ]
+        },
+        "movement_state_epochs": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/movement_state_epochs.parquet",
+          "rows": 673459,
+          "columns": [
+            {
+              "name": "detector_name",
+              "dtype": "large_string"
+            },
+            {
+              "name": "detector_version",
+              "dtype": "large_string"
+            },
+            {
+              "name": "duration_s",
+              "dtype": "float"
+            },
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "movement_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "peak_amplitude",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_velocity_time",
+              "dtype": "float"
+            },
+            {
+              "name": "source_signal",
+              "dtype": "large_string"
+            },
+            {
+              "name": "t_end",
+              "dtype": "float"
+            },
+            {
+              "name": "t_start",
+              "dtype": "float"
+            }
+          ]
+        },
+        "quiescence_state_epochs": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/quiescence_state_epochs.parquet",
+          "rows": 665722,
+          "columns": [
+            {
+              "name": "derived_from",
+              "dtype": "large_string"
+            },
+            {
+              "name": "duration_s",
+              "dtype": "float"
+            },
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "min_duration_s",
+              "dtype": "float"
+            },
+            {
+              "name": "quiescence_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "t_end",
+              "dtype": "float"
+            },
+            {
+              "name": "t_start",
+              "dtype": "float"
+            }
+          ]
+        },
+        "behavior_state_session_features": {
+          "path": "reports/datasets/bwm_behavior/2.0.0/features/behavior_state_session_features.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "large_string"
+            },
+            {
+              "name": "fraction_time_moving",
+              "dtype": "float"
+            },
+            {
+              "name": "fraction_time_quiescent",
+              "dtype": "float"
+            },
+            {
+              "name": "median_movement_duration",
+              "dtype": "float"
+            },
+            {
+              "name": "median_quiescence_duration",
+              "dtype": "float"
+            },
+            {
+              "name": "movement_epoch_count",
+              "dtype": "int32"
+            },
+            {
+              "name": "quiescence_epoch_count",
+              "dtype": "int32"
+            },
+            {
+              "name": "wheel_present",
+              "dtype": "bool"
+            }
+          ]
+        }
+      }
+    },
+    "bwm_ephys": {
+      "path": "reports/datasets/bwm_ephys/1.2.0",
+      "version": "1.2.0",
+      "tables": {
+        "sessions": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/sessions.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "n_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_included_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_insertions",
+              "dtype": "int16"
+            },
+            {
+              "name": "n_good_units",
+              "dtype": "int32"
+            }
+          ]
+        },
+        "insertions": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/insertions.parquet",
+          "rows": 699,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "probe_name",
+              "dtype": "string"
+            },
+            {
+              "name": "n_good_units",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_included_trials",
+              "dtype": "int32"
+            },
+            {
+              "name": "n_channels",
+              "dtype": "int32"
+            }
+          ]
+        },
+        "units": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/units.parquet",
+          "rows": 75395,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "cluster_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "channels",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "probe_name",
+              "dtype": "string"
+            },
+            {
+              "name": "label",
+              "dtype": "float"
+            },
+            {
+              "name": "atlas_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "acronym",
+              "dtype": "string"
+            },
+            {
+              "name": "beryl_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "beryl_acronym",
+              "dtype": "string"
+            },
+            {
+              "name": "x",
+              "dtype": "float"
+            },
+            {
+              "name": "y",
+              "dtype": "float"
+            },
+            {
+              "name": "z",
+              "dtype": "float"
+            },
+            {
+              "name": "axial_um",
+              "dtype": "float"
+            },
+            {
+              "name": "lateral_um",
+              "dtype": "float"
+            },
+            {
+              "name": "depths",
+              "dtype": "float"
+            },
+            {
+              "name": "spike_count",
+              "dtype": "int32"
+            },
+            {
+              "name": "firing_rate",
+              "dtype": "float"
+            }
+          ]
+        },
+        "channels": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/channels.parquet",
+          "rows": 267264,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "channel_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "probe_name",
+              "dtype": "string"
+            },
+            {
+              "name": "rawInd",
+              "dtype": "int32"
+            },
+            {
+              "name": "labels",
+              "dtype": "int16"
+            },
+            {
+              "name": "brainLocationIds_ccf_2017",
+              "dtype": "int32"
+            },
+            {
+              "name": "acronym",
+              "dtype": "string"
+            },
+            {
+              "name": "beryl_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "beryl_acronym",
+              "dtype": "string"
+            },
+            {
+              "name": "localCoordinates_x",
+              "dtype": "float"
+            },
+            {
+              "name": "localCoordinates_y",
+              "dtype": "float"
+            },
+            {
+              "name": "mlapdv_x",
+              "dtype": "float"
+            },
+            {
+              "name": "mlapdv_y",
+              "dtype": "float"
+            },
+            {
+              "name": "mlapdv_z",
+              "dtype": "float"
+            }
+          ]
+        },
+        "trials": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/trials.parquet",
+          "rows": 295920,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "choice",
+              "dtype": "double"
+            },
+            {
+              "name": "feedbackType",
+              "dtype": "double"
+            },
+            {
+              "name": "probabilityLeft",
+              "dtype": "double"
+            },
+            {
+              "name": "contrastLeft",
+              "dtype": "double"
+            },
+            {
+              "name": "contrastRight",
+              "dtype": "double"
+            },
+            {
+              "name": "intervals_0",
+              "dtype": "double"
+            },
+            {
+              "name": "stimOn_times",
+              "dtype": "double"
+            },
+            {
+              "name": "goCue_times",
+              "dtype": "double"
+            },
+            {
+              "name": "firstMovement_times",
+              "dtype": "double"
+            },
+            {
+              "name": "response_times",
+              "dtype": "double"
+            },
+            {
+              "name": "feedback_times",
+              "dtype": "double"
+            },
+            {
+              "name": "intervals_1",
+              "dtype": "double"
+            },
+            {
+              "name": "bwm_include",
+              "dtype": "bool"
+            },
+            {
+              "name": "goCueTrigger_times",
+              "dtype": "double"
+            },
+            {
+              "name": "stimOff_times",
+              "dtype": "double"
+            },
+            {
+              "name": "rewardVolume",
+              "dtype": "double"
+            }
+          ]
+        },
+        "events": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/events.parquet",
+          "rows": 2066041,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "trial_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "event_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "subject",
+              "dtype": "string"
+            },
+            {
+              "name": "date",
+              "dtype": "string"
+            },
+            {
+              "name": "session_number",
+              "dtype": "int16"
+            },
+            {
+              "name": "lab",
+              "dtype": "string"
+            },
+            {
+              "name": "event_name",
+              "dtype": "string"
+            },
+            {
+              "name": "event_time",
+              "dtype": "float"
+            }
+          ]
+        },
+        "unit_features": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/features/unit_features.parquet",
+          "rows": 75395,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "cluster_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "amp_max",
+              "dtype": "double"
+            },
+            {
+              "name": "amp_median",
+              "dtype": "double"
+            },
+            {
+              "name": "contamination",
+              "dtype": "double"
+            },
+            {
+              "name": "drift",
+              "dtype": "double"
+            },
+            {
+              "name": "firing_rate",
+              "dtype": "double"
+            },
+            {
+              "name": "missed_spikes_est",
+              "dtype": "double"
+            },
+            {
+              "name": "noise_cutoff",
+              "dtype": "double"
+            },
+            {
+              "name": "presence_ratio",
+              "dtype": "double"
+            },
+            {
+              "name": "slidingRP_viol",
+              "dtype": "double"
+            },
+            {
+              "name": "spike_count",
+              "dtype": "double"
+            },
+            {
+              "name": "spike_width_ms",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_to_trough_ms",
+              "dtype": "float"
+            },
+            {
+              "name": "waveform_amplitude_uv",
+              "dtype": "float"
+            },
+            {
+              "name": "pt_ratio",
+              "dtype": "float"
+            }
+          ]
+        },
+        "event_response_features": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/features/event_response_features.parquet",
+          "rows": 376975,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "cluster_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "event_name",
+              "dtype": "string"
+            },
+            {
+              "name": "window_spec",
+              "dtype": "string"
+            },
+            {
+              "name": "n_events",
+              "dtype": "int32"
+            },
+            {
+              "name": "baseline_fr",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_fr",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_latency_ms",
+              "dtype": "float"
+            },
+            {
+              "name": "modulation_index",
+              "dtype": "float"
+            }
+          ]
+        },
+        "passive_sessions": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/passive_sessions.parquet",
+          "rows": 459,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "session_dir",
+              "dtype": "string"
+            },
+            {
+              "name": "alf_dir",
+              "dtype": "string"
+            },
+            {
+              "name": "raw_passive_data_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "passive_periods_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "passive_rfm_times_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "passive_gabor_table_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "passive_stims_table_present",
+              "dtype": "bool"
+            },
+            {
+              "name": "n_passive_files",
+              "dtype": "int16"
+            }
+          ]
+        },
+        "passive_events": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/metadata/passive_events.parquet",
+          "rows": 6959652,
+          "columns": [
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "passive_event_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "passive_event_name",
+              "dtype": "string"
+            },
+            {
+              "name": "event_time",
+              "dtype": "float"
+            },
+            {
+              "name": "event_end_time",
+              "dtype": "float"
+            },
+            {
+              "name": "event_source",
+              "dtype": "string"
+            },
+            {
+              "name": "stimulus_type",
+              "dtype": "string"
+            },
+            {
+              "name": "position",
+              "dtype": "float"
+            },
+            {
+              "name": "contrast",
+              "dtype": "float"
+            },
+            {
+              "name": "phase",
+              "dtype": "float"
+            }
+          ]
+        },
+        "passive_response_features": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/features/passive_response_features.parquet",
+          "rows": 577566,
+          "columns": [
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "cluster_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "passive_event_name",
+              "dtype": "string"
+            },
+            {
+              "name": "window_spec",
+              "dtype": "string"
+            },
+            {
+              "name": "n_events",
+              "dtype": "int32"
+            },
+            {
+              "name": "baseline_fr",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_fr",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_latency_ms",
+              "dtype": "float"
+            },
+            {
+              "name": "modulation_index",
+              "dtype": "float"
+            }
+          ]
+        },
+        "clusters": {
+          "path": "reports/datasets/bwm_ephys/1.2.0/clusters.pqt",
+          "rows": 621733,
+          "columns": [
+            {
+              "name": "channels",
+              "dtype": "int16"
+            },
+            {
+              "name": "depths",
+              "dtype": "float"
+            },
+            {
+              "name": "uuids",
+              "dtype": "string"
+            },
+            {
+              "name": "cluster_id",
+              "dtype": "int16"
+            },
+            {
+              "name": "amp_max",
+              "dtype": "float"
+            },
+            {
+              "name": "amp_min",
+              "dtype": "float"
+            },
+            {
+              "name": "amp_median",
+              "dtype": "float"
+            },
+            {
+              "name": "amp_std_dB",
+              "dtype": "float"
+            },
+            {
+              "name": "contamination",
+              "dtype": "float"
+            },
+            {
+              "name": "contamination_alt",
+              "dtype": "float"
+            },
+            {
+              "name": "drift",
+              "dtype": "float"
+            },
+            {
+              "name": "missed_spikes_est",
+              "dtype": "float"
+            },
+            {
+              "name": "noise_cutoff",
+              "dtype": "float"
+            },
+            {
+              "name": "presence_ratio",
+              "dtype": "float"
+            },
+            {
+              "name": "presence_ratio_std",
+              "dtype": "float"
+            },
+            {
+              "name": "slidingRP_viol",
+              "dtype": "float"
+            },
+            {
+              "name": "spike_count",
+              "dtype": "float"
+            },
+            {
+              "name": "slidingRP_viol_forced",
+              "dtype": "float"
+            },
+            {
+              "name": "max_confidence",
+              "dtype": "float"
+            },
+            {
+              "name": "min_contamination",
+              "dtype": "float"
+            },
+            {
+              "name": "n_spikes_below2",
+              "dtype": "float"
+            },
+            {
+              "name": "firing_rate",
+              "dtype": "float"
+            },
+            {
+              "name": "label",
+              "dtype": "float"
+            },
+            {
+              "name": "bitwise_fail",
+              "dtype": "uint8"
+            },
+            {
+              "name": "ks2_label",
+              "dtype": "string"
+            },
+            {
+              "name": "x",
+              "dtype": "float"
+            },
+            {
+              "name": "y",
+              "dtype": "float"
+            },
+            {
+              "name": "z",
+              "dtype": "float"
+            },
+            {
+              "name": "acronym",
+              "dtype": "string"
+            },
+            {
+              "name": "atlas_id",
+              "dtype": "int32"
+            },
+            {
+              "name": "axial_um",
+              "dtype": "float"
+            },
+            {
+              "name": "lateral_um",
+              "dtype": "float"
+            },
+            {
+              "name": "labels",
+              "dtype": "float"
+            },
+            {
+              "name": "rawInd",
+              "dtype": "float"
+            },
+            {
+              "name": "pid",
+              "dtype": "string"
+            },
+            {
+              "name": "eid",
+              "dtype": "string"
+            },
+            {
+              "name": "burstiness",
+              "dtype": "float"
+            },
+            {
+              "name": "memory",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "peak_val",
+              "dtype": "float"
+            },
+            {
+              "name": "invert_sign_peak",
+              "dtype": "float"
+            },
+            {
+              "name": "trough_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "trough_val",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_to_trough_ratio",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_to_trough_ratio_log",
+              "dtype": "float"
+            },
+            {
+              "name": "tip_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "tip_val",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_to_trough_duration",
+              "dtype": "float"
+            },
+            {
+              "name": "half_peak_post_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "half_peak_pre_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "half_peak_post_val",
+              "dtype": "float"
+            },
+            {
+              "name": "half_peak_pre_val",
+              "dtype": "float"
+            },
+            {
+              "name": "half_peak_duration",
+              "dtype": "float"
+            },
+            {
+              "name": "recovery_time_idx",
+              "dtype": "int16"
+            },
+            {
+              "name": "recovery_val",
+              "dtype": "float"
+            },
+            {
+              "name": "depolarisation_slope",
+              "dtype": "float"
+            },
+            {
+              "name": "repolarisation_slope",
+              "dtype": "float"
+            },
+            {
+              "name": "recovery_slope",
+              "dtype": "float"
+            },
+            {
+              "name": "peak_channel",
+              "dtype": "int16"
+            }
+          ]
+        }
+      },
+      "arrays": {
+        "clusters.waveforms_peak.npy": {
+          "shape": [
+            621733,
+            128
+          ],
+          "dtype": "float16"
+        },
+        "clusters.acgs_log.npy": {
+          "shape": [
+            621733,
+            128
+          ],
+          "dtype": "float16"
+        },
+        "acgs_log.times.npy": {
+          "shape": [
+            128
+          ],
+          "dtype": "float64"
+        }
+      }
+    }
+  },
+  "behavior_shards": {
+    "count": 459,
+    "shards_with_pawstates": 0,
+    "array_coverage": {
+      "leftCamera.features": 437,
+      "leftCamera.timestamps": 437,
+      "rightCamera.features": 432,
+      "rightCamera.timestamps": 432,
+      "wheel.position": 459,
+      "wheel.timestamps": 459,
+      "wheel.velocity": 459,
+      "bodyCamera.features": 260,
+      "bodyCamera.timestamps": 260
+    },
+    "feature_column_coverage": {
+      "leftCamera.features": {
+        "nose_tip_x": 437,
+        "nose_tip_y": 437,
+        "nose_tip_likelihood": 437,
+        "pupil_top_r_x": 437,
+        "pupil_top_r_y": 437,
+        "pupil_top_r_likelihood": 437,
+        "pupil_bottom_r_x": 437,
+        "pupil_bottom_r_y": 437,
+        "pupil_bottom_r_likelihood": 437,
+        "pupil_right_r_x": 437,
+        "pupil_right_r_y": 437,
+        "pupil_right_r_likelihood": 437,
+        "pupil_left_r_x": 437,
+        "pupil_left_r_y": 437,
+        "pupil_left_r_likelihood": 437,
+        "paw_l_x": 437,
+        "paw_l_y": 437,
+        "paw_l_likelihood": 437,
+        "paw_r_x": 437,
+        "paw_r_y": 437,
+        "paw_r_likelihood": 437,
+        "tube_top_x": 437,
+        "tube_top_y": 437,
+        "tube_top_likelihood": 437,
+        "tube_bottom_x": 437,
+        "tube_bottom_y": 437,
+        "tube_bottom_likelihood": 437,
+        "tongue_end_l_x": 437,
+        "tongue_end_l_y": 437,
+        "tongue_end_l_likelihood": 437,
+        "tongue_end_r_x": 437,
+        "tongue_end_r_y": 437,
+        "tongue_end_r_likelihood": 437,
+        "whiskerMotionEnergy": 433,
+        "pupilDiameter_raw": 264,
+        "pupilDiameter_smooth": 264
+      },
+      "rightCamera.features": {
+        "nose_tip_x": 432,
+        "nose_tip_y": 432,
+        "nose_tip_likelihood": 432,
+        "pupil_top_r_x": 432,
+        "pupil_top_r_y": 432,
+        "pupil_top_r_likelihood": 432,
+        "pupil_bottom_r_x": 432,
+        "pupil_bottom_r_y": 432,
+        "pupil_bottom_r_likelihood": 432,
+        "pupil_right_r_x": 432,
+        "pupil_right_r_y": 432,
+        "pupil_right_r_likelihood": 432,
+        "pupil_left_r_x": 432,
+        "pupil_left_r_y": 432,
+        "pupil_left_r_likelihood": 432,
+        "paw_l_x": 432,
+        "paw_l_y": 432,
+        "paw_l_likelihood": 432,
+        "paw_r_x": 432,
+        "paw_r_y": 432,
+        "paw_r_likelihood": 432,
+        "tube_top_x": 432,
+        "tube_top_y": 432,
+        "tube_top_likelihood": 432,
+        "tube_bottom_x": 432,
+        "tube_bottom_y": 432,
+        "tube_bottom_likelihood": 432,
+        "tongue_end_l_x": 432,
+        "tongue_end_l_y": 432,
+        "tongue_end_l_likelihood": 432,
+        "tongue_end_r_x": 432,
+        "tongue_end_r_y": 432,
+        "tongue_end_r_likelihood": 432,
+        "whiskerMotionEnergy": 428
+      },
+      "bodyCamera.features": {
+        "tail_start_x": 260,
+        "tail_start_y": 260,
+        "tail_start_likelihood": 260,
+        "bodyMotionEnergy": 256
+      }
+    }
+  },
+  "one_cache": {
+    "path": "/Users/gaellechapuis/Downloads/ONE",
+    "configured": false,
+    "indexes": {
+      "alyx.internationalbrainlab.org": {
+        "rows": 2507377,
+        "indexed_pawstates": 0,
+        "note": "Cached index rows do not establish downloaded files or current server availability."
+      },
+      "openalyx.internationalbrainlab.org": {
+        "rows": 106287,
+        "indexed_pawstates": 0,
+        "note": "Cached index rows do not establish downloaded files or current server availability."
+      }
+    },
+    "pawstate_files": []
+  },
+  "ephys_atlas_cache": {
+    "path": "/Users/gaellechapuis/Downloads/ONE/alyx.internationalbrainlab.org/ephys_atlas_features/ea_active/2026_W32/agg_full/raw_ephys_features.pqt",
+    "rows": 384768,
+    "columns": [
+      "alpha_std",
+      "psd_alpha",
+      "decay_fit_error",
+      "channel_labels",
+      "recovery_time_secs",
+      "rms_lf_csd_diff1",
+      "polarity",
+      "psd_residual_theta",
+      "rms_lf",
+      "psd_residual_beta",
+      "psd_alpha_csd_diff1",
+      "psd_delta_csd",
+      "psd_beta",
+      "psd_residual_lfp",
+      "aperiodic_offset",
+      "psd_residual_alpha",
+      "spike_count",
+      "psd_gamma",
+      "rms_ap",
+      "peak_val",
+      "psd_beta_csd",
+      "repolarisation_slope",
+      "psd_lfp",
+      "psd_theta",
+      "recovery_slope",
+      "decay_n_peaks",
+      "trough_time_secs",
+      "psd_lfp_csd",
+      "tip_time_secs",
+      "psd_delta_csd_diff1",
+      "psd_residual_gamma",
+      "rms_lf_csd",
+      "psd_gamma_csd_diff1",
+      "psd_beta_csd_diff1",
+      "trough_val",
+      "psd_alpha_csd",
+      "depolarisation_slope",
+      "decay_fit_r_squared",
+      "alpha_mean",
+      "psd_delta",
+      "tip_val",
+      "psd_lfp_csd_diff1",
+      "psd_residual_delta",
+      "aperiodic_exponent",
+      "cor_ratio",
+      "psd_theta_csd_diff1",
+      "psd_theta_csd",
+      "peak_time_secs",
+      "psd_gamma_csd",
+      "axial_um",
+      "lateral_um",
+      "pid",
+      "channel"
+    ],
+    "pids": 1002,
+    "overlapping_bwm_pids": 695,
+    "note": "PID overlap alone does not verify channel/revision compatibility."
+  },
+  "lfp": {
+    "path": "reports/datasets/bwm_lfp/lf_compressed_all_bwm.h5",
+    "bytes": 15546004168,
+    "root_pid_groups": 699,
+    "root_attrs": [],
+    "configured": false,
+    "sidecar_schema_present": false,
+    "version": "unverified"
+  }
+}

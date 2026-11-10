@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-
 SKILLS_ROOT = Path("skills")
 SKILL_DIR_NAMES = {
     path.name
@@ -41,7 +40,7 @@ def _resolve_skill_path(raw_path: str, source: Path) -> Path | None:
 
     if cleaned in LOCAL_CONFIG_FILENAMES:
         return None
-    if cleaned.startswith("./") or cleaned.startswith("../"):
+    if cleaned.startswith(("./", "../")):
         return (source.parent / cleaned).resolve()
     if cleaned.startswith(("references/", "scripts/", "assets/")):
         return (source.parent / cleaned).resolve()
@@ -103,6 +102,22 @@ def test_reference_resolution(raw_path: str, source: str, expected: str | None) 
 def test_brainbox_references_are_wired_into_skill_system() -> None:
     analyze_skill = Path("skills/ibl-analyze/SKILL.md").read_text(encoding="utf-8")
     assert "brainbox_routing.md" in analyze_skill
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "skills/ibl-load/SKILL.md",
+        "skills/ibl-load/references/data_loading.md",
+        "skills/ibl-load/references/bwm_runtime_policy.md",
+        "skills/ibl-analyze/references/brainbox_routing.md",
+        "docs/bwm/README.md",
+        "docs/bwm/behavior.md",
+    ],
+)
+def test_metadata_discovery_is_reachable(source: str) -> None:
+    text = Path(source).read_text(encoding="utf-8")
+    assert any(route in text for route in ("data_discovery", "data_loading.md", "ibl-load/SKILL.md", "describe-available-data"))
 
 
 def test_ibl_neuropixel_skill_exists_and_is_wired_into_skill_system() -> None:

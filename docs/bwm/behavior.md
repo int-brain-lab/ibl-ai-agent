@@ -12,6 +12,23 @@ The build is allowed to complete as a **partial dataset** when some sessions
 lack wheel or pose assets; those sessions are recorded in the availability
 tables and the build report instead of aborting the whole release.
 
+## What information is available?
+
+Use [metadata-driven discovery](../data_locations.md#describe-available-data)
+to inspect current table columns, embedded camera features and related installed
+loaders before choosing a product. In version 2.0.0, named
+paw/tongue/pupil keypoints are retained in camera shard features; separate
+`pawstates` predictions, raw video pixels and Lightning Pose ensemble uncertainty
+columns are excluded. These exclusions describe this package, not all IBL data.
+
+Wheel quiet intervals do not establish animal/paw stillness. Generic camera
+`feature_mean`/`feature_peak` and event summaries mix feature columns with
+different units, so use named tracks for interpretable movement quantities.
+The builder's `movement_peak_time` uses response time rather than a detected
+wheel-velocity peak; verify the producer/release before interpreting this field.
+
+## Tracking and release notes
+
 Pose naming note: per camera, the build prefers Lightning Pose over DeepLabCut
 whenever both trackers' datasets are present for a session (measured coverage:
 LP available for 436/437 leftCamera, 432/432 rightCamera, 253/260 bodyCamera

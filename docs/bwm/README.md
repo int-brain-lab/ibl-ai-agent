@@ -15,6 +15,20 @@ loading paths. These derived datasets are intended to:
 - expose the tables and spike shards an agent is expected to inspect;
 - make dataset version, schema, and caveats easier to report.
 
+## Find information by question
+
+Ask the agent what data are available, or run the [metadata-driven discovery
+command](../data_locations.md#describe-available-data) for current local tables,
+embedded fields and installed loader documentation. There is no separate
+capability catalog to update when datasets change. Inspect the configured
+schema/provenance for version and coverage; the snapshots below are not a
+machine inventory or a guarantee of live coverage.
+
+In particular, `bwm_behavior` 2.0.0 contains paw trajectories but excludes the
+separate Lightning Action `pawstates` predictions and video pixels. Wheel-defined
+quiescence is not a paw-stillness label; inspect the installed loader documentation
+for related session-level products and verify their availability separately.
+
 ## `bwm_behavior`
 
 Local behavior companion dataset for wheel, pose, trials, and event-aligned
@@ -67,7 +81,7 @@ Local ephys-centered BWM dataset with spikes, units, insertions, channels,
 trials, events, and passive-response context.
 
 - Config key: `datasets.bwm_ephys.root`
-- Version: `1.2.0`
+- Reference snapshot version: `1.2.0` (the [download target/specification](./ephys.md) may be newer)
 - Public archive size: `6.03G`
 - Previous `1.1.0` local-table/spike footprint: `5.3G`
 - Approx. file count: `4,215`
