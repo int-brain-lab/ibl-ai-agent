@@ -74,8 +74,11 @@ SECRET_PATTERNS = [
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
     re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
-    # Also quoted as JSON ("api_key": "...") or escaped JSON inside a string (\"api_key\": \"...\").
-    re.compile(r"(?i)(password|passwd|token|api[_-]?key|secret)\\?['\"]?\s*[:=]\s*\\?['\"]?[^'\"\s<]{8,}"),
+    # A quoted value (also \"escaped\") runs to its closing quote, else to the next space.
+    re.compile(
+        r"(?i)(password|passwd|token|api[_-]?key|secret)\\?['\"]?\s*[:=]\s*"
+        r"(?:(\\?['\"])(?:(?!(?<!\\)\2).){8,}(?<!\\)\2|\\?['\"]?[^'\"\s<]{8,})"
+    ),
     re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}"),
     # The whole key; to the end of the text when the END line is cut off.
     re.compile(

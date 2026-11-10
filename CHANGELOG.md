@@ -48,8 +48,8 @@ See `CHANGELOG_DATA.md` for further details.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
 - The secret check shared by GitHub Pages publishing and `/ibl-submit` now also finds quoted
-  (JSON) credentials, bearer tokens and every private-key type, and redaction removes the
-  whole key.
+  (JSON) credentials, bearer tokens and every private-key type. Redaction removes the whole
+  quoted value (spaces, apostrophes and escaped quotes included) and the whole key.
 
 ### Fixed
 - Require `ibllib>=4.1.1`. `ibl-neuropixel` 1.15.0 removed `ibldsp.utils.sync_timestamps`,

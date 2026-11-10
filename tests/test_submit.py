@@ -247,6 +247,12 @@ def test_normalize_records(host: str, records: list[dict], texts: list[str]) -> 
         ('{"api_key": "abcd1234efgh5678"}', "abcd1234efgh5678"),
         # JSON inside a tool call's arguments has its quotes escaped.
         (json.dumps({"command": "curl -d '{\"password\": \"hunter2hunter2\"}'"}), "hunter2hunter2"),
+        # A quoted value goes whole: spaces, apostrophes and escaped quotes included.
+        ('{"password": "correct horse battery staple"}', "battery staple"),
+        ('{"password": " correct horse battery"}', "horse battery"),
+        ('{"password": "don\'t tell anyone"}', "tell anyone"),
+        (r'{"password": "say \"open sesame\" twice"}', "twice"),
+        (json.dumps({"command": r"""curl -d '{"password": "say \"open sesame\" twice"}'"""}), "twice"),
         ("curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.abcdefgh'", "eyJhbGciOiJIUzI1NiJ9"),
         ("-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkq\n-----END PRIVATE KEY-----", "MIIEvQIBADANBgkq"),
         ("-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----", "MIIEowIBAAKCAQEA"),
@@ -305,8 +311,10 @@ def test_report_with_data_files_secrets_or_local_paths_is_refused(tmp_path: Path
         "<html>key sk-abcdefghij1234567890</html>", encoding="utf-8"
     )
     (report / "figures" / "caption.txt").write_text("saved in /Users/me/proj", encoding="utf-8")
+    password = '{"password": "correct horse battery staple"}'
+    (report / "config.json").write_text(password, encoding="utf-8")
     (project / "report.qmd").write_text(
-        '---\ntitle: "R"\n---\nload("/home/me/x.npy")\n', encoding="utf-8"
+        f'---\ntitle: "R"\n---\nload("/home/me/x.npy")\n{password}\n', encoding="utf-8"
     )
 
     with pytest.raises(SubmitError) as error:
@@ -315,8 +323,10 @@ def test_report_with_data_files_secrets_or_local_paths_is_refused(tmp_path: Path
     for problem in (
         "data.npy:",
         "report.html: credential-like text detected",
+        "config.json: credential-like text detected",
         "figures/caption.txt: absolute local path detected",
         "report.qmd: absolute local path detected",
+        "report.qmd: credential-like text detected",
     ):
         assert problem in str(error.value)
     assert not (tmp_path / "submissions").exists()  # nothing saved
