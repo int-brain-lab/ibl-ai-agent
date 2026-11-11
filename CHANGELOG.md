@@ -48,8 +48,13 @@ See `CHANGELOG_DATA.md` for further details.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
 - The secret check shared by GitHub Pages publishing and `/ibl-submit` now also finds quoted
-  (JSON) credentials, bearer tokens and every private-key type. Redaction removes the whole
-  quoted value (spaces, apostrophes and escaped quotes included) and the whole key.
+  (JSON) credentials, more key names (such as `SECRET_KEY`, `AWS_SECRET_ACCESS_KEY`,
+  `ALYX_PWD`), `--password` arguments, credentials in URLs and after `curl -u`, Basic and Token
+  authorization headers, bearer tokens, AWS, Slack, Google, Stripe, Hugging Face, GitLab and npm
+  tokens, JWTs and every private-key type. In a report it also checks the text as shown, where
+  Quarto writes quotes as `&quot;`. Redaction removes the whole quoted value (spaces,
+  apostrophes and escaped quotes included, also when the JSON is escaped several times) and the
+  whole key.
 
 ### Fixed
 - Require `ibllib>=4.1.1`. `ibl-neuropixel` 1.15.0 removed `ibldsp.utils.sync_timestamps`,
