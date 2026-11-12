@@ -22,6 +22,7 @@ dependencies = [
   "brainwidemap",
   "ibllib>=4.1.1",
   "boto3>=1.34",
+  "requests>=2.31",
 ]
 
 [project.optional-dependencies]

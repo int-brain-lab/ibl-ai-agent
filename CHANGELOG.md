@@ -22,6 +22,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 See `CHANGELOG_DATA.md` for further details.
 - `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
 - Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
+- `/ibl-submit` skill and `ibl-ai-agent submit` command: send a message (feedback or a bug
+  report) to the IBL maintainers through the IBL AI Agent server. `submit --message` redacts
+  secrets from the message (best effort), saves a draft in `submissions/` and prints everything
+  that will be sent; only `submit --send <draft>` sends, and it refuses a draft changed after it
+  was built. The chat history and reports are not sent. New dependency: `requests`.
 
 ### Changed
 - Scoped agent preflight and skill loading by task, reconciled download consent,
@@ -37,6 +42,14 @@ See `CHANGELOG_DATA.md` for further details.
   remote absence separately from query or download failures.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
+- The secret check shared by GitHub Pages publishing and `/ibl-submit` now also finds quoted
+  (JSON) credentials, more key names (such as `SECRET_KEY`, `AWS_SECRET_ACCESS_KEY`,
+  `ALYX_PWD`), `--password` arguments, credentials in URLs and after `curl -u`, Basic and Token
+  authorization headers, bearer tokens, AWS, Slack, Google, Stripe, Hugging Face, GitLab and npm
+  tokens, JWTs and every private-key type. In a report it also checks the text as shown, where
+  Quarto writes quotes as `&quot;`. Redaction removes the whole quoted value (spaces,
+  apostrophes and escaped quotes included, also when the JSON is escaped several times) and the
+  whole key.
 
 ### Fixed
 - Require `ibllib>=4.1.1`. `ibl-neuropixel` 1.15.0 removed `ibldsp.utils.sync_timestamps`,

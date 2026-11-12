@@ -11,3 +11,7 @@ class ExecutionContractError(IblAgentError):
 
 class NotebookExecutionError(IblAgentError):
     """Raised when notebook generation or execution fails."""
+
+
+class SubmitError(IblAgentError):
+    """Raised when building, packaging, or sending a submission fails."""

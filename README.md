@@ -81,6 +81,14 @@ The default public report repository is  `https://<github_owner>.github.io/ibl-a
 
 **You are responsible** for checking that the report does not reveal identifying, sensitive, unpublished, or confidential information before making it public. To check, open the rendered HTML report in a browser, review the visible text, figures, captions, tables, links, hover text, and appendices, search for names, usernames, computer names, institutions, email addresses, local paths such as `C:\Users` or `/home`, passwords, tokens, subject identifiers, and unpublished or private data, and review the `files_to_publish` manifest printed by the publishing command.
 
+## Sending Feedback
+
+Type `/ibl-submit` followed by a message to send feedback or a bug report to the IBL
+maintainers. The agent saves the message as a draft and shows you everything that will be sent;
+it sends only after you confirm. Secrets are redacted from the message on a best effort basis, so
+read the draft before confirming. Your chat history and reports are not sent. See
+`skills/ibl-submit/SKILL.md`.
+
 ## Example Reports
 
 Some example reports can be found at https://kdharris101.github.io/ibl-ai-agent-reports/.
