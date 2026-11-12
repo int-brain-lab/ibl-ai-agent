@@ -22,16 +22,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 See `CHANGELOG_DATA.md` for further details.
 - `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
 - Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
-- `/ibl-submit` skill and `ibl-ai-agent submit` command: send this session's chat, a message
-  and, optionally, the project's rendered report to the IBL AI Agent server for the IBL
-  maintainers. The chat is found from the session id Claude Code or Codex sets, in
-  `CLAUDE_CONFIG_DIR` / `CODEX_HOME` when set (`--transcript-file` sends another log,
-  `--no-transcript` sends a report alone), cleaned up and redacted of secrets. A report gets
-  the same checks as GitHub Pages publishing, plus its `report.qmd`. Every run saves a local
-  copy in `submissions/`; only `--yes` sends, and `--saved <copy> --yes` sends a saved copy
-  unchanged. Reports stay
-  private until the maintainers publish them on https://iblagent.iblcore.org. The `ibl-report`
-  skill now offers `/ibl-submit` next to GitHub Pages. New dependency: `requests`.
+- `/ibl-submit` skill and `ibl-ai-agent submit` command: send a message (feedback or a bug
+  report) to the IBL maintainers through the IBL AI Agent server. `submit --message` redacts
+  secrets from the message (best effort), saves a draft in `submissions/` and prints everything
+  that will be sent; only `submit --send <draft>` sends, and it refuses a draft changed after it
+  was built. The chat history and reports are not sent. New dependency: `requests`.
 
 ### Changed
 - Scoped agent preflight and skill loading by task, reconciled download consent,
