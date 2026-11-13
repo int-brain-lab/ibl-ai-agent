@@ -84,10 +84,13 @@ The default public report repository is  `https://<github_owner>.github.io/ibl-a
 ## Sending Feedback
 
 Type `/ibl-submit` followed by a message to send feedback or a bug report to the IBL
-maintainers. The agent saves the message as a draft and shows you everything that will be sent;
-it sends only after you confirm. Secrets are redacted from the message on a best effort basis, so
-read the draft before confirming. Your chat history and reports are not sent. See
-`skills/ibl-submit/SKILL.md`.
+maintainers. If you choose, it can also include this session's chat (all of it or a range of
+messages) and your rendered report, with its `report.qmd` only if you ask. The agent saves a
+draft and shows you everything that will be sent, in an HTML preview when there is a chat or a
+report; it sends only after you confirm. Secrets are redacted on a best effort basis, so read the
+draft before confirming. A submitted report stays private, stored in the server's database to
+build the agent's memory, unless you agree to its publication on https://iblagent.iblcore.org.
+See `skills/ibl-submit/SKILL.md`.
 
 ## Example Reports
 

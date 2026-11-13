@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from html import escape, unescape
+from html import escape
 from pathlib import Path
-import os
 import re
 import shutil
-import socket
 import subprocess
 
-from ibl_ai_agent.secret_scan import SECRET_PATTERNS
+from ibl_ai_agent.secret_scan import PublishFinding, risky_file_reason, scan_publish_tree
 
 
 DEFAULT_REPORTS_REPO = "ibl-ai-agent-reports"
@@ -36,53 +34,7 @@ WEB_EXTENSIONS = {
     ".woff2",
 }
 
-RISKY_EXTENSIONS = {
-    ".csv",
-    ".db",
-    ".env",
-    ".feather",
-    ".h5",
-    ".hdf5",
-    ".ipynb",
-    ".jsonl",
-    ".log",
-    ".npy",
-    ".npz",
-    ".parquet",
-    ".pkl",
-    ".pickle",
-    ".sqlite",
-    ".sqlite3",
-    ".tsv",
-    ".yaml",
-    ".yml",
-}
-
-RISKY_FILENAMES = {
-    ".env",
-    ".env.private",
-    "alyx.json",
-    "credentials",
-    "credentials.json",
-    "data_locations.local.yaml",
-    "id_rsa",
-    "id_dsa",
-    "id_ecdsa",
-    "id_ed25519",
-    "known_hosts",
-}
-
-WINDOWS_PATH_RE = re.compile(r"[A-Za-z]:\\(?:Users|Neuropixels Dropbox|Documents and Settings)\\[^<>'\"\s]+")
-POSIX_HOME_RE = re.compile(r"/(?:Users|home)/[^<>'\"\s]+")
-
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
-
-
-@dataclass(frozen=True)
-class PublishFinding:
-    severity: str
-    path: str
-    message: str
 
 
 @dataclass(frozen=True)
@@ -157,7 +109,7 @@ def stage_report_site(
     findings: list[PublishFinding] = []
     for path in sorted(p for p in source_root.rglob("*") if p.is_file()):
         rel = path.relative_to(source_root)
-        risk = _risky_file_reason(path)
+        risk = risky_file_reason(path)
         if risk:
             findings.append(PublishFinding("blocker", str(rel), risk))
             continue
@@ -201,37 +153,6 @@ def stage_report_site(
         files=tuple(sorted(copied)),
         findings=tuple(staged_findings),
     )
-
-
-def scan_publish_tree(root: Path) -> list[PublishFinding]:
-    findings: list[PublishFinding] = []
-    home = str(Path.home())
-    username = os.environ.get("USERNAME") or os.environ.get("USER") or ""
-    hostname = socket.gethostname()
-
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        rel = str(path.relative_to(root)).replace("\\", "/")
-        risk = _risky_file_reason(path)
-        if risk:
-            findings.append(PublishFinding("blocker", rel, risk))
-
-        if path.suffix.lower() in {".html", ".htm", ".css", ".js", ".json", ".txt", ".svg"}:
-            text = _read_text_sample(path)
-            if text is None:
-                continue
-            # Also the text as shown: Quarto writes quotes as &quot; and wraps code in <span>s.
-            visible = unescape(re.sub(r"<[^>]+>", "", text))
-            for pattern in SECRET_PATTERNS:
-                if pattern.search(text) or pattern.search(visible):
-                    findings.append(PublishFinding("blocker", rel, "credential-like text detected"))
-                    break
-            if WINDOWS_PATH_RE.search(text) or POSIX_HOME_RE.search(text) or (home and home in text):
-                findings.append(PublishFinding("blocker", rel, "absolute local path detected"))
-            if username and len(username) >= 3 and re.search(rf"(?i)\b{re.escape(username)}\b", text):
-                findings.append(PublishFinding("warning", rel, "local username appears in text"))
-            if hostname and len(hostname) >= 3 and re.search(rf"(?i)\b{re.escape(hostname)}\b", text):
-                findings.append(PublishFinding("warning", rel, "computer name appears in text"))
-    return findings
 
 
 def publish_report_to_github(
@@ -308,24 +229,6 @@ def _resolve_report_entrypoint(path: Path) -> tuple[Path, Path]:
         if candidate.is_file():
             return candidate, path
     raise PublishError(f"Report directory must contain index.html or report.html: {path}")
-
-
-def _risky_file_reason(path: Path) -> str | None:
-    name = path.name.lower()
-    if name in RISKY_FILENAMES:
-        return "risky filename is not safe for public upload"
-    if path.suffix.lower() in RISKY_EXTENSIONS:
-        return "risky file type is not safe for public upload"
-    return None
-
-
-def _read_text_sample(path: Path, *, max_bytes: int = 50_000_000) -> str | None:
-    try:
-        if path.stat().st_size > max_bytes:
-            return None
-        return path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return None
 
 
 def _write_root_index(site_dir: Path) -> Path:
