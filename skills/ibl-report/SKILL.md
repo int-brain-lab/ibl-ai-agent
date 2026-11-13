@@ -10,7 +10,7 @@ description: Use this skill to write a final report for an IBL scientific analys
 
 ## Output format
 
-Prepare a scientific report using Quarto. Resolve the project directory and slug using `AGENTS.md`; save source as `report.qmd` and render HTML to `report/report.html`. PDF is an optional additional output at `report.pdf`; for an explicit PDF-only request, omit HTML, the manifest, and the Pages publishing offer.
+Prepare a scientific report using Quarto. Resolve the project directory and slug using `AGENTS.md`; save source as `report.qmd` and render HTML to `report/report.html`. PDF is an optional additional output at `report.pdf`; for an explicit PDF-only request, omit HTML, the manifest, and the sharing offers (both need the HTML report).
 
 For HTML reports, render a single self-contained HTML file (`embed-resources: true` in the YAML header) so reports can be hosted, versioned, and ingested as one file. Also write `report/manifest.json` as a JSON object with all fields below, so a future report index can list the report without parsing HTML. The manifest is public; the privacy rules below apply to every value.
 
@@ -22,7 +22,7 @@ For HTML reports, render a single self-contained HTML file (`embed-resources: tr
 | `tags` | Array of unique, nonempty topic keywords (3-6 recommended), shown on the report index; also set `keywords:` in the YAML header. Use `[]` if none apply. |
 | `data_version` | Object mapping dataset names to version strings (e.g. `{"bwm_ephys": "1.2.0", "bwm_behavior": "1.0.0"}`). Include every dataset used; use `null` for an unknown version and explain it in the report's methods. Use `{}` if no dataset was used. Never put local paths or credentials here. |
 
-Keep only the rendered HTML, public manifest, and required web assets in `report/`. Keep source, PDF, and private notes outside it, because the publisher collects web files recursively from that directory.
+Keep only the rendered HTML, public manifest, and required web assets in `report/`. Keep source, PDF, and private notes outside it, because both GitHub Pages publishing and `/ibl-submit` collect web files recursively from that directory.
 
 The report should have the following sections:
 
@@ -70,7 +70,12 @@ When suggesting edits, prioritize edits that would be generally useful for futur
 
 *IMPORTANT* Users may make the reports public. Always ensure the report contains no information that could identify the user or constitute a security risk, such as directory or computer names, institution names, passwords, tokens, private local paths, usernames, host names, details of installation, or the names or identifying information of other individuals.
 
-After writing the final Quarto HTML report, ask the user whether they want to publish it publicly on GitHub Pages. Publishing is always opt-in. If the user says yes, ask which GitHub account or organization should own the public report repository, and optionally ask for a URL slug if the project slug is not suitable.
+After writing the final Quarto HTML report, offer the user two opt-in ways to share it:
+
+- **Submit it to the IBL maintainers** with `/ibl-submit` (see `skills/ibl-submit/SKILL.md`). The report stays private, stored in the IBL AI Agent server's database to build the agent's memory, unless the user separately agrees to its publication on https://iblagent.iblcore.org.
+- **Publish it publicly on GitHub Pages**, as described below.
+
+For GitHub Pages: publishing is always opt-in. If the user says yes, ask which GitHub account or organization should own the public report repository, and optionally ask for a URL slug if the project slug is not suitable.
 
 Before rendering or publishing, follow `skills/install/SKILL.md` to check prerequisites (Quarto for rendering; `git`, `gh`, and `gh auth status` for GitHub Pages publishing). If a required tool is missing, explain the missing tool briefly, ask for permission to install or authenticate when needed, run the setup commands yourself where possible, and then resume the report workflow. Do not ask the user to run shell commands manually.
 

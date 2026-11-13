@@ -23,10 +23,16 @@ See `CHANGELOG_DATA.md` for further details.
 - `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
 - Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
 - `/ibl-submit` skill and `ibl-ai-agent submit` command: send a message (feedback or a bug
-  report) to the IBL maintainers through the IBL AI Agent server. `submit --message` redacts
-  secrets from the message (best effort), saves a draft in `submissions/` and prints everything
-  that will be sent; only `submit --send <draft>` sends, and it refuses a draft changed after it
-  was built. The chat history and reports are not sent. New dependency: `requests`.
+  report) to the IBL maintainers through the IBL AI Agent server, and only if asked, this
+  session's chat (`--transcript`, or `--messages A-B` for a range), the rendered report
+  (`--report`) and its `report.qmd` (`--report-source`). `submit` redacts secrets (best effort),
+  checks the report, saves a draft in `submissions/` and shows everything that will be sent,
+  in an HTML preview when there is a chat or a report; only `submit --send <draft>` sends, and
+  it refuses a draft changed after it was built. A report is published on
+  https://iblagent.iblcore.org only with `--allow-publishing`, which the skill passes only when
+  the user agrees. New dependency: `requests`.
+- The report check (GitHub Pages publishing and `/ibl-submit`) now blocks text files it can't
+  read or that are over 50 MB, and files that link outside the report folder.
 
 ### Changed
 - Scoped agent preflight and skill loading by task, reconciled download consent,
