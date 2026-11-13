@@ -130,8 +130,9 @@ Use these files for persistent scientific state:
 - `report.qmd`: Quarto source, outside the publishable directory.
 - `report.pdf`: optional additional output, or the sole rendered output for an
   explicit PDF-only request. GitHub Pages publication requires an HTML report.
-- `report/`: rendered HTML and required web assets only. The publisher collects
-  web files recursively from this directory; do not pass the whole project.
+- `report/`: rendered HTML and required web assets only. GitHub Pages publishing
+  and `/ibl-submit` collect web files recursively from this directory; do not pass
+  the whole project.
 - `instruction-suggestions.md`: optional proposals for durable guidance changes.
 
 The [experimental ask runtime](ask/ASK_RUNTIME.md) uses `reports/ask_runs/` when
