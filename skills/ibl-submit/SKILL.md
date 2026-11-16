@@ -54,8 +54,8 @@ requests). Those are not this skill.
    ```bash
    UV_CACHE_DIR=.uv-cache uv run ibl-ai-agent submit --send submissions/<id>.json
    ```
-   This sends the draft exactly as shown; a draft changed after it was built is refused. Report
-   the server response.
+   This sends the draft exactly as shown, to the destination it shows; a draft changed after it
+   was built, or built for another server, is refused. Report the server response.
 
 ## Rules
 

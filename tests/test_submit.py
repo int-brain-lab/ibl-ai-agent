@@ -33,7 +33,8 @@ CLAUDE_LOG = ".claude/projects/-Users-me-proj/{}.jsonl"
 CODEX_LOG = ".codex/sessions/2026/11/07/rollout-2026-11-07T17-07-31-{}.jsonl"
 # What a message-only draft holds.
 MESSAGE_KEYS = {
-    "schema_version", "submission_id", "created_at", "message", "agent", "environment", "redaction",
+    "schema_version", "submission_id", "created_at", "destination", "message", "agent",
+    "environment", "redaction",
 }  # fmt: skip
 
 
@@ -263,6 +264,7 @@ def test_collect_submission_saves_only_the_message() -> None:
 
     metadata, saved = submission.metadata, submission.saved
     assert set(metadata) == MESSAGE_KEYS  # no chat, no report
+    assert metadata["destination"] == DEFAULT_SUBMIT_URL  # the server the user reviews it for
     assert "sk-abcdefghij1234567890" not in metadata["message"]  # secrets go, paths stay
     assert "/Users/me/x" in metadata["message"]
     assert metadata["redaction"] == {"counts": {"secrets": 1}}
@@ -410,6 +412,9 @@ def test_write_preview_shows_everything_and_runs_nothing(
 
     assert "Content-Security-Policy" in page and "default-src 'none'" in page
     assert "<script" not in page  # the report's script is shown as text, never run
+    # The report is also shown rendered, in a frame without any sandbox permission.
+    rendered = f'<iframe sandbox srcdoc="{escape("<html><script>alert(1)</script></html>")}">'
+    assert rendered in page and "allow-" not in page
     assert DEFAULT_SUBMIT_URL in page and "did not agree to publication" in page
     for text in ("my message", escape("first <b>message</b>"), "second"):
         assert text in page
@@ -446,7 +451,7 @@ def _capture_post(monkeypatch: pytest.MonkeyPatch, reply: dict | None = None) ->
     return sent
 
 
-def test_post_submission_sends_the_draft_to_the_built_in_or_the_configured_server(
+def test_post_submission_sends_the_draft_only_to_the_server_it_was_built_for(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     sent = _capture_post(monkeypatch, {"status": "stored"})
@@ -455,7 +460,10 @@ def test_post_submission_sends_the_draft_to_the_built_in_or_the_configured_serve
     assert post_submission(saved) == {"status": "stored"}
     monkeypatch.setenv("IBL_AGENT_SUBMIT_URL", "https://env.example/api")
     monkeypatch.setenv("IBL_AGENT_SUBMIT_TOKEN", "envtoken")
-    post_submission(saved)
+    # The user read this draft for the built-in server, which is no longer the destination.
+    with pytest.raises(SubmitError, match="env.example.*Build a new draft"):
+        post_submission(saved)
+    post_submission(collect_submission("hello").saved)
 
     built_in, configured = sent
     assert (built_in["url"], built_in["headers"]) == (

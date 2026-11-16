@@ -311,6 +311,7 @@ def collect_submission(
         "schema_version": SCHEMA_VERSION,
         "submission_id": f"{now:%Y%m%dT%H%M%SZ}-{os.urandom(4).hex()}",
         "created_at": f"{now:%Y-%m-%dT%H:%M:%SZ}",
+        "destination": submit_url(),  # the server post_submission sends this draft to
         "message": redacted,
         "agent": {"ibl_ai_agent_version": agent_version, "repo_commit": commit},
         "environment": {"os": platform.system().lower(), "python": platform.python_version()},
@@ -333,11 +334,12 @@ def write_preview(saved: Path) -> Path:
     """Write ``submissions/<id>.html`` showing everything in the saved draft; return its path.
 
     No scripts, and the Content-Security-Policy blocks loading anything, so opening it neither
-    runs what the attachments contain nor contacts a server.
+    runs what the attachments contain nor contacts a server. ``report.html`` is shown rendered in
+    a sandboxed frame (which the policy also covers) and as source.
     """
     metadata = json.loads(saved.read_text(encoding="utf-8"))
     parts = [
-        f"<p>Draft: nothing has been sent. Destination: {escape(submit_url())}</p>",
+        f"<p>Draft: nothing has been sent. Destination: {escape(metadata['destination'])}</p>",
         f"<p>{escape(PRIVACY_NOTICE)}</p>",
         f"<h2>Message</h2><pre>{escape(metadata['message'])}</pre>",
     ]
@@ -360,6 +362,8 @@ def write_preview(saved: Path) -> Path:
                 checked = name == "report.qmd" or Path(name).suffix.lower() in SCANNED_EXTENSIONS
                 kind = mimetypes.guess_type(name)[0] or ""
                 parts.append(f"<h3>{escape(name)}: {info.file_size:,} bytes, {'' if checked else 'not '}checked for secrets</h3>")
+                if name == "report.html":  # rendered; `sandbox` with no permission runs no scripts
+                    parts.append(f'<iframe sandbox srcdoc="{escape(data.decode("utf-8", "replace"))}"></iframe>')
                 if checked:
                     parts.append(f"<details><summary>Contents</summary><pre>{escape(data.decode('utf-8', 'replace'))}</pre></details>")
                 elif kind.startswith("image/"):
@@ -374,8 +378,9 @@ def write_preview(saved: Path) -> Path:
     preview.write_text(
         '<!doctype html><html><head><meta charset="utf-8">'
         '<meta http-equiv="Content-Security-Policy" '
-        "content=\"default-src 'none'; style-src 'unsafe-inline'; img-src data:\">"
-        "<style>body{font-family:sans-serif;max-width:60rem;margin:auto}pre{white-space:pre-wrap}</style>"
+        "content=\"default-src 'none'; style-src 'unsafe-inline' data:; img-src data:; font-src data:\">"
+        "<style>body{font-family:sans-serif;max-width:60rem;margin:auto}pre{white-space:pre-wrap}"
+        "iframe{width:100%;height:80vh}</style>"
         "</head><body>" + "".join(parts) + "</body></html>",
         encoding="utf-8",
     )
@@ -385,8 +390,9 @@ def write_preview(saved: Path) -> Path:
 def post_submission(saved: Path) -> dict[str, Any]:
     """Send the draft ``saved`` as it is (multipart, bearer token) and return the server's reply.
 
-    A draft whose JSON or zip changed after it was built, or a file ``collect_submission`` did
-    not save, is refused: the user must build a new draft and read it before it is sent.
+    A draft whose JSON or zip changed after it was built, a file ``collect_submission`` did not
+    save, or a draft built for another server than ``submit_url()`` names now, is refused: the
+    user must build a new draft and read it before it is sent.
     """
     body = saved.read_bytes()
     bundle_file = saved.with_suffix(".zip")
@@ -398,12 +404,18 @@ def post_submission(saved: Path) -> dict[str, Any]:
             f"{saved} changed after it was built, or is not a draft. Build a new draft and read "
             "it before sending."
         )
+    url = submit_url()
+    built_for = json.loads(body).get("destination")
+    if built_for != url:
+        raise SubmitError(
+            f"This draft was built for {built_for}, but submissions now go to {url}. Build a new "
+            "draft and read it before sending."
+        )
     size = len(body) + len(bundle or b"")
     if size > MAX_UPLOAD_BYTES:
         raise SubmitError(
             f"Submission is {size:,} bytes, which exceeds the {MAX_UPLOAD_BYTES:,} byte limit."
         )
-    url = submit_url()
     token = os.environ.get("IBL_AGENT_SUBMIT_TOKEN") or DEFAULT_SUBMIT_TOKEN
     # No file name for metadata, so the server reads it as a form field.
     files = {"metadata": (None, body, "application/json")}

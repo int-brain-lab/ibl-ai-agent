@@ -27,8 +27,9 @@ See `CHANGELOG_DATA.md` for further details.
   session's chat (`--transcript`, or `--messages A-B` for a range), the rendered report
   (`--report`) and its `report.qmd` (`--report-source`). `submit` redacts secrets (best effort),
   checks the report, saves a draft in `submissions/` and shows everything that will be sent,
-  in an HTML preview when there is a chat or a report; only `submit --send <draft>` sends, and
-  it refuses a draft changed after it was built. A report is published on
+  in an HTML preview when there is a chat or a report (the report rendered with its scripts
+  turned off, and as source); only `submit --send <draft>` sends, and it refuses a draft changed
+  after it was built or built for another server. A report is published on
   https://iblagent.iblcore.org only with `--allow-publishing`, which the skill passes only when
   the user agrees. New dependency: `requests`.
 - The report check (GitHub Pages publishing and `/ibl-submit`) now blocks text files it can't
