@@ -1,4 +1,4 @@
-"""Build, preview and send a submission for ``ibl-ai-agent submit`` (the ``/ibl-submit`` skill).
+"""Build, preview and send a submission for ``ibl-ai-agent submit`` (the ``ibl-submit`` skill).
 
 A submission is the user's message and, only if they ask, this session's chat and the project's
 rendered report (and ``report.qmd``), with secrets redacted, plus a few details about the agent

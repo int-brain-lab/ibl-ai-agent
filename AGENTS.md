@@ -83,7 +83,7 @@ Raw Neuropixels or SpikeGLX preprocessing:
 Skill maintenance:
 - `skills/skill-maintenance/SKILL.md`
 
-Submitting to the IBL AI Agent server (`/ibl-submit`, or an explicit request to submit a report, feedback, or chat history to IBL):
+Submitting to the IBL AI Agent server (a message starting with `ibl-submit`, or an explicit request to submit a report, feedback, or chat history to IBL):
 - `skills/ibl-submit/SKILL.md`
 
 ## Project directory

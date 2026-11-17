@@ -1,4 +1,4 @@
-"""Best-effort checks for secrets and local paths, shared by GitHub Pages publishing and ``/ibl-submit``.
+"""Best-effort checks for secrets and local paths, shared by GitHub Pages publishing and ``ibl-submit``.
 
 No pattern list finds every secret, so a clean result does not mean the text is safe to share.
 """

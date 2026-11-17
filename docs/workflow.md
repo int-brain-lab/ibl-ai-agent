@@ -131,7 +131,7 @@ Use these files for persistent scientific state:
 - `report.pdf`: optional additional output, or the sole rendered output for an
   explicit PDF-only request. GitHub Pages publication requires an HTML report.
 - `report/`: rendered HTML and required web assets only. GitHub Pages publishing
-  and `/ibl-submit` collect web files recursively from this directory; do not pass
+  and `ibl-submit` collect web files recursively from this directory; do not pass
   the whole project.
 - `instruction-suggestions.md`: optional proposals for durable guidance changes.
 

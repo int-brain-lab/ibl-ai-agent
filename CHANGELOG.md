@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 See `CHANGELOG_DATA.md` for further details.
 - `ibl-report` skill now includes "Statistical information" section with journal-style table of statistical tests used in analyses.
 - Data-offline mode: setting `IBL_AGENT_DATA_OFFLINE=1` will use local datasets without having to download. If data is missing from local, the agent will ask the user to provide it. Applies to agent workflow; the experimental `ask` runtime is not offline-aware.
-- `/ibl-submit` skill and `ibl-ai-agent submit` command: send a message (feedback or a bug
+- `ibl-submit` skill (start a message with `ibl-submit`; it is not a slash command) and `ibl-ai-agent submit` command: send a message (feedback or a bug
   report) to the IBL maintainers through the IBL AI Agent server, and only if asked, this
   session's chat (`--transcript`, or `--messages A-B` for a range), the rendered report
   (`--report`) and its `report.qmd` (`--report-source`). `submit` redacts secrets (best effort),
@@ -32,7 +32,7 @@ See `CHANGELOG_DATA.md` for further details.
   after it was built or built for another server. A report is published on
   https://iblagent.iblcore.org only with `--allow-publishing`, which the skill passes only when
   the user agrees. New dependency: `requests`.
-- The report check (GitHub Pages publishing and `/ibl-submit`) now blocks text files it can't
+- The report check (GitHub Pages publishing and `ibl-submit`) now blocks text files it can't
   read or that are over 50 MB, and files that link outside the report folder.
 
 ### Changed
@@ -49,7 +49,7 @@ See `CHANGELOG_DATA.md` for further details.
   remote absence separately from query or download failures.
 - `scripts/download_datasets.py`: `bwm_ephys` archive updated to version 1.2.1
   with the corrected passive tables. See `CHANGELOG_DATA.md` for details.
-- The secret check shared by GitHub Pages publishing and `/ibl-submit` now also finds quoted
+- The secret check shared by GitHub Pages publishing and `ibl-submit` now also finds quoted
   (JSON) credentials, more key names (such as `SECRET_KEY`, `AWS_SECRET_ACCESS_KEY`,
   `ALYX_PWD`), `--password` arguments, credentials in URLs and after `curl -u`, Basic and Token
   authorization headers, bearer tokens, AWS, Slack, Google, Stripe, Hugging Face, GitLab and npm

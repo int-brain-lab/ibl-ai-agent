@@ -22,7 +22,7 @@ For HTML reports, render a single self-contained HTML file (`embed-resources: tr
 | `tags` | Array of unique, nonempty topic keywords (3-6 recommended), shown on the report index; also set `keywords:` in the YAML header. Use `[]` if none apply. |
 | `data_version` | Object mapping dataset names to version strings (e.g. `{"bwm_ephys": "1.2.0", "bwm_behavior": "1.0.0"}`). Include every dataset used; use `null` for an unknown version and explain it in the report's methods. Use `{}` if no dataset was used. Never put local paths or credentials here. |
 
-Keep only the rendered HTML, public manifest, and required web assets in `report/`. Keep source, PDF, and private notes outside it, because both GitHub Pages publishing and `/ibl-submit` collect web files recursively from that directory.
+Keep only the rendered HTML, public manifest, and required web assets in `report/`. Keep source, PDF, and private notes outside it, because both GitHub Pages publishing and `ibl-submit` collect web files recursively from that directory.
 
 The report should have the following sections:
 
@@ -72,7 +72,7 @@ When suggesting edits, prioritize edits that would be generally useful for futur
 
 After writing the final Quarto HTML report, offer the user two opt-in ways to share it:
 
-- **Submit it to the IBL maintainers** with `/ibl-submit` (see `skills/ibl-submit/SKILL.md`). The report stays private, stored in the IBL AI Agent server's database to build the agent's memory, unless the user separately agrees to its publication on https://iblagent.iblcore.org.
+- **Submit it to the IBL maintainers** by starting a message with `ibl-submit`, without a leading `/` (see `skills/ibl-submit/SKILL.md`). The report stays private, stored in the IBL AI Agent server's database to build the agent's memory, unless the user separately agrees to its publication on https://iblagent.iblcore.org.
 - **Publish it publicly on GitHub Pages**, as described below.
 
 For GitHub Pages: publishing is always opt-in. If the user says yes, ask which GitHub account or organization should own the public report repository, and optionally ask for a URL slug if the project slug is not suitable.

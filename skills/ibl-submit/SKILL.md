@@ -1,6 +1,6 @@
 ---
 name: ibl-submit
-description: Use this skill only when the user types `/ibl-submit` (optionally with text) or explicitly asks to send feedback, a message, a report, or chat history to the IBL AI Agent server or the IBL maintainers. Do not trigger on bare `submit` or unrelated submissions (cluster jobs, forms, pull requests).
+description: Use this skill only when the user's message starts with `ibl-submit` (optionally followed by text; a leading `/` is fine) or explicitly asks to send feedback, a message, a report, or chat history to the IBL AI Agent server or the IBL maintainers. Do not trigger on bare `submit` or unrelated submissions (cluster jobs, forms, pull requests).
 ---
 
 # Submitting to the IBL maintainers
@@ -17,7 +17,7 @@ requests). Those are not this skill.
 ## Steps
 
 1. **Work out what to send.** By default, only the message. Ask short questions, one at a time:
-   - **Message:** if the user typed text after `/ibl-submit`, use it, keeping their wording. A
+   - **Message:** if the user typed text after `ibl-submit`, use it, keeping their wording. A
      submission may have no message if it has a chat or a report.
    - **Chat:** "Include this session's chat? It includes the messages, tool calls, tool outputs
      and readable reasoning." The answer is none, all of it, or a range of messages.
