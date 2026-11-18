@@ -28,7 +28,7 @@ BWM_DATASET_DEFAULTS = {
     },
     "bwm_lfp": {
         "root": REPO_ROOT / "reports" / "datasets" / "bwm_lfp",
-        "size": "about 14 GB (opt-in)",
+        "size": "about 20 GB (opt-in)",
         "why": "the compressed LFP store lets the agent read any of the 699 BWM recordings without a raw ONE/SpikeGLX download",
         "download_hint": "UV_CACHE_DIR=.uv-cache uv run python scripts/download_datasets.py --lfp",
     },

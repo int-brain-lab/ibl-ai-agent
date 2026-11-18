@@ -114,19 +114,15 @@ Opt-in — not downloaded by the default `download_datasets.py` run because of
 its size.
 
 - Config key: `datasets.bwm_lfp.root`
-- Version: `1.0.0`
-- Compression tier: `standard` only (the `lfpack` package also produces an
-  `aggressive` tier for its own uses; it is intentionally not distributed to
-  the agent)
-- Approx. size on disk: `14G`
+- Version: `1.2.0` (= the `lfpack` version that wrote the file)
+- Compression tier: `default` (α = 7) only
+- Approx. size on disk: `20G`
 - Recordings: `699` (one per probe insertion, keyed by `pid`)
-- Channels per recording: `384` for 695 recordings; `96` for four NP2.4
-  recordings
+- Channels per recording: `384` for 695 recordings; `96` for four NP2.4 recordings (`NR_0029`)
 - Sample rate: `250 Hz` (decimated from `2500 Hz`)
 - Main contents:
-  - `lf_compressed_all_bwm.h5` — all 699 recordings, per-channel brain-region
-    annotations, saturation QC, and session-clock sync (non-linear where the
-    registered sync has real non-linear structure)
+  - `lf_compressed_v05_a07_default_all_bwm.h5` — all 699 recordings, per-channel brain-region
+    annotations, saturation QC, session-clock sync and provenance
   - `schema.yaml` / `provenance.yaml` / `manifest.json` — authored by
     `scripts/download_datasets.py` at download time (not shipped by `lfpack`)
 

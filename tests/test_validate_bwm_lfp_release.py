@@ -43,7 +43,7 @@ dataset_name: bwm_lfp
 dataset_version: 1.0.0
 stores:
   lf_compressed:
-    path: lf_compressed_all_bwm.h5
+    path: lf_compressed_v05_a07_default_all_bwm.h5
     n_recordings: 3
     n_channels: [96, 384]
     channel_count_distribution:
@@ -86,6 +86,7 @@ source:
 
         def __init__(self, path: str, *, recording: str, scale: int) -> None:
             self.nc = self.channel_counts[recording]
+            self.provenance = {"lfpack_version": "1.0.0"}
 
     fake_lfpack = ModuleType("lfpack")
     fake_lfpack.LFPackReader = FakeLFPackReader
@@ -97,7 +98,7 @@ source:
         expected_n_recordings=3,
         expected_channel_count_distribution={96: 1, 384: 2},
     )
-    assert report.ok
+    assert report.ok, report.failures
     assert report.details["channel_count_distribution"] == {96: 1, 384: 2}
 
     FakeLFPackReader.channel_counts["np2"] = 95

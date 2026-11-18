@@ -16,7 +16,7 @@ The script downloads the public `bwm_ephys` and `bwm_behavior` archives into
 `reports/datasets/` and writes `data_locations.local.yaml`. Approximate download
 sizes are listed in `docs/bwm/README.md`.
 
-The compressed LFP dataset (`bwm_lfp`, ~14 GB, standard-compression tier) is
+The compressed LFP dataset (`bwm_lfp`, ~20 GB, standard-compression tier) is
 opt-in and not part of this default flow, since most sessions never need raw
 LFP access. Fetch and register it separately with:
 

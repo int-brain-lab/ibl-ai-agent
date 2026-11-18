@@ -43,7 +43,7 @@ Resolution order:
 Configured roots:
 - `datasets.bwm_ephys.root`
 - `datasets.bwm_behavior.root`
-- `datasets.bwm_lfp.root` (compressed LFP `.h5`, opt-in; download/register with `scripts/download_datasets.py --lfp`, ~14 GB; reading it needs the optional `lfp` extra, `uv sync --extra lfp`)
+- `datasets.bwm_lfp.root` (compressed LFP `.h5`, opt-in; download/register with `scripts/download_datasets.py --lfp`, ~20 GB; reading it needs the optional `lfp` extra, `uv sync --extra lfp`)
 
 Each root may be a directory containing version folders with `schema.yaml`, or one exact dataset directory containing `schema.yaml`. Do not assume `reports/datasets` exists.
 

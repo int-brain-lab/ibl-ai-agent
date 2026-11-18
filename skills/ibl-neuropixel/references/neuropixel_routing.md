@@ -31,7 +31,7 @@ Policy:
 
 ### Compressed LFP access (lfpack / BWM LFP dataset)
 Use when the task reads the lossy-compressed LFP `.h5` store (e.g. the 699-recording BWM LFP dataset,
-`lf_compressed_all_bwm.h5`, registered as `bwm_lfp` — see `skills/ibl-load/references/bwm_runtime_policy.md`) rather than raw `.lf.bin`.
+`lf_compressed_v05_a07_default_all_bwm.h5`, registered as `bwm_lfp` — see `skills/ibl-load/references/bwm_runtime_policy.md`) rather than raw `.lf.bin`.
 
 Prefer:
 - `lfpack.LFPackReader` — a drop-in for `spikeglx.Reader`; decompresses chunks on demand (SVD + wavelet-packet).

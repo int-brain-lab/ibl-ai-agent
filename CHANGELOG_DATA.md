@@ -11,6 +11,18 @@ Dataset versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [bwm_lfp 1.2.0] - 2026-11-18
+
+### Changed
+- v05 archive `lf_compressed_v05_a07_default_all_bwm.h5` (default tier, α = 7),
+  written by lfpack 1.2.0 (HDF5 format 2, ibl-neuropixel 1.14.0): Cadzow
+  without window seams, bad channels estimated by Cadzow. All `699` recordings,
+  ~20 GB. Reading needs `lfpack>=1.2.0`.
+- The `bwm_lfp` version now equals the lfpack version that wrote the file;
+  `schema_version` is the lfpack HDF5 `format_version` (2).
+
+---
+
 ## [bwm_lfp 1.1.0] - 2026-08-23
 
 ### Fixed
