@@ -11,7 +11,7 @@ so it can be discovered through the same `data_locations.local.yaml` /
 dataset.
 
 It is opt-in: `scripts/download_datasets.py` does not fetch it by default
-(unlike `bwm_ephys`/`bwm_behavior`) because of its size (~14 GB). Fetch and
+(unlike `bwm_ephys`/`bwm_behavior`) because of its size (~20 GB). Fetch and
 register it with:
 
 ```bash
@@ -26,18 +26,19 @@ UV_CACHE_DIR=.uv-cache uv sync --extra lfp
 
 Dataset identity:
 - Name: `bwm_lfp`
-- Current version: `1.0.0`
+- Current version: `1.2.0`. From 1.2.0 on, the version is the `lfpack`
+  version that wrote the file (`sr.provenance["lfpack_version"]`); 1.0.0 and
+  1.1.0 predate this rule.
 - Config key: `datasets.bwm_lfp.root`
-- Compression tier: `standard` only. `lfpack` also produces an `aggressive`
-  tier (higher compression, more high-frequency roll-off); it is not
-  distributed to the agent.
+- Compression tier: `default` (α = 7) only, recorded as `standard`. The `small`
+  and `fine` tiers are not distributed to the agent.
 
 ## Layout
 
 ```text
 bwm_lfp/
-  1.0.0/
-    lf_compressed_all_bwm.h5
+  1.2.0/
+    lf_compressed_v05_a07_default_all_bwm.h5
     schema.yaml
     provenance.yaml
     manifest.json
@@ -52,8 +53,7 @@ even though nothing here is built by this repo's own pipeline.
 ## Contents
 
 One HDF5 file holding all `699` BWM probe recordings, keyed by `pid`:
-- `384` channels for `695` recordings and `96` channels for four NP2.4
-  recordings from subject `NR_0029`
+- `384` channels for `695` recordings and `96` channels for four NP2.4 recordings from subject `NR_0029`
 - `250 Hz` sample rate (decimated from `2500 Hz`)
 - per-channel brain-region annotations (`acronym`, `atlas_id`, MNI coordinates)
 - per-recording saturation (ADC-clipping) QC table
@@ -73,29 +73,14 @@ the API here; see:
 
 ## Known Limitations
 
-Carried over from `lfpack`'s own release notes — check these before trusting
-a result:
+See the [Limitations](https://int-brain-lab.github.io/lfpack/how-to/bwm-dataset.html#limitations)
+of the lfpack page (saturation, high frequencies, CSD, low frequencies). Specific to the agent:
 
-- **Saturation events**: ADC-clipped stretches are detected and muted before
-  lossy compression. Decompressed values in those stretches are not guaranteed
-  to be exactly zero, so use `sr.saturation_mask`/`sr.saturation_times()` rather
-  than testing sample values. In this release, 121 of 699 recordings have more
-  than 1% saturated source samples and 16 exceed 10% (maximum 23.9%).
-- **Sync for 11 probes corrected in `bwm_lfp 1.1.0`**: 4 raw-pulse defect
-  classes (`dropped_edges`, `duplicate_burst`, `single_edge_glitch`,
-  `irregular_3A_reference`) previously left `sr.t0` as `NaN` for 7 probes and
-  silently wrong for another 4 — re-derived from raw sync pulses and fixed; see
-  [lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8) and the
-  [full write-up](https://oliche.github.io/oliche-quarto/analyses/2026-08-lfpack-sync-issues/index.html).
-- **Saturation interval boundaries**: interval stop times can extend up to one
-  decimated sample beyond `sr.times[-1]` because intervals are rounded
-  outwards; `sr.saturation_mask` clips them safely.
-- **High-frequency roll-off**: the SVD + wavelet-packet codec trades off
-  power above roughly 20-30 Hz for compression ratio, more so at the
-  (undistributed) aggressive tier.
-- **Low-frequency channel-to-channel mismatch**: per-channel
-  impedance/analog-filter differences show up as amplitude outliers below
-  ~1.5 Hz and are not corrected by the current pre-processing pipeline.
+- **Saturation**: decompressed values in muted stretches are not exactly zero; use
+  `sr.saturation_mask`/`sr.saturation_times()`, never sample values.
+- **Sync**: the 11 probes fixed in `bwm_lfp` 1.1.0
+  ([lfpack#8](https://github.com/int-brain-lab/lfpack/issues/8)) stay fixed; align with `sr.times`
+  only when `sr.t0` is finite.
 
 ## Related
 

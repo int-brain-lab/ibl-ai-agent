@@ -45,18 +45,15 @@ BWM_DATASET_ROOTS = {
     "bwm_behavior": DATASETS_DIR / "bwm_behavior",
 }
 
-# bwm_lfp is opt-in (--lfp, ~14 GB) and deliberately excluded from
+# bwm_lfp is opt-in (--lfp, ~20 GB) and deliberately excluded from
 # BWM_DATASET_ROOTS/ARCHIVES so it never joins the default two-dataset flow.
 LFP_DIR = DATASETS_DIR / "bwm_lfp"
-# 1.1.0, not a patch bump: every recording gains new sync_samples/sync_times knot data
-# (schema addition), and many probes' t0_sync/fs_sync scalars shift slightly even where nothing
-# was previously flagged broken (see lfpack#8 / CHANGELOG_DATA.md).
-BWM_LFP_VERSION = "1.1.0"
-LFP_SCHEMA_VERSION = 1
-# TODO(fix/lfpack-sync-issue-8): confirm against the actual released lfpack version once
-# int-brain-lab/lfpack#14 merges and ships (currently unreleased on the lfpack side; 0.4.0 is
-# the expected next version per lfpack's own CHANGELOG.md, not yet tagged).
-LFP_MIN_PACKAGE_VERSION = "0.4.0"
+# From 1.2.0 on, the bwm_lfp version is the lfpack version that wrote the file (`lfpack_version`
+# in every recording's meta attrs); 1.0.0 and 1.1.0 predate this rule.
+BWM_LFP_VERSION = "1.2.0"
+# The lfpack HDF5 `format_version` of the file (format 2 since lfpack 1.0).
+LFP_SCHEMA_VERSION = 2
+LFP_MIN_PACKAGE_VERSION = "1.2.0"
 
 
 @dataclass(frozen=True)
@@ -139,20 +136,18 @@ class LFPFileSpec:
         return self.target_dir / self.filename
 
 
-# Only the standard-compression tier is exposed for download; the aggressive
-# tier is not distributed to the agent.
+# Only the default tier (alpha=7, "standard") is exposed for download; the small and
+# fine tiers are not distributed to the agent.
 LFP_STANDARD = LFPFileSpec(
     dataset="bwm_lfp",
     version=BWM_LFP_VERSION,
-    filename="lf_compressed_all_bwm.h5",
+    filename="lf_compressed_v05_a07_default_all_bwm.h5",
     url=(
         "https://ibl-brain-wide-map-public.s3.amazonaws.com/resources/"
-        "ibl-agent-data/lf_compressed_all_bwm.h5"
+        "ibl-agent-data/lf_compressed_v05_a07_default_all_bwm.h5"
     ),
-    # sha1 of the corrected archive (`v03_bwm/lf_compressed_all_bwm.h5`), uploaded 2026-08-23.
-    # Live object confirmed byte-identical (ContentLength 15575685736 matches the local file
-    # exactly; aws s3 cp is a byte-for-byte transfer of the file this hash was computed from).
-    sha1="c8ee81a202d1598ed51dbb960c6473754fe8933b",
+    # sha1 of the v05 default tier (lfpack 1.2.0, alpha=7), uploaded 2026-11-17, 20037401373 bytes.
+    sha1="a6afd8345e4351a11e68900f8a25076cd5a2e4ee",
 )
 
 
@@ -461,6 +456,7 @@ def _build_lfp_provenance(spec: LFPFileSpec) -> dict[str, Any]:
         "source": {
             "package": "lfpack",
             "min_package_version": LFP_MIN_PACKAGE_VERSION,
+            "lfpack_version": spec.version,
             "compression_tier": "standard",
             "upstream_url": spec.url,
             "upstream_sha1": spec.sha1,
@@ -562,7 +558,7 @@ def main() -> int:
         action="store_true",
         default=False,
         help=(
-            "Download only the bwm_lfp dataset (standard-compression tier, ~14 GB) "
+            "Download only the bwm_lfp dataset (standard-compression tier, ~20 GB) "
             "instead of the default bwm_ephys/bwm_behavior archives."
         ),
     )

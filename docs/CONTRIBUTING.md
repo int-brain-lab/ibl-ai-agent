@@ -55,10 +55,12 @@ file produced upstream by `lfpack`. `scripts/download_datasets.py` authors
 its `schema.yaml`/`provenance.yaml`/`manifest.json` itself at download time
 (there is nothing to unpack). To pick up a new upstream release:
 
-1. Bump `BWM_LFP_VERSION` in `scripts/download_datasets.py`.
-2. Update `LFP_STANDARD`'s `url` and `sha1` (`shasum -a 1
-   lf_compressed_all_bwm.h5`) to the new upstream file. Only the standard
-   compression tier is exposed; do not add an aggressive-tier spec.
+1. Set `BWM_LFP_VERSION` in `scripts/download_datasets.py` to the `lfpack`
+   version that wrote the file (`lfpack_version` in the `meta` attrs; the
+   validator checks it), and `LFP_SCHEMA_VERSION` to its HDF5 `format_version`.
+2. Update `LFP_STANDARD`'s `filename`, `url` and `sha1` (`shasum -a 1 <file>`)
+   to the new upstream file. Only the default (α = 7) tier is exposed; do not
+   add a spec for the other tiers.
 3. Add a `CHANGELOG_DATA.md` entry under a new `[bwm_lfp <version>]` heading.
 4. Run the release validator against the freshly downloaded version dir:
    ```bash

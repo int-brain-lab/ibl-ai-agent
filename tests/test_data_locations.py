@@ -153,5 +153,5 @@ def test_missing_bwm_lfp_error_points_at_the_opt_in_lfp_flag(tmp_path: Path, mon
         resolve_dataset_dir("bwm_lfp")
 
     message = str(exc_info.value)
-    assert "about 14 GB (opt-in)" in message
+    assert "about 20 GB (opt-in)" in message
     assert "scripts/download_datasets.py --lfp" in message

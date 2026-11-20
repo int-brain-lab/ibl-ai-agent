@@ -33,7 +33,7 @@ Your coding agent needs to read `AGENTS.md` and referenced files, edit files, ru
 The agent is specialized for working on the **IBL Brain Wide Map (BWM)**, a large collaborative dataset mapping neural activity across the mouse brain during a decision-making task. The flagship paper is
 [A brain-wide map of neural activity during complex behaviour](https://www.nature.com/articles/s41586-025-09235-0).
 
-This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. The two default datasets (`bwm_ephys`, ~6 GB, including per-unit waveforms and autocorrelograms; `bwm_behavior`, ~2.9 GB) together fit in well under 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead. A larger, opt-in compressed LFP dataset (`bwm_lfp`, ~14 GB) is also available; see [docs/bwm/README.md](docs/bwm/README.md) for exact sizes and contents.
+This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. The two default datasets (`bwm_ephys`, ~6 GB, including per-unit waveforms and autocorrelograms; `bwm_behavior`, ~2.9 GB) together fit in well under 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead. A larger, opt-in compressed LFP dataset (`bwm_lfp`, ~20 GB) is also available; see [docs/bwm/README.md](docs/bwm/README.md) for exact sizes and contents.
 
 For more info on what data is downloaded, and what requires the API, ask the Agent!
 
@@ -137,7 +137,7 @@ It offers to download the main compressed BWM data to `reports/datasets/`, or ca
 **How much disk space do the public BWM derived datasets need?**
 
 Less than 10 GB for all spikes from good units and behavior data from the BWM.
-A compressed LFP dataset (`bwm_lfp`, ~14 GB) is also available but opt-in —
+A compressed LFP dataset (`bwm_lfp`, ~20 GB) is also available but opt-in —
 it is not downloaded by default; fetch it with
 `scripts/download_datasets.py --lfp`.
 

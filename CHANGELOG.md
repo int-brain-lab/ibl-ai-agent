@@ -12,11 +12,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - `bwm_behavior` dataset version 2.0.0 with wheel recovery for all 459 sessions
   and Lightning Pose preferred over DeepLabCut per camera.
-- `bwm_lfp` dataset version 1.0.0 (standard-compression tier only): opt-in
+- `bwm_lfp` dataset version 1.2.0 (v05 default tier only, lfpack 1.2.0): opt-in
   download/registration via `scripts/download_datasets.py --lfp`, plugged
   into the standard `data_locations`/`schema.yaml` dataset registry, plus
   `ibl-neuropixel`/`ibl-load` skill guidance for `lfpack.LFPackReader`.
-  `lfpack` is an optional `lfp` extra, not a core dependency.
+  `lfpack>=1.2.0` is an optional `lfp` extra, not a core dependency.
 - `scripts/validate_bwm_lfp_release.py`: release validator for `bwm_lfp`
   archives, mirroring `validate_bwm_ephys_release.py`'s role.
 See `CHANGELOG_DATA.md` for further details.

@@ -9,7 +9,7 @@ and channel-count distributions.
 
 Usage:
     UV_CACHE_DIR=.uv-cache uv run python scripts/validate_bwm_lfp_release.py \
-        reports/datasets/bwm_lfp/1.0.0
+        reports/datasets/bwm_lfp/1.2.0
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ from typing import Any
 import yaml
 
 
-DEFAULT_EXPECTED_VERSION = "1.1.0"
-DEFAULT_EXPECTED_FILENAME = "lf_compressed_all_bwm.h5"
+DEFAULT_EXPECTED_VERSION = "1.2.0"
+DEFAULT_EXPECTED_FILENAME = "lf_compressed_v05_a07_default_all_bwm.h5"
 DEFAULT_EXPECTED_N_RECORDINGS = 699
 DEFAULT_EXPECTED_CHANNEL_COUNT_DISTRIBUTION = {96: 4, 384: 695}
 
@@ -169,9 +169,11 @@ def validate_bwm_lfp_release(
                 )
                 try:
                     channel_count_distribution: dict[int, int] = {}
+                    lfpack_versions: set[str] = set()
                     for recording in recordings:
                         reader = lfpack.LFPackReader(str(data_path), recording=recording, scale=0)
                         channel_count_distribution[reader.nc] = channel_count_distribution.get(reader.nc, 0) + 1
+                        lfpack_versions.add(str(reader.provenance.get("lfpack_version")))
                 except Exception as exc:
                     report.failures.append(f"failed to inspect recording channel counts with lfpack: {exc}")
                 else:
@@ -179,6 +181,12 @@ def validate_bwm_lfp_release(
                     report.check(
                         channel_count_distribution == expected_channel_count_distribution,
                         f"file channel-count distribution is {expected_channel_count_distribution}",
+                    )
+                    # the bwm_lfp version is the lfpack version that wrote the file
+                    report.details["lfpack_versions"] = sorted(lfpack_versions)
+                    report.check(
+                        lfpack_versions == {expected_version},
+                        f"every recording was written by lfpack {expected_version}",
                     )
 
     return report
