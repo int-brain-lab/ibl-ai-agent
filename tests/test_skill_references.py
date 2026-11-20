@@ -115,9 +115,18 @@ def test_ibl_neuropixel_skill_exists_and_is_wired_into_skill_system() -> None:
 
 
 def test_ibl_submit_skill_uses_namespaced_trigger() -> None:
-    """Guard against firing on everyday uses of the word "submit"."""
+    """Guard against firing on everyday uses of the word "submit", and check that the guidance
+    tells users to start a message with `ibl-submit`, not to type `/ibl-submit`: Claude Code and
+    Codex do not register the repo's `skills/` as slash commands, so they reject `/ibl-submit`
+    before the agent sees it."""
     text = Path("skills/ibl-submit/SKILL.md").read_text(encoding="utf-8")
 
-    assert "/ibl-submit" in text
+    assert "starts with `ibl-submit`" in text
     assert "Do not trigger on bare `submit`" in text
     assert "ibl-ai-agent submit" in text
+
+    # `/ibl-submit` not preceded by a word character or `/`, so paths like
+    # `skills/ibl-submit/SKILL.md` are not counted.
+    slash_command = re.compile(r"(?<![\w/])/ibl-submit")
+    guidance = [Path("AGENTS.md"), Path("README.md"), *SKILLS_ROOT.rglob("*.md"), *Path("docs").rglob("*.md")]
+    assert [str(path) for path in guidance if slash_command.search(path.read_text(encoding="utf-8"))] == []

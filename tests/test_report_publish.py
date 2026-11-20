@@ -7,7 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from ibl_ai_agent.cli import app
-from ibl_ai_agent import report_publish
+from ibl_ai_agent import report_publish, secret_scan
 from ibl_ai_agent.report_publish import PublishError, publish_report_to_github, stage_report_site
 
 
@@ -86,6 +86,22 @@ def test_stage_report_site_detects_secrets_in_rendered_code(tmp_path: Path, body
     staged = stage_report_site(report_dir, site_dir=tmp_path / "site")
 
     assert "credential-like text detected" in [finding.message for finding in staged.findings]
+
+
+def test_scan_publish_tree_blocks_files_it_cannot_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(secret_scan, "MAX_SCAN_BYTES", 5)
+    root = tmp_path / "report"
+    root.mkdir()
+    (root / "big.txt").write_text("more than five bytes", encoding="utf-8")
+    (tmp_path / "private.html").write_text("<p>hi</p>", encoding="utf-8")
+    (root / "link.html").symlink_to(tmp_path / "private.html")
+
+    findings = {(f.path, f.message) for f in secret_scan.scan_publish_tree(root)}
+
+    assert ("big.txt", "could not be read to check for secrets") in findings
+    assert ("link.html", "links to a file outside the folder") in findings
 
 
 def test_stage_report_site_skips_non_web_auxiliary_files(tmp_path: Path) -> None:
