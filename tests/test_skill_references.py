@@ -112,3 +112,12 @@ def test_ibl_neuropixel_skill_exists_and_is_wired_into_skill_system() -> None:
     assert "neuropixel_routing.md" in text
     assert "neuropixel_function_signatures.md" in text
     assert "int-brain-lab/ibl-neuropixel" in text
+
+
+def test_ibl_submit_skill_uses_namespaced_trigger() -> None:
+    """Guard against firing on everyday uses of the word "submit"."""
+    text = Path("skills/ibl-submit/SKILL.md").read_text(encoding="utf-8")
+
+    assert "/ibl-submit" in text
+    assert "Do not trigger on bare `submit`" in text
+    assert "ibl-ai-agent submit" in text

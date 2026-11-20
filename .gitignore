@@ -20,6 +20,9 @@ uv.toml
 .mplconfig/
 .jupyter_runtime/
 .ibl-ai-agent-publish/
+# Local copies of submissions written by `ibl-ai-agent submit`
+# (anchored so it only matches the repo-root folder).
+/submissions/
 data_locations.local.yaml
 ibl-agent.local.yaml
 questions/projects/**/data_locations.local.yaml

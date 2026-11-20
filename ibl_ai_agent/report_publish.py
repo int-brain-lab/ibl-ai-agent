@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from html import escape
+from html import escape, unescape
 from pathlib import Path
 import os
 import re
 import shutil
 import socket
 import subprocess
+
+from ibl_ai_agent.secret_scan import SECRET_PATTERNS
 
 
 DEFAULT_REPORTS_REPO = "ibl-ai-agent-reports"
@@ -69,14 +71,6 @@ RISKY_FILENAMES = {
     "id_ed25519",
     "known_hosts",
 }
-
-SECRET_PATTERNS = [
-    re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
-    re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
-    re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
-    re.compile(r"(?i)(password|passwd|token|api[_-]?key|secret)\s*[:=]\s*['\"]?[^'\"\s<]{8,}"),
-    re.compile(r"-----BEGIN (?:OPENSSH|RSA|DSA|EC|PRIVATE) KEY-----"),
-]
 
 WINDOWS_PATH_RE = re.compile(r"[A-Za-z]:\\(?:Users|Neuropixels Dropbox|Documents and Settings)\\[^<>'\"\s]+")
 POSIX_HOME_RE = re.compile(r"/(?:Users|home)/[^<>'\"\s]+")
@@ -225,8 +219,10 @@ def scan_publish_tree(root: Path) -> list[PublishFinding]:
             text = _read_text_sample(path)
             if text is None:
                 continue
+            # Also the text as shown: Quarto writes quotes as &quot; and wraps code in <span>s.
+            visible = unescape(re.sub(r"<[^>]+>", "", text))
             for pattern in SECRET_PATTERNS:
-                if pattern.search(text):
+                if pattern.search(text) or pattern.search(visible):
                     findings.append(PublishFinding("blocker", rel, "credential-like text detected"))
                     break
             if WINDOWS_PATH_RE.search(text) or POSIX_HOME_RE.search(text) or (home and home in text):

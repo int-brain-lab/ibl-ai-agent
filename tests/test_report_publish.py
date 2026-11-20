@@ -56,7 +56,8 @@ def test_stage_report_site_detects_risky_files_and_paths(tmp_path: Path) -> None
     report_dir = _write_report(tmp_path)
     (report_dir / "secrets.yaml").write_text("password: abcdefghijk", encoding="utf-8")
     (report_dir / "report.html").write_text(
-        r"<html><body>C:\Users\Kenneth\private\file.txt</body></html>",
+        r"<html><body>C:\Users\Kenneth\private\file.txt"
+        "<pre>-----BEGIN RSA PRIVATE KEY-----</pre></body></html>",
         encoding="utf-8",
     )
 
@@ -66,6 +67,25 @@ def test_stage_report_site_detects_risky_files_and_paths(tmp_path: Path) -> None
     assert staged.has_blockers
     assert "risky file type is not safe for public upload" in messages
     assert "absolute local path detected" in messages
+    assert "credential-like text detected" in messages
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "<pre>{&quot;password&quot;: &quot;correct horse battery staple&quot;}</pre>",
+        '<span class="va">password</span> <span class="op">=</span> '
+        '<span class="st">&quot;correct horse battery staple&quot;</span>',
+    ],
+)
+def test_stage_report_site_detects_secrets_in_rendered_code(tmp_path: Path, body: str) -> None:
+    # Quarto writes quotes as &quot; and wraps highlighted code in <span>s.
+    report_dir = _write_report(tmp_path)
+    (report_dir / "report.html").write_text(f"<html><body>{body}</body></html>", encoding="utf-8")
+
+    staged = stage_report_site(report_dir, site_dir=tmp_path / "site")
+
+    assert "credential-like text detected" in [finding.message for finding in staged.findings]
 
 
 def test_stage_report_site_skips_non_web_auxiliary_files(tmp_path: Path) -> None:
