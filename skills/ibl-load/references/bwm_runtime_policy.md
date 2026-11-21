@@ -6,6 +6,11 @@ Use this as the shared policy reference for:
 - `ibl-load`
 - `ibl-analyze`
 
+Local-first execution does not limit conceptual product discovery. For capability
+questions, follow the discovery workflow in `data_loading.md`: absence from a derived BWM release does
+not establish absence from session-level products or installed APIs. Keep local,
+release and live-availability claims separate without bypassing access gates.
+
 ## Core policy
 1. For Brain Wide Map questions, start by resolving user-local BWM dataset roots from `data_locations.local.yaml`, project-level `data_locations.local.yaml`, `IBL_AGENT_DATA_LOCATIONS`, or the repo default `reports/datasets/<dataset_name>` location, then check schemas before choosing a loading path.
 2. Treat `brainwidemap` as the canonical upstream fallback layer, not as the mandatory opening move.

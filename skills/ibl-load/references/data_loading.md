@@ -9,11 +9,39 @@ Short default loading policy for IBL and Brain Wide Map questions.
 - Keep generated scripts lean: no CLI flags, no config plumbing, no speculative fallback branches.
 - Large reusable datasets are user-local, not repo state. Resolve configured roots with `data_locations.local.yaml` / `ibl_ai_agent.data_locations`; do not assume `reports/datasets`.
 
+## Capability and availability discovery
+
+Run `.venv/bin/python -m ibl_ai_agent.data_discovery` in the project environment for a
+fresh overview, or add `--query <broad-term> --json` for focused source evidence.
+The command discovers configured datasets through their existing schemas,
+reads Parquet headers and sampled shard manifests, and extracts installed
+loader docstrings/behavior constants without importing or executing the loaders.
+New configured datasets and loader methods appear without updating a catalog.
+Check the reported Python executable and `software_inspection` status: a system
+interpreter without IBL installed cannot establish missing software capabilities.
+
+Give a short user-facing explanation after this first pass, then inspect only
+the relevant producer references, availability tables or local cache evidence.
+Search is lexical and shard inspection is sampled: neither establishes absence.
+With zero matches, the command returns the unfiltered overview and sets
+`query_fallback`; those entries are candidates, not inferred synonyms. Source
+reading/parsing failures mark software inspection incomplete and remain visible
+in both JSON and readable output, even when a query filters capabilities.
+Scientific meaning/units still require source documentation; discovery does not
+invent missing definitions. Ignore AppleDouble `._*` files and build checkpoints.
+
+Report the evidence scope: supported by software, packaged in a release, present
+locally, listed in a cached index, live availability verified or unknown, and
+derivable with analysis. Missing local files or stale index entries do not prove
+remote absence. Surface detected-but-unconfigured data without silently changing
+configuration. Use live metadata queries only when authorized and permitted by
+offline/access rules; capability discovery alone does not authorize downloads.
+
 ## Non-BWM default decision path
 Use the smallest loading surface that matches the question.
 
 1. Session discovery or dataset availability:
-   - start with `ONE.search(...)`, `one.list_datasets(...)`, or `one.list_collections(...)`
+   - follow local capability discovery above; for authorized server-backed discovery use `ONE.search(...)`, `one.list_datasets(...)`, or `one.list_collections(...)`
 2. Behavioral trial questions for one or a few sessions:
    - prefer `one.load_object(eid, "trials", attribute=[...])`
 3. Session-level neural questions for one or a few probes:

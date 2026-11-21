@@ -9,6 +9,8 @@ references that keep the README short.
   project outputs, interaction pattern, and current boundaries.
 - [Data locations](./data_locations.md): where local datasets live and how
   agents/scripts resolve them.
+- [Discover available data](./data_locations.md#describe-available-data): generate
+  a current overview from dataset metadata and installed loaders.
 - [BWM overview](./bwm/README.md): current derived BWM dataset contents, sizes,
   and links to detailed schemas.
 - [BWM ephys dataset](./bwm/ephys.md)

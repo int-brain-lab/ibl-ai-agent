@@ -35,7 +35,7 @@ The agent is specialized for working on the **IBL Brain Wide Map (BWM)**, a larg
 
 This repository uses a compressed representation of the BWM data. It contains the spike times of all high-quality neurons to 0.1 ms resolution with basic metadata such as their brain locations; and behavioral traces such as stimulus and response events, wheel movements, and video keypoint detections. The two default datasets (`bwm_ephys`, ~6 GB, including per-unit waveforms and autocorrelograms; `bwm_behavior`, ~2.9 GB) together fit in well under 10 GB, enabling large-scale analyses to be conducted quickly; the agent can use the original API for any other information required. With your authorization, the downloader stores these datasets under `reports/datasets/`, so ensure you have ~10 GB free. An existing copy elsewhere can be configured instead. A larger, opt-in compressed LFP dataset (`bwm_lfp`, ~14 GB) is also available; see [docs/bwm/README.md](docs/bwm/README.md) for exact sizes and contents.
 
-For more info on what data is downloaded, and what requires the API, ask the Agent!
+Ask the agent what information is available, or use [data discovery](docs/data_locations.md#describe-available-data) to generate a current overview from local metadata and installed loader documentation; no separately maintained catalog is needed.
 
 ### Data-offline mode
 

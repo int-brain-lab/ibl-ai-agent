@@ -102,7 +102,40 @@ projects/<project_slug>/data_locations.local.yaml
 Set `IBL_AGENT_DATA_LOCATIONS` to an explicit config path when running scripts
 from another directory or when a project override should be forced.
 
-## Runtime Rule
+## Describe available data
+
+Ask the agent what information is available, or run this from the project
+environment (no server connection or downloads):
+
+```bash
+.venv/bin/python -m ibl_ai_agent.data_discovery
+.venv/bin/python -m ibl_ai_agent.data_discovery --query paw --json
+```
+
+This generates an overview from the existing local schemas, Parquet footers,
+sampled shard manifests and installed IBL loader documentation. New datasets
+registered in the config above appear automatically; no separate data catalog
+needs editing. Descriptions and scientific definitions come from the existing
+schema/producer documentation, not guessed from field names.
+On Windows use `.venv/Scripts/python.exe`; in an activated project environment,
+`python` also works. The output names its interpreter and flags incomplete
+software discovery when IBL loader sources are missing.
+
+Use `--config <path>` for an explicit data-locations file, and
+`--sample-shards <count>` to control how many manifests per store are inspected
+(default one). Samples establish observed fields, not release-wide absence or
+tracking quality; lexical filtering can miss related terminology. Zero-match
+queries return a labelled unfiltered overview (`query_fallback` in JSON), so
+the displayed candidates must not be treated as matches or synonyms. Source
+reading/parsing errors mark inspection incomplete and are shown in both formats.
+Use `--json`
+for complete columns, source paths, loader documentation and class constants.
+Installed API support does not establish downloaded files or live coverage.
+Cache indexes, signals and remote endpoints are not scanned by this command.
+Detected default dataset directories lacking registration/schema are reported
+separately; the command does not change configuration.
+
+## Resolve datasets in code
 
 Agents and scripts should resolve BWM datasets through `ibl_ai_agent.data_locations`
 instead of assuming `reports/datasets`.
